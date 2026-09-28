@@ -1,1 +1,1 @@
-docker run --name mysql-betsphere -e MYSQL_ROOT_PASSWORD=betsphere2026 -e MYSQL_DATABASE=betsphere -p 3306:3306 -d mysql:8.0    
+docker run --name mysql-betsphere -e MYSQL_ROOT_PASSWORD=betsphere2026 -e MYSQL_DATABASE=betsphere -p 3306:3306 -d mysql:8.0
