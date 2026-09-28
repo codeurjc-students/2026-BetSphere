@@ -1,7 +1,13 @@
+import Footer from "./components/Footer"
+import Header from "./components/Header"
+import MatchList from "./components/MatchList"
+
 function App() {
   return (
     <div>
-      <h1>BetSphere</h1>
+      <Header />
+      <MatchList />
+      <Footer />
     </div>
   )
 }
