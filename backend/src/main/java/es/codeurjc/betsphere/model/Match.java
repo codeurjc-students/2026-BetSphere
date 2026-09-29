@@ -25,19 +25,19 @@ public class Match {
     private Double drawOdds;
     private Double awayOdds;
     
-    private String status; // SCHEDULED, PLAYING, FINISHED
+    private String gameStatus; // SCHEDULED, PLAYING, FINISHED
 
     public Match(){
     }
 
-    public Match(String homeTeam, String awayTeam, LocalDateTime matchDate, Double homeOdds, Double drawOdds, Double awayOdds, String status) {
+    public Match(String homeTeam, String awayTeam, LocalDateTime matchDate, Double homeOdds, Double drawOdds, Double awayOdds, String gameStatus) {
         this.homeTeam = homeTeam;
         this.awayTeam = awayTeam;
         this.matchDate = matchDate;
         this.homeOdds = homeOdds;
         this.drawOdds = drawOdds;
         this.awayOdds = awayOdds;
-        this.status = status;
+        this.gameStatus = gameStatus;
     }
 
     // --- GETTERS & SETTERS ---
@@ -62,8 +62,8 @@ public class Match {
     public Double getAwayOdds() { return awayOdds; }
     public void setAwayOdds(Double awayOdds) { this.awayOdds = awayOdds; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public String getGameStatus() { return gameStatus; }
+    public void setGameStatus(String gameStatus) { this.gameStatus = gameStatus; }
 
 
 }
