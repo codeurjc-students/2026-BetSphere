@@ -1,12 +1,12 @@
 import Header from "../components/Header";
-import MatchList from "../components/MatchList";
 import Footer from "../components/Footer";
+import { Outlet } from "react-router";
 
 export default function Home() {
   return (
     <div>
       <Header />
-      <MatchList />
+      <Outlet />
       <Footer />
     </div>
   );

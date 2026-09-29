@@ -25,9 +25,14 @@ type RouteFiles = {
     id: "routes/home";
     page: "/";
   };
+  "routes/matches.tsx": {
+    id: "routes/matches";
+    page: "/";
+  };
 };
 
 type RouteModules = {
   "root": typeof import("./app/root.tsx");
   "routes/home": typeof import("./app/routes/home.tsx");
+  "routes/matches": typeof import("./app/routes/matches.tsx");
 };

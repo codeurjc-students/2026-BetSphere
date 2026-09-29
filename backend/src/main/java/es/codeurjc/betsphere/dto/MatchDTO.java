@@ -9,6 +9,6 @@ public record MatchDTO(
         Double homeOdds,
         Double drawOdds,
         Double awayOdds,
-        String status
+        String gameStatus
 ) {
 }
