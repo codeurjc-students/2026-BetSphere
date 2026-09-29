@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import es.codeurjc.betsphere.dto.MatchDTO;
 import es.codeurjc.betsphere.dto.MatchMapper;
-import es.codeurjc.betsphere.repository.MatchRepository;
+import es.codeurjc.betsphere.service.MatchService;
 
 import java.util.List;
 
@@ -18,17 +18,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 public class MatchRESTController {
     
-    private final MatchRepository matchRepo;
+    private final MatchService matchService;
     private final MatchMapper mapper;
 
-    public MatchRESTController(MatchRepository matchRepo, MatchMapper mapper){
-        this.matchRepo = matchRepo;
+    public MatchRESTController(MatchService matchService, MatchMapper mapper){
+        this.matchService = matchService;
         this.mapper = mapper;
     }
 
     @GetMapping("/")
     public List<MatchDTO> getMatches() {
-        return mapper.toDTOs(matchRepo.findAll());
+        return mapper.toDTOs(matchService.getAllMatches());
     }
     
 }
