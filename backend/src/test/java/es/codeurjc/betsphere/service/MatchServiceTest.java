@@ -16,7 +16,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import es.codeurjc.betsphere.dto.MatchDTO;
 import es.codeurjc.betsphere.model.Match;
 import es.codeurjc.betsphere.repository.MatchRepository;
 
