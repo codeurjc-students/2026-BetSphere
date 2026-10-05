@@ -42,7 +42,7 @@ jobs:
         working-directory: ./frontend
         run: |
           npm run dev &
-          npx wait-on http://127.0.0.1:5173
+          npx wait-on tcp:5173
 
       # --- 4. BACKEND (Unit, integration & System) ---
       - name: Make Maven Wrapper executable
