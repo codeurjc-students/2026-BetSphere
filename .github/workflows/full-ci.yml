@@ -1,0 +1,54 @@
+name: Full CI
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  full-quality-control:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # --- 1. PREPARE ENVIROMENTS ---
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      # --- 2. FRONTEND (Unit & Build) ---
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Run frontend unit tests
+        working-directory: ./frontend
+        run: npm run test:coverage
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build
+
+      # --- 3. LAUNCH FRONTEND IN THE BACKGROUND ---
+      - name: Start frontend in background
+        working-directory: ./frontend
+        run: |
+          npm run dev &
+          npx wait-on http://127.0.0.1:5173
+
+      # --- 4. BACKEND (Unit, integration & System) ---
+      - name: Make Maven Wrapper executable
+        working-directory: ./backend
+        run: chmod +x mvnw
+
+      - name: Run ALL backend tests (Unit, Integration, System)
+        working-directory: ./backend
+        run: xvfb-run ./mvnw test
