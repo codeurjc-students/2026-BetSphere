@@ -1,0 +1,28 @@
+{
+  "info": {
+    "_postman_id": "83e91e46-e555-46ef-98fc-b7aaa93d6415",
+    "name": "BetSphere API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "53109491",
+    "_collection_link": "https://go.postman.co/collection/53109491-83e91e46-e555-46ef-98fc-b7aaa93d6415?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Get all matches",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/matches/"
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080/api/v1"
+    }
+  ]
+}
