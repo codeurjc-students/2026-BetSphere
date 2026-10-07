@@ -114,7 +114,7 @@ A medida que avance el desarrollo de BetSphere, se irá detallando en este docum
 * **Ficheros de contexto:** `Desarrollo de una aplicación web como TFG v4.pdf` (normativa académica URJC) y `Diagrama pantallas BetSphere.pdf`.
 * **Herramientas basadas en ficheros (Spec Driven Development):** No aplica en esta interacción.
 
-### [Registro 7] - 2026-09-18: Estructuración del CHANGELOG.md y adopción de estándares de versionado
+### [Registro 7] - Estructuración del CHANGELOG.md y adopción de estándares de versionado
 
 * **Fecha:** 18/09/2026
 * **Fase:** Changelog.
@@ -128,3 +128,172 @@ A medida que avance el desarrollo de BetSphere, se irá detallando en este docum
 * **Complementos a la herramienta:** Ninguno (uso directo vía interfaz web).
 * **Ficheros de contexto:** Especificaciones oficiales de *Keep a Changelog* y *Semantic Versioning*.
 * **Herramientas basadas en ficheros (Spec Driven Development):** No aplica en esta interacción.
+
+### [Registro 8] - Gestión Ágil de Tareas y Formalización de Issues (GitHub Projects)
+
+* **Fecha:** 25/09/2026
+* **Fase:** 2: Gestión de Proyecto y Metodología.
+* **Objetivo:** Estructurar el tablero Kanban en GitHub Projects y estandarizar la redacción de las tareas técnicas (*Issues*) para mantener un flujo de trabajo profesional y trazable.
+* **Herramienta:** ChatGPT
+* **Versión concreta:** ChatGPT (GPT-4o)
+* **Configuración de la herramienta:** Modo chat conversacional orientado a *Project Management* y metodologías ágiles.
+* **Cómo ha sido usada:** 
+  * Se solicitó asistencia para organizar el *backlog* de tareas pendientes de la Fase 2, priorizando el orden de resolución (backend, testing, CI/CD, documentación).
+  * La IA redactó las descripciones de los *Issues* en inglés y en formato Markdown, aplicando una plantilla profesional que incluye el propósito (*Expected outcome*), el alcance de la tarea (*Scope*), los criterios de aceptación (*Acceptance criteria*) y los pasos de validación (*Verification*).
+  * Esta asistencia permitió documentar correctamente tareas clave (como la redacción de la *Development Guide* o la exportación de Postman) antes de moverlas a las columnas de *In Progress* y *Done*, simulando un entorno de desarrollo profesional real.
+* **Complementos a la herramienta:** Ninguno.
+* **Ficheros de contexto:** Contexto del flujo de trabajo, estado actual de la rama y nombres de las tareas pendientes.
+* **Herramientas basadas en ficheros (Spec Driven Development):** No aplica.
+
+### [Registro 9] - Configuración inicial de Spring Boot y dependencias (Maven)
+
+* **Fecha:** 26/09/2026
+* **Fase:** 2: Desarrollo Software (Backend).
+* **Objetivo:** Configurar la estructura base del proyecto Spring Boot y definir el árbol de dependencias inicial en Maven para la Fase 2.
+* **Herramienta:** ChatGPT
+* **Versión concreta:** ChatGPT (GPT-4o)
+* **Configuración de la herramienta:** Modo chat como experto en arquitectura Java/Spring.
+* **Cómo ha sido usada:** 
+  * Se solicitó asistencia para limpiar y estructurar correctamente el archivo `pom.xml` inicial del proyecto.
+  * La IA ayudó a organizar las dependencias fundamentales de Spring Boot (Web, Data JPA, Validation), la configuración del conector de base de datos (MySQL) y las herramientas de utilidades, garantizando una base de proyecto sólida y libre de librerías innecesarias.
+* **Complementos a la herramienta:** Ninguno.
+* **Ficheros de contexto:** Archivo `pom.xml` inicial.
+* **Herramientas basadas en ficheros (Spec Driven Development):** No aplica.
+
+### [Registro 10] - Desarrollo del Frontend (SPA) y migración a React Router
+
+* **Fecha:** 28/09/2026
+* **Fase:** 2: Desarrollo Software (Frontend).
+* **Objetivo:** Inicializar el proyecto cliente web (Single Page Application) e implementar el sistema de enrutamiento y navegación.
+* **Herramienta:** ChatGPT
+* **Versión concreta:** ChatGPT (GPT-4o)
+* **Configuración de la herramienta:** Modo chat especializado en React y desarrollo web moderno.
+* **Cómo ha sido usada:** 
+  * Se utilizó la IA como apoyo para la limpieza del código *boilerplate* generado por defecto al crear el proyecto frontend.
+  * Se solicitó asistencia técnica para migrar e implementar la estructura de navegación utilizando **React Router**, definiendo las rutas principales de la aplicación (Home, listado de partidos, etc.).
+  * La IA proporcionó ejemplos de estructuración de carpetas y ayudó a definir el esqueleto de componentes base (`Header`, `Footer`).
+* **Complementos a la herramienta:** Ninguno.
+* **Ficheros de contexto:** Archivos de configuración y enrutamiento del frontend (ej. `App.tsx`, `routes.ts`).
+* **Herramientas basadas en ficheros (Spec Driven Development):** No aplica.
+
+### [Registro 11] - Estrategia de Pruebas de Integración con Testcontainers
+
+* **Fecha:** 30/09/2026
+* **Fase:** 2: Testing automatizado.
+* **Objetivo:** Asegurar que el acceso a datos y las consultas a la base de datos funcionan en un entorno lo más parecido a producción posible, evitando bases de datos en memoria (H2).
+* **Herramienta:** ChatGPT
+* **Versión concreta:** ChatGPT (GPT-4o)
+* **Configuración de la herramienta:** Modo chat especializado en QA y Testing.
+* **Cómo ha sido usada:** 
+  * Se debatió sobre la fragilidad de usar H2 para tests si en producción se usa MySQL.
+  * La IA guio el proceso de implementación de **Testcontainers**, proporcionando la configuración necesaria para levantar contenedores Docker de MySQL efímeros durante la fase de ejecución de pruebas de Maven.
+* **Complementos a la herramienta:** Ninguno.
+* **Ficheros de contexto:** Ninguno.
+* **Herramientas basadas en ficheros (Spec Driven Development):** No aplica.
+
+### [Registro 12] - Configuración de Pruebas End-to-End (E2E) con Selenium
+
+* **Fecha:** 02/10/2026
+* **Fase:** 2: Testing automatizado.
+* **Objetivo:** Automatizar la simulación del comportamiento de un usuario real navegando por el frontend y consumiendo la API de BetSphere.
+* **Herramienta:** ChatGPT
+* **Versión concreta:** ChatGPT (GPT-4o)
+* **Configuración de la herramienta:** Modo chat conversacional.
+* **Cómo ha sido usada:** 
+  * Se exploraron alternativas para pruebas de UI y se seleccionó Selenium con ChromeDriver.
+  * La IA proporcionó los *scripts* iniciales de configuración para inicializar el navegador en modo *headless* (sin interfaz gráfica) para que fuera compatible con servidores de Integración Continua.
+* **Complementos a la herramienta:** Ninguno.
+* **Ficheros de contexto:** Entorno general de testing del proyecto.
+* **Herramientas basadas en ficheros (Spec Driven Development):** No aplica.
+
+### [Registro 13] - Orquestación de Integración Continua en GitHub Actions
+
+* **Fecha:** 04/10/2026
+* **Fase:** 2: DevOps y CI/CD.
+* **Objetivo:** Automatizar la ejecución de las pruebas y la validación del código cada vez que se suben cambios al repositorio.
+* **Herramienta:** ChatGPT
+* **Versión concreta:** ChatGPT (GPT-4o)
+* **Configuración de la herramienta:** Modo chat como ingeniero DevOps.
+* **Cómo ha sido usada:** 
+  * Se le pidió crear los flujos de trabajo en formato YAML para GitHub Actions.
+  * La IA generó las canalizaciones de `Basic Backend CI`, `Basic Frontend CI` y `Full CI`, configurando correctamente la instalación de Java 21, Node.js y la caché de dependencias para optimizar los tiempos de ejecución en la nube.
+* **Complementos a la herramienta:** Ninguno.
+* **Ficheros de contexto:** Capturas de pantalla de la interfaz de GitHub Actions.
+* **Herramientas basadas en ficheros (Spec Driven Development):** No aplica.
+
+### [Registro 14] - Resolución de conflictos de ciclo de vida en Maven (Troubleshooting)
+
+* **Fecha:** 06/10/2026
+* **Fase:** 2: Depuración (Troubleshooting) y Backend.
+* **Objetivo:** Resolver un error de compilación crítico donde los *Mappers* dejaban de generarse, causando el fallo masivo de los tests locales.
+* **Herramienta:** ChatGPT
+* **Versión concreta:** ChatGPT (GPT-4o)
+* **Configuración de la herramienta:** Modo chat analítico y resolución de problemas (Debugging).
+* **Cómo ha sido usada:** 
+  * Se reportó un problema donde el proyecto fallaba en silencio y no generaba la clase `MatchMapperImpl`.
+  * La IA analizó la configuración de construcción e identificó una colisión entre los plugins de `Lombok`, `MapStruct` y `JaCoCo`. 
+  * Proporcionó el fragmento XML refactorizado para el `maven-compiler-plugin` definiendo el orden estricto de los *annotation processors*, restaurando el éxito de la compilación (`BUILD SUCCESS`).
+* **Complementos a la herramienta:** Ninguno.
+* **Ficheros de contexto:** Archivo `pom.xml`.
+* **Herramientas basadas en ficheros (Spec Driven Development):** No aplica.
+
+### [Registro 15] - Estabilización del entorno de desarrollo (VS Code Classpath)
+
+* **Fecha:** 07/10/2026
+* **Fase:** 2: Entorno de Desarrollo (IDE).
+* **Objetivo:** Sincronizar el editor de código con los cambios profundos realizados en el sistema de construcción de Maven.
+* **Herramienta:** ChatGPT
+* **Versión concreta:** ChatGPT (GPT-4o)
+* **Configuración de la herramienta:** Modo chat interactivo.
+* **Cómo ha sido usada:** 
+  * Tras modificar el `pom.xml`, el IDE reportaba errores falsos positivos. Se proporcionaron capturas de las alertas de Visual Studio Code.
+  * La IA identificó la necesidad de forzar la limpieza del *Java classpath* y guio paso a paso sobre cómo actualizar el proyecto interno del editor utilizando los comandos nativos de la extensión de Java (`Java: Update Project`).
+* **Complementos a la herramienta:** Lector de imágenes integrado.
+* **Ficheros de contexto:** Capturas de pantalla de la interfaz de VS Code (`Project configuration is not up-to-date`).
+* **Herramientas basadas en ficheros (Spec Driven Development):** No aplica.
+
+### [Registro 16] - Extracción y análisis de métricas de cobertura (Code Coverage)
+
+* **Fecha:** 07/10/2026
+* **Fase:** 2: Calidad de Software.
+* **Objetivo:** Registrar formalmente el porcentaje de código cubierto por pruebas automatizadas tanto en cliente como en servidor para la rúbrica del TFG.
+* **Herramienta:** ChatGPT
+* **Versión concreta:** ChatGPT (GPT-4o)
+* **Configuración de la herramienta:** Modo chat analítico.
+* **Cómo ha sido usada:** 
+  * Se suministraron los volcados de texto plano generados por la terminal al ejecutar los *suites* de test.
+  * La IA analizó la matriz de cobertura de `Vitest` (Frontend) extrayendo un 76% global de las líneas, e interpretó los reportes de `JaCoCo` (Backend) consolidando un 85%.
+* **Complementos a la herramienta:** Ninguno.
+* **Ficheros de contexto:** Logs crudos de la ejecución de pruebas en la terminal de Node/Vite.
+* **Herramientas basadas en ficheros (Spec Driven Development):** No aplica.
+
+### [Registro 17] - Redacción técnica de la Guía de Desarrollo (`development-guide.md`)
+
+* **Fecha:** 07/10/2026
+* **Fase:** 2: Documentación técnica.
+* **Objetivo:** Crear un manual de *onboarding* para asentar la arquitectura y explicar cómo ejecutar BetSphere en un entorno local de forma estandarizada.
+* **Herramienta:** ChatGPT
+* **Versión concreta:** ChatGPT (GPT-4o)
+* **Configuración de la herramienta:** Modo chat orientado a *Technical Writing*.
+* **Cómo ha sido usada:** 
+  * Se solicitó apoyo para redactar un archivo Markdown robusto.
+  * La IA estructuró secciones claras abarcando prerrequisitos, clonación del repositorio, ejecución de los servidores locales (comandos `mvnw` y `npm run dev`), y enlazó el registro fotográfico del éxito de la Integración Continua.
+* **Complementos a la herramienta:** Ninguno.
+* **Ficheros de contexto:** Contexto acumulado de la arquitectura de las fases 1 y 2.
+* **Herramientas basadas en ficheros (Spec Driven Development):** No aplica.
+
+### [Registro 18] - Elaboración de "Documentación Ejecutable" (Colecciones de Postman)
+
+* **Fecha:** 07/10/2026
+* **Fase:** 2: Documentación de API y cierre de fase.
+* **Objetivo:** Exportar un entorno de pruebas listo para usar por cualquier desarrollador que quiera probar los *endpoints* del backend sin tener que configurar clientes HTTP desde cero.
+* **Herramienta:** ChatGPT
+* **Versión concreta:** ChatGPT (GPT-4o)
+* **Configuración de la herramienta:** Modo chat interactivo y análisis de interfaz.
+* **Cómo ha sido usada:** 
+  * Se usó la IA para estructurar correctamente las variables de entorno dinámicas en Postman (`{{base_url}}`).
+  * La IA asistió, mediante el análisis de capturas de pantalla, en la detección de un error de exportación (variables guardadas vacías). 
+  * Proporcionó la solución para corregir el archivo JSON exportado manualmente, asegurando que la ruta y los valores estuvieran íntegros antes de subirlos al control de versiones bajo la rama `docs/p2-18-postman-collection`.
+* **Complementos a la herramienta:** Visor de imágenes para depuración visual de la interfaz de Postman.
+* **Ficheros de contexto:** Código del controlador, capturas de Postman y archivo crudo `BetSphere API.postman_collection.json`.
+* **Herramientas basadas en ficheros (Spec Driven Development):** No aplica.
