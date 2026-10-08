@@ -262,7 +262,7 @@ A medida que avance el desarrollo de BetSphere, se irá detallando en este docum
 * **Configuración de la herramienta:** Modo chat analítico.
 * **Cómo ha sido usada:** 
   * Se suministraron los volcados de texto plano generados por la terminal al ejecutar los *suites* de test.
-  * La IA analizó la matriz de cobertura de `Vitest` (Frontend) extrayendo un 76% global de las líneas, e interpretó los reportes de `JaCoCo` (Backend) consolidando un 85%.
+  * La IA analizó la matriz de cobertura de `Vitest` (Frontend) extrayendo un 76% global de las líneas.
 * **Complementos a la herramienta:** Ninguno.
 * **Ficheros de contexto:** Logs crudos de la ejecución de pruebas en la terminal de Node/Vite.
 * **Herramientas basadas en ficheros (Spec Driven Development):** No aplica.
@@ -296,4 +296,36 @@ A medida que avance el desarrollo de BetSphere, se irá detallando en este docum
   * Proporcionó la solución para corregir el archivo JSON exportado manualmente, asegurando que la ruta y los valores estuvieran íntegros antes de subirlos al control de versiones bajo la rama `docs/p2-18-postman-collection`.
 * **Complementos a la herramienta:** Visor de imágenes para depuración visual de la interfaz de Postman.
 * **Ficheros de contexto:** Código del controlador, capturas de Postman y archivo crudo `BetSphere API.postman_collection.json`.
+* **Herramientas basadas en ficheros (Spec Driven Development):** No aplica.
+
+### [Registro 19] - Configuración de JaCoCo y refactorización de MapStruct
+
+* **Fecha:** 08/10/2026
+* **Fase:** 2: Testing automatizado y Calidad de Software.
+* **Objetivo:** Garantizar la generación del reporte de métricas de cobertura con JaCoCo (superando el 70%) y resolver un error crítico de inyección de dependencias en el entorno de pruebas.
+* **Herramienta:** ChatGPT
+* **Versión concreta:** ChatGPT (GPT-4o)
+* **Configuración de la herramienta:** Modo chat analítico y resolución de problemas (Debugging avanzado).
+* **Cómo ha sido usada:** 
+  * Se reportó un error persistente (`Failed to load ApplicationContext`) que impedía a los tests arrancar el contexto de Spring.
+  * La IA diagnosticó que el problema se debía a un conflicto entre la compilación automática de VS Code y el ciclo de vida de Maven, lo que provocaba la desaparición de la clase `MatchMapperImpl`.
+  * Como solución arquitectónica, la IA guio la refactorización del `MatchMapper`, desvinculándolo del contenedor de Spring (`componentModel="spring"`) para usar el patrón *Factory* nativo de MapStruct (`Mappers.getMapper()`), estabilizando la *build* y permitiendo extraer el informe HTML de JaCoCo con un 75% de cobertura global.
+* **Complementos a la herramienta:** Ninguno.
+* **Ficheros de contexto:** Archivos `pom.xml`, logs de error de `maven-surefire-plugin` (terminal) y código fuente de `MatchMapper.java` y `MatchRESTController.java`.
+* **Herramientas basadas en ficheros (Spec Driven Development):** No aplica.
+
+### [Registro 20] - Revisión general, limpieza del repositorio y cierre de la Fase 2
+
+* **Fecha:** 08/10/2026
+* **Fase:** 2: Gestión de Proyecto y Mantenimiento.
+* **Objetivo:** Auditar los archivos del proyecto, sanear el control de versiones e integrar todo el trabajo final en la rama `chore/p2-wrap-up` antes del *merge* definitivo.
+* **Herramienta:** ChatGPT
+* **Versión concreta:** ChatGPT (GPT-4o)
+* **Configuración de la herramienta:** Modo chat como ingeniero DevOps.
+* **Cómo ha sido usada:** 
+  * Se consultó a la IA sobre la naturaleza de diversos directorios generados automáticamente durante el desarrollo (`.react-router/` en Vite y `.vscode/` en la raíz).
+  * La IA explicó su propósito y dictó las instrucciones exactas para excluirlos mediante los archivos `.gitignore` e invalidar la caché de Git (`git rm -r --cached`).
+  * Finalmente, guio la estrategia de *commits* para empaquetar de forma limpia estos últimos ajustes, dando por estabilizada y cerrada la Fase 2 del proyecto.
+* **Complementos a la herramienta:** Análisis de capturas de pantalla de la estructura del explorador de archivos.
+* **Ficheros de contexto:** Archivos `.gitignore` (raíz y frontend) y estructura del árbol de directorios del editor.
 * **Herramientas basadas en ficheros (Spec Driven Development):** No aplica.
