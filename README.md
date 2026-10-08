@@ -15,7 +15,7 @@ A la experiencia de pronósticos se suma un componente social y de análisis, ya
 #### 1. Vista de competición (Competition)
 
 ![Competition](docs/images/Competition.png)  
-*Figura 3.1: Boceto de la vista de competición (LaLiga) con partidos en vivo, cuotas 1X2 y cupón de apuestas combinadas.*
+*Boceto de la vista de competición (LaLiga) con partidos en vivo, cuotas 1X2 y cupón de apuestas combinadas.*
 
 * **Descripción:** Pantalla dedicada al detalle de una competición específica (ej. LaLiga). Permite explorar los partidos programados o en directo, consultar cuotas principales de resultado (1X2) y gestionar la elaboración de cupones de apuestas simples o combinadas.
 * **Componentes clave:** Encabezado de torneo con opción a favoritos, pestañas de navegación (Partidos, Clasificación, Estadísticas), tarjetas de partidos con indicador "En vivo", cupón lateral interactivo y recordatorio de juego responsable.
@@ -23,7 +23,7 @@ A la experiencia de pronósticos se suma un componente social y de análisis, ya
 #### 2. Evento, Apuestas e Inteligencia Artificial (Bet & Match + IA Summary)
 
 ![Match](docs/images/Match.png)  
-*Figura 3.2: Boceto del detalle de partido con marcadores, cuotas dinámicas, chat interactivo y resumen analítico generado por IA.*
+*Boceto del detalle de partido con marcadores, cuotas dinámicas, chat interactivo y resumen analítico generado por IA.*
 
 * **Descripción:** Núcleo interactivo de la aplicación. Muestra los detalles de un partido específico junto con las cuotas dinámicas, chat interactivo y el módulo de análisis generado por Inteligencia Artificial.
 * **Componentes clave:** Marcador en directo, cuotas de apuestas, chat interactivo de la comunidad y recuadro de resumen/predicción que generará la IA.
@@ -31,7 +31,7 @@ A la experiencia de pronósticos se suma un componente social y de análisis, ya
 #### 3. Histórico de Apuestas y Saldo Virtual (Historic + User Balance)
 
 ![BalancePnL](docs/images/BalancePnL.png)  
-*Figura 3.3: Boceto del panel de usuario con evolución gráfica de pérdidas/ganancias (PnL), historial de apuestas y saldo virtual.*
+*Boceto del panel de usuario con evolución gráfica de pérdidas/ganancias (PnL), historial de apuestas y saldo virtual.*
 
 * **Descripción:** Panel de control privado del usuario registrado para hacer seguimiento de su actividad financiera simulada y gestionar su cuenta.
 * **Componentes clave:** Gráfico de rendimiento (*PnL* / Pérdidas y Ganancias), desglose de apuestas ganadas/perdidas y módulo para simular recargas de saldo virtual.
@@ -53,7 +53,7 @@ A la experiencia de pronósticos se suma un componente social y de análisis, ya
 
 ## Uso de IA
 
-El uso de herramientas basadas en Inteligencia Artificial Generativa se ha articulado bajo principios de transparencia académica y eficiencia técnica. El detalle completo de las interacciones, promps y trazabilidad se encuentra recogido en el archivo [`AI_USAGE.md`](./AI_USAGE.md).
+El uso de herramientas basadas en Inteligencia Artificial Generativa se ha articulado bajo principios de transparencia académica y eficiencia técnica. El detalle completo de las interacciones, promps y trazabilidad se encuentra recogido en el archivo [`AI_USAGE.md`](./docs/AI_USAGE.md).
 
 - **Google Gemini:** Utilizado como asistente interactivo para la investigación temática del sector, delimitación del alcance y funcionalidades, definición del estado del arte, estructuración de la documentación técnica y refinamiento formal del texto de la memoria.
 - **OpenAI Codex:** Empleado como herramienta de apoyo en el prototipado inicial de las pantallas, maquetación de la interfaz de usuario y estructura base de navegación.

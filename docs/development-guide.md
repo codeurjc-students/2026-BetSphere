@@ -95,7 +95,7 @@ Para asegurar la robustez de las funcionalidades desarrolladas desde la Fase 2, 
 
 **Métricas y automatización:**
 Actualmente, las herramientas de cobertura (JaCoCo para Java y el coverage de Vitest) monitorizan el código escrito. 
-La cobertura actual se sitúa en un **85% en el servidor** y un **76% en el cliente**. 
+La cobertura actual se sitúa en un **75% en el servidor** y un **76% en el cliente**. 
 
 ![Captura del workflow de Integración Continua superado en GitHub Actions](./images/ci-success.png)
 *Captura de los flujos de Integración Continua obligatorios en GitHub Actions*
