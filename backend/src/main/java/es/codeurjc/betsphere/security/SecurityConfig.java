@@ -39,9 +39,12 @@ public class SecurityConfig {
                 //PUBLIC
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/matches/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/users/").permitAll()
                 //PRIVATE
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 //AUTHENTICATED
+                .requestMatchers("/api/v1/users/**").authenticated()
+                
                 .anyRequest().authenticated()
             );
 
