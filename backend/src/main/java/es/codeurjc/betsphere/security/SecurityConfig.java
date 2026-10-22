@@ -39,9 +39,17 @@ public class SecurityConfig {
                 //PUBLIC
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/matches/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/users/").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/users/").permitAll()       
+                .requestMatchers(HttpMethod.GET, "/api/v1/sports/**").permitAll() 
+                .requestMatchers(HttpMethod.GET, "/api/v1/competitions/**").permitAll() 
                 //PRIVATE
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/sports/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/sports/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/sports/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/competitions/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/competitions/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/sports/**").hasRole("ADMIN")
                 //AUTHENTICATED
                 .requestMatchers("/api/v1/users/**").authenticated()
                 

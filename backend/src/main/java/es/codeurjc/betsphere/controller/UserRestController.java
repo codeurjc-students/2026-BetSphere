@@ -84,7 +84,6 @@ public class UserRestController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody UserUpdateDTO updateDTO, Authentication authentication) {
         try {
-            // 1. Buscamos al usuario para comprobar si es el dueño
             User requestedUser = userService.getUser(id);
             
             boolean isOwner = requestedUser.getEmail().equals(authentication.getName());
