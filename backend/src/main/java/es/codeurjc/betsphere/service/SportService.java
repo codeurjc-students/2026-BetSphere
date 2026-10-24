@@ -3,6 +3,7 @@ package es.codeurjc.betsphere.service;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import es.codeurjc.betsphere.model.Sport;
 import es.codeurjc.betsphere.repository.SportRepository;
@@ -52,8 +53,12 @@ public class SportService {
         return sportRepository.save(existingSport);
     }
 
+    @Transactional
     public void delete(Long id) {
         Sport sport = findById(id);
+        if (!sport.getCompetitions().isEmpty()) {
+            throw new IllegalStateException("Cannot delete a sport that has competitions. Remove or reassign its competitions first.");
+        }
         sportRepository.delete(sport);
     }
 }

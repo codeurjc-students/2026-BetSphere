@@ -7,6 +7,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
 @Entity
 @Table(name = "matches")
@@ -18,6 +21,18 @@ public class Match {
 
     private String homeTeam;
     private String awayTeam;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "home_team_id")
+    private Team homeTeamRef;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "away_team_id")
+    private Team awayTeamRef;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "competition_id")
+    private Competition competition;
     private LocalDateTime matchDate;
 
     // Match odds
@@ -44,11 +59,23 @@ public class Match {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public String getHomeTeam() { return homeTeam; }
+    public String getHomeTeam() { return homeTeamRef != null ? homeTeamRef.getName() : homeTeam; }
     public void setHomeTeam(String homeTeam) { this.homeTeam = homeTeam; }
 
-    public String getAwayTeam() { return awayTeam; }
+    public String getAwayTeam() { return awayTeamRef != null ? awayTeamRef.getName() : awayTeam; }
     public void setAwayTeam(String awayTeam) { this.awayTeam = awayTeam; }
+    public Team getHomeTeamRef() { return homeTeamRef; }
+    public void setHomeTeamRef(Team homeTeamRef) {
+        this.homeTeamRef = homeTeamRef;
+        if (homeTeamRef != null) this.homeTeam = homeTeamRef.getName();
+    }
+    public Team getAwayTeamRef() { return awayTeamRef; }
+    public void setAwayTeamRef(Team awayTeamRef) {
+        this.awayTeamRef = awayTeamRef;
+        if (awayTeamRef != null) this.awayTeam = awayTeamRef.getName();
+    }
+    public Competition getCompetition() { return competition; }
+    public void setCompetition(Competition competition) { this.competition = competition; }
 
     public LocalDateTime getMatchDate() { return matchDate; }
     public void setMatchDate(LocalDateTime matchDate) { this.matchDate = matchDate; }

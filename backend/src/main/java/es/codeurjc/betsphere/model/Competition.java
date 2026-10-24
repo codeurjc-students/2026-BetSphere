@@ -12,8 +12,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 @Entity
 @Table(name="competitions")
@@ -34,14 +36,19 @@ public class Competition {
     @JoinColumn(name = "sport_id", nullable = false)
     private Sport sport;
 
-    /* 
+     
+    @ManyToMany
     @JoinTable(
         name = "competition_teams",
         joinColumns = @JoinColumn(name = "competition_id"),
-        inverseJoinColumns = @JoinColumn(name = "team_id")
+        inverseJoinColumns = @JoinColumn(name = "team_id"),
+        uniqueConstraints = @UniqueConstraint(columnNames = {"competition_id", "team_id"})
     )
     private List<Team> teams = new ArrayList<>();
-    */
+
+    @OneToMany(mappedBy = "competition")
+    private List<Match> matches = new ArrayList<>();
+    
 
     public Competition() {}
 
@@ -63,8 +70,10 @@ public class Competition {
     public void setSport(Sport sport) { this.sport = sport; }
     public String getIconUrl() { return iconUrl; }
     public void setIconUrl(String iconUrl) { this.iconUrl = iconUrl; }
-    /*public List<Team> getTeams() { return teams; }
+    public List<Team> getTeams() { return teams; }
     public void setTeams(List<Team> teams) { this.teams = teams; }
-    */
+    public List<Match> getMatches() { return matches; }
+    public void setMatches(List<Match> matches) { this.matches = matches; }
+    
     
 }
