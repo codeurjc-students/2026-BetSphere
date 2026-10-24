@@ -3,7 +3,6 @@ package es.codeurjc.betsphere.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -23,7 +22,7 @@ public class Sport {
     @Column(unique = true, nullable = false)
     private String name;
 
-    @OneToMany(mappedBy = "sport", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "sport")
     private List<Competition> competitions = new ArrayList<>();
 
     private String iconUrl;

@@ -82,9 +82,15 @@ public class SportRestController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteSport(@PathVariable Long id) {
-        sportService.delete(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> deleteSport(@PathVariable Long id) {
+        try {
+            sportService.delete(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
     }
 }
 

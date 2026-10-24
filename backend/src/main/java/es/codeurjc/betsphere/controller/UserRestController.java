@@ -75,7 +75,7 @@ public class UserRestController {
             UserDTO newUserDTO = mapper.toDTO(createdUser);
             URI location = fromCurrentRequest().path("/{id}").buildAndExpand(newUserDTO.id()).toUri();
 
-            return ResponseEntity.created(location).body(userDTO);
+            return ResponseEntity.created(location).body(newUserDTO);
         } catch (RuntimeException e){
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(Map.of("error", e.getMessage()));
         }

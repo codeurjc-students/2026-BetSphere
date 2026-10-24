@@ -9,6 +9,9 @@ public record MatchDTO(
         Double homeOdds,
         Double drawOdds,
         Double awayOdds,
-        String gameStatus
+        String gameStatus,
+        Long homeTeamId,
+        Long awayTeamId,
+        Long competitionId
 ) {
 }

@@ -4,7 +4,7 @@ import org.mapstruct.Mapper;
 
 import es.codeurjc.betsphere.model.Competition;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = MatchMapper.class)
 public interface CompetitionMapper {
     
     CompetitionDTO toDTO(Competition competition);
