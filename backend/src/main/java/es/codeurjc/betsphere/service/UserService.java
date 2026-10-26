@@ -89,6 +89,10 @@ public class UserService {
         return userRepository.findByEmail(email).orElseThrow();
     }
 
+    public User save(User user) {
+        return userRepository.save(user);
+    }
+
     public User update(Long id, User partialUser) {
         User existingUser = getUser(id);
 

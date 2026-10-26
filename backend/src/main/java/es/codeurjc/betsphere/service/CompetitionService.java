@@ -34,6 +34,10 @@ public class CompetitionService {
         return competitionRepository.findById(id).orElseThrow();
     }
 
+    public Competition save(Competition competition) {
+        return competitionRepository.save(competition);
+    }
+
     public Competition save(Competition competition, Long sportId) {
         validateName(competition.getName());
         

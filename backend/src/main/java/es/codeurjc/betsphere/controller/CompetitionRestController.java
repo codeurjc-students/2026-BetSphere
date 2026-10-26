@@ -14,6 +14,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import es.codeurjc.betsphere.service.ImageStorageService;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import static org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentRequest;
@@ -34,12 +38,31 @@ public class CompetitionRestController {
     private final CompetitionService competitionService;
     private final CompetitionMapper mapper;
     private final TeamMapper teamMapper;
+    private final ImageStorageService imageStorageService;
 
     public CompetitionRestController(CompetitionService competitionService, CompetitionMapper mapper,
-            TeamMapper teamMapper) {
+            TeamMapper teamMapper, ImageStorageService imageStorageService) {
         this.competitionService = competitionService;
         this.mapper = mapper;
         this.teamMapper = teamMapper;
+        this.imageStorageService = imageStorageService;
+    }
+
+    @PostMapping(value = "/{id}/image", consumes = "multipart/form-data")
+    public ResponseEntity<?> uploadCompetitionImage(@PathVariable Long id, @RequestParam MultipartFile file) throws IOException {
+        try {
+            Competition competition = competitionService.findById(id);
+            String previousKey = imageStorageService.keyFromUrl(competition.getIconUrl());
+            String key = imageStorageService.store(file);
+            competition.setIconUrl(imageStorageService.publicUrl(key));
+            competitionService.save(competition);
+            if (previousKey != null) imageStorageService.delete(previousKey);
+            return ResponseEntity.ok(Map.of("url", competition.getIconUrl()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @GetMapping("/")
