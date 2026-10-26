@@ -37,12 +37,14 @@ public class SecurityConfig {
             
             .authorizeHttpRequests(auth -> auth
                 //PUBLIC
+                .requestMatchers("/docs/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/matches/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/users/").permitAll()       
                 .requestMatchers(HttpMethod.GET, "/api/v1/sports/**").permitAll() 
                 .requestMatchers(HttpMethod.GET, "/api/v1/competitions/**").permitAll() 
                 .requestMatchers(HttpMethod.GET, "/api/v1/teams/**").permitAll()
+                
                 //PRIVATE
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/v1/sports/**").hasRole("ADMIN")
