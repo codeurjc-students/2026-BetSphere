@@ -106,7 +106,6 @@ public class UserService {
             if (partialUser.getPassword().length() < 8 || partialUser.getPassword().length() > 64) {
                 throw new RuntimeException("Password must be between 8 and 64 characters long.");
             }
-            // Importante: aquí encriptamos
             existingUser.setPassword(passwordEncoder.encode(partialUser.getPassword()));
         }
 
