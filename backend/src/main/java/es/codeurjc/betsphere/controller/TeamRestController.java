@@ -1,7 +1,5 @@
 package es.codeurjc.betsphere.controller;
 
-import java.util.Map;
-
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -13,6 +11,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.util.Map;
+import es.codeurjc.betsphere.service.ImageStorageService;
 
 import es.codeurjc.betsphere.dto.TeamDTO;
 import es.codeurjc.betsphere.dto.TeamBasicInfoDTO;
@@ -26,10 +30,29 @@ public class TeamRestController {
 
     private final TeamService teamService;
     private final TeamMapper mapper;
+    private final ImageStorageService imageStorageService;
 
-    public TeamRestController(TeamService teamService, TeamMapper mapper) {
+    public TeamRestController(TeamService teamService, TeamMapper mapper, ImageStorageService imageStorageService) {
         this.teamService = teamService;
         this.mapper = mapper;
+        this.imageStorageService = imageStorageService;
+    }
+
+    @PostMapping(value = "/{id}/image", consumes = "multipart/form-data")
+    public ResponseEntity<?> uploadTeamImage(@PathVariable Long id, @RequestParam MultipartFile file) throws IOException {
+        try {
+            Team team = teamService.findById(id);
+            String previousKey = imageStorageService.keyFromUrl(team.getLogoUrl());
+            String key = imageStorageService.store(file);
+            team.setLogoUrl(imageStorageService.publicUrl(key));
+            teamService.save(team);
+            if (previousKey != null) imageStorageService.delete(previousKey);
+            return ResponseEntity.ok(Map.of("url", team.getLogoUrl()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @GetMapping({"", "/"})

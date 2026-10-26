@@ -14,6 +14,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import es.codeurjc.betsphere.service.ImageStorageService;
 import static org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentRequest;
 
 import es.codeurjc.betsphere.dto.SportBasicInfoDTO;
@@ -28,10 +32,29 @@ public class SportRestController {
 
     private final SportService sportService;
     private final SportMapper mapper;
+    private final ImageStorageService imageStorageService;
 
-    public SportRestController(SportService sportService, SportMapper mapper) {
+    public SportRestController(SportService sportService, SportMapper mapper, ImageStorageService imageStorageService) {
         this.sportService = sportService;
         this.mapper = mapper;
+        this.imageStorageService = imageStorageService;
+    }
+
+    @PostMapping(value = "/{id}/image", consumes = "multipart/form-data")
+    public ResponseEntity<?> uploadSportImage(@PathVariable Long id, @RequestParam MultipartFile file) throws IOException {
+        try {
+            Sport sport = sportService.findById(id);
+            String previousKey = imageStorageService.keyFromUrl(sport.getIconUrl());
+            String key = imageStorageService.store(file);
+            sport.setIconUrl(imageStorageService.publicUrl(key));
+            sportService.update(id, sport);
+            if (previousKey != null) imageStorageService.delete(previousKey);
+            return ResponseEntity.ok(Map.of("url", sport.getIconUrl()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @GetMapping("/")

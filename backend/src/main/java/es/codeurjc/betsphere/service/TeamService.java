@@ -28,6 +28,7 @@ public class TeamService {
         return teamRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Team not found"));
     }
 
+
     public Team save(Team team) {
         validateName(team.getName());
         teamRepository.findByName(team.getName()).ifPresent(existing -> {
