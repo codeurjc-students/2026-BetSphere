@@ -22,7 +22,6 @@ import io.restassured.http.ContentType;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(properties = {
     "server.port=0",
-    "server.ssl.key-store=",
     "server.ssl.enabled=false"
 })
 class MatchApiE2ETest {
