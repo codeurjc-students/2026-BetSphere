@@ -3,9 +3,6 @@ package es.codeurjc.betsphere.controller;
 import java.net.URI;
 import java.security.Principal;
 import java.util.Map;
-import java.util.NoSuchElementException;
-
-import org.apache.catalina.connector.Response;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -19,7 +16,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 import static org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentRequest;
 
 import es.codeurjc.betsphere.dto.UserDTO;
