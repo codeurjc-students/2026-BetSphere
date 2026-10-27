@@ -1,5 +1,6 @@
 import type { Route } from "./+types/matches";
 import { getMatches } from "../services/match-service";
+import 'bootstrap/dist/css/bootstrap.min.css'
 
 export async function clientLoader(){
     const matches = await getMatches();
