@@ -84,7 +84,7 @@ public class User implements UserDetails{
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; // TODO: if someone is blocked
+        return true;
     }
 
     @Override

@@ -2,6 +2,7 @@ package es.codeurjc.betsphere.security.jwt;
 
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +30,7 @@ public class UserLoginService {
         this.userDetailsService = userDetailsService;
     }
 
-    public ResponseEntity<AuthResponse> login(HttpServletResponse response, LoginRequest loginRequest) {
+    public ResponseEntity<AuthResponse> login(HttpServletRequest request, HttpServletResponse response, LoginRequest loginRequest) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
@@ -42,6 +43,8 @@ public class UserLoginService {
 
             Cookie cookie = new Cookie("RefreshToken", refreshToken);
             cookie.setHttpOnly(true);
+            cookie.setSecure(request.isSecure());
+            cookie.setAttribute("SameSite", "Strict");
             cookie.setPath("/");
             cookie.setMaxAge((int) TokenType.REFRESH.duration.getSeconds());
             response.addCookie(cookie);
@@ -53,7 +56,7 @@ public class UserLoginService {
         }
     }
 
-    public ResponseEntity<AuthResponse> refresh(HttpServletResponse response, String refreshToken) {
+    public ResponseEntity<AuthResponse> refresh(HttpServletRequest request, HttpServletResponse response, String refreshToken) {
         if (refreshToken == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new AuthResponse(AuthResponse.Status.FAILURE, "Missing refresh token cookie"));
@@ -79,10 +82,12 @@ public class UserLoginService {
         }
     }
 
-    public String logout(HttpServletResponse response) {
+    public String logout(HttpServletRequest request, HttpServletResponse response) {
         SecurityContextHolder.clearContext();
         Cookie cookie = new Cookie("RefreshToken", null);
         cookie.setHttpOnly(true);
+        cookie.setSecure(request.isSecure());
+        cookie.setAttribute("SameSite", "Strict");
         cookie.setPath("/");
         cookie.setMaxAge(0);
         response.addCookie(cookie);

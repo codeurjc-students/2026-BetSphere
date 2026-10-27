@@ -3,6 +3,7 @@ package es.codeurjc.betsphere.controller;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import es.codeurjc.betsphere.service.ImageStorageService;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
 import static org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentRequest;
 
 import es.codeurjc.betsphere.dto.CompetitionBasicInfoDTO;
@@ -60,12 +60,12 @@ public class CompetitionRestController {
             return ResponseEntity.ok(Map.of("url", competition.getIconUrl()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
-    @GetMapping("/")
+    @GetMapping({"", "/"})
     public ResponseEntity<List<CompetitionDTO>> getAllCompetitions() {
         List<CompetitionDTO> competitions = competitionService.findAll().stream()
                 .map(mapper::toDTO)
@@ -78,12 +78,12 @@ public class CompetitionRestController {
         try {
             Competition competition = competitionService.findById(id);
             return ResponseEntity.ok(mapper.toDTO(competition));
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
 
-    @PostMapping("/")
+    @PostMapping({"", "/"})
     public ResponseEntity<?> createCompetition(@RequestBody CompetitionBasicInfoDTO dto) {
         try {
             Competition competition = mapper.toEntity(dto);
@@ -99,7 +99,7 @@ public class CompetitionRestController {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(Map.of("error", e.getMessage()));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
@@ -113,7 +113,7 @@ public class CompetitionRestController {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(Map.of("error", e.getMessage()));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
@@ -125,15 +125,15 @@ public class CompetitionRestController {
             return ResponseEntity.noContent().build();
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
 
-    @PostMapping("/{id}/teams")
-    public ResponseEntity<?> createTeamForCompetition(@PathVariable Long id, @RequestBody TeamBasicInfoDTO teamDTO) {
+    @PostMapping("/{competitionId}/teams")
+    public ResponseEntity<?> createTeamForCompetition(@PathVariable Long competitionId, @RequestBody TeamBasicInfoDTO teamDTO) {
         try {
-            Team savedTeam = competitionService.createAndLinkTeam(id,
+            Team savedTeam = competitionService.createAndLinkTeam(competitionId,
                     new Team(teamDTO.name(), teamDTO.country(), teamDTO.logoUrl()));
 
             URI location = ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -146,7 +146,7 @@ public class CompetitionRestController {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(Map.of("error", e.getMessage()));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
@@ -158,7 +158,7 @@ public class CompetitionRestController {
             return ResponseEntity.ok(mapper.toDTO(updatedCompetition));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(Map.of("error", e.getMessage()));
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
@@ -170,7 +170,7 @@ public class CompetitionRestController {
             return ResponseEntity.noContent().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(Map.of("error", e.getMessage()));
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }

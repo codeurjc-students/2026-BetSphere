@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.util.NoSuchElementException;
 import es.codeurjc.betsphere.service.ImageStorageService;
 import static org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentRequest;
 
@@ -26,7 +27,7 @@ import es.codeurjc.betsphere.dto.SportMapper;
 import es.codeurjc.betsphere.model.Sport;
 import es.codeurjc.betsphere.service.SportService;
 
-@RestController 
+@RestController
 @RequestMapping("/api/v1/sports")
 public class SportRestController {
 
@@ -52,12 +53,12 @@ public class SportRestController {
             return ResponseEntity.ok(Map.of("url", sport.getIconUrl()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
-    @GetMapping("/")
+    @GetMapping({"", "/"})
     public ResponseEntity<List<SportDTO>> getAllSports() {
         List<SportDTO> sports = sportService.findAll().stream()
                 .map(mapper::toDTO)
@@ -70,12 +71,12 @@ public class SportRestController {
         try {
             Sport sport = sportService.findById(id);
             return ResponseEntity.ok(mapper.toDTO(sport));
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
 
-    @PostMapping("/")
+    @PostMapping({"", "/"})
     public ResponseEntity<?> createSport(@RequestBody SportBasicInfoDTO dto) {
         try {
             Sport sport = mapper.toEntity(dto);
@@ -99,7 +100,7 @@ public class SportRestController {
             return ResponseEntity.ok(mapper.toDTO(updatedSport));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(Map.of("error", e.getMessage()));
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
@@ -111,7 +112,7 @@ public class SportRestController {
             return ResponseEntity.noContent().build();
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }

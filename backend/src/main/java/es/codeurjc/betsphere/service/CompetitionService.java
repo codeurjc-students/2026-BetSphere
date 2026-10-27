@@ -1,6 +1,7 @@
 package es.codeurjc.betsphere.service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +32,8 @@ public class CompetitionService {
     }
 
     public Competition findById(Long id) {
-        return competitionRepository.findById(id).orElseThrow();
+        return competitionRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Competition not found."));
     }
 
     public Competition save(Competition competition) {
@@ -80,7 +82,6 @@ public class CompetitionService {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Competition name cannot be empty.");
         }
-        //TODO: more validations
     }
 
     @Transactional
@@ -104,7 +105,8 @@ public class CompetitionService {
     @Transactional
     public Competition linkExistingTeam(Long competitionId, Long teamId) {
         Competition competition = findById(competitionId);
-        Team team = teamRepository.findById(teamId).orElseThrow();
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new NoSuchElementException("Team not found."));
 
         if (competition.getTeams().stream().noneMatch(existing -> existing.getId().equals(teamId))) {
             competition.getTeams().add(team);
@@ -116,7 +118,8 @@ public class CompetitionService {
     @Transactional
     public Competition unlinkTeam(Long competitionId, Long teamId) {
         Competition competition = findById(competitionId);
-        Team team = teamRepository.findById(teamId).orElseThrow();
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new NoSuchElementException("Team not found."));
         if (matchRepository.countByCompetitionAndTeam(competitionId, teamId) > 0) {
             throw new IllegalStateException("Cannot remove a team that participates in matches of this competition.");
         }

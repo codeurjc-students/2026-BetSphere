@@ -2,6 +2,7 @@ package es.codeurjc.betsphere.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import java.util.NoSuchElementException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,7 +26,7 @@ public class TeamService {
     }
 
     public Team findById(Long id) {
-        return teamRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Team not found"));
+        return teamRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Team not found."));
     }
 
 

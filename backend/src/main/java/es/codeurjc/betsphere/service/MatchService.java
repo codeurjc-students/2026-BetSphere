@@ -87,10 +87,10 @@ public class MatchService {
                 || match.getCompetition() == null || match.getCompetition().getId() == null) {
             throw new IllegalArgumentException("Home team, away team and competition IDs are required.");
         }
-        Team home = teamRepository.findById(match.getHomeTeamRef().getId()).orElseThrow(() -> new NoSuchElementException("Home team not found"));
-        Team away = teamRepository.findById(match.getAwayTeamRef().getId()).orElseThrow(() -> new NoSuchElementException("Away team not found"));
+        Team home = teamRepository.findById(match.getHomeTeamRef().getId()).orElseThrow(() -> new NoSuchElementException("Home team not found."));
+        Team away = teamRepository.findById(match.getAwayTeamRef().getId()).orElseThrow(() -> new NoSuchElementException("Away team not found."));
         Competition competition = competitionRepository.findById(match.getCompetition().getId())
-                .orElseThrow(() -> new NoSuchElementException("Competition not found"));
+                .orElseThrow(() -> new NoSuchElementException("Competition not found."));
         match.setHomeTeamRef(home);
         match.setAwayTeamRef(away);
         match.setCompetition(competition);

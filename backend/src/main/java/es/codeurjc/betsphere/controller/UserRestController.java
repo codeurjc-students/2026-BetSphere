@@ -3,6 +3,7 @@ package es.codeurjc.betsphere.controller;
 import java.net.URI;
 import java.security.Principal;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -42,20 +43,12 @@ public class UserRestController {
     public ResponseEntity<?> getUserById(@PathVariable Long id, Authentication authentication) {
         try {
             User requestedUser = userService.getUser(id);
-            
-            // Resource Ownership Authorization
-            boolean isOwner = requestedUser.getEmail().equals(authentication.getName());
-            boolean isAdmin = authentication.getAuthorities().stream()
-                    .anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN"));
-
-            if (!isOwner && !isAdmin) {
+            if (!canAccess(requestedUser, authentication)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("error", "You are not authorized to view this profile."));
             }
-
             return ResponseEntity.ok(mapper.toDTO(requestedUser));
-            
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
@@ -70,7 +63,7 @@ public class UserRestController {
         try {
             User user = userService.getByEmail(principal.getName());
             return ResponseEntity.ok(mapper.toDTO(user));
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
@@ -83,7 +76,7 @@ public class UserRestController {
             URI location = fromCurrentRequest().path("/{id}").buildAndExpand(newUserDTO.id()).toUri();
 
             return ResponseEntity.created(location).body(newUserDTO);
-        } catch (RuntimeException e) {
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(Map.of("error", e.getMessage()));
         }
     }
@@ -94,11 +87,7 @@ public class UserRestController {
         try {
             User requestedUser = userService.getUser(id);
 
-            boolean isOwner = requestedUser.getEmail().equals(authentication.getName());
-            boolean isAdmin = authentication.getAuthorities().stream()
-                    .anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN"));
-
-            if (!isOwner && !isAdmin) {
+            if (!canAccess(requestedUser, authentication)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("error", "You are not authorized to update this profile."));
             }
@@ -107,9 +96,10 @@ public class UserRestController {
             User updatedUser = userService.update(id, partialUser);
             return ResponseEntity.ok(mapper.toDTO(updatedUser));
 
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT)
-                    .body(Map.of("error", e.getMessage()));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -118,11 +108,7 @@ public class UserRestController {
         try {
             User requestedUser = userService.getUser(id);
 
-            boolean isOwner = requestedUser.getEmail().equals(authentication.getName());
-            boolean isAdmin = authentication.getAuthorities().stream()
-                    .anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN"));
-
-            if (!isOwner && !isAdmin) {
+            if (!canAccess(requestedUser, authentication)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("error", "You are not authorized to delete this profile."));
             }
@@ -130,7 +116,7 @@ public class UserRestController {
             userService.delete(id);
             return ResponseEntity.noContent().build(); // 204 No Content
 
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", e.getMessage()));
         }
@@ -138,11 +124,8 @@ public class UserRestController {
 
     @GetMapping("/")
     public ResponseEntity<?> getAllUsers(Pageable pageable, Authentication authentication) {
-
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN"));
-
-        if (!isAdmin) {
+        if (authentication == null || authentication.getAuthorities().stream()
+                .noneMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("error", "Access denied. Only administrators can view the user list."));
         }
@@ -151,6 +134,14 @@ public class UserRestController {
         Page<UserDTO> dtoPage = usersPage.map(mapper::toDTO);
 
         return ResponseEntity.ok(dtoPage);
+    }
+
+    private boolean canAccess(User user, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
+        }
+        return user.getEmail().equals(authentication.getName()) || authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
     }
 
 }
