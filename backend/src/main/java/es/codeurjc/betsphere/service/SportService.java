@@ -1,6 +1,7 @@
 package es.codeurjc.betsphere.service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +22,7 @@ public class SportService {
     }
 
     public Sport findById(Long id) {
-        return sportRepository.findById(id).orElseThrow();
+        return sportRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Sport not found."));
     }
 
     public Sport save(Sport sport) {

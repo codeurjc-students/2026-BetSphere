@@ -12,6 +12,7 @@ import es.codeurjc.betsphere.security.jwt.AuthResponse.Status;
 import es.codeurjc.betsphere.security.jwt.LoginRequest;
 import es.codeurjc.betsphere.security.jwt.UserLoginService;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -26,19 +27,21 @@ public class LoginRestController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
             @RequestBody LoginRequest loginRequest,
+            HttpServletRequest request,
             HttpServletResponse response) {
-        return userService.login(response, loginRequest);
+        return userService.login(request, response, loginRequest);
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refreshToken(
             @CookieValue(name = "RefreshToken", required = false) String refreshToken, 
+            HttpServletRequest request,
             HttpServletResponse response) {
-        return userService.refresh(response, refreshToken);
+        return userService.refresh(request, response, refreshToken);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<AuthResponse> logOut(HttpServletResponse response) {
-        return ResponseEntity.ok(new AuthResponse(Status.SUCCESS, userService.logout(response)));
+    public ResponseEntity<AuthResponse> logOut(HttpServletRequest request, HttpServletResponse response) {
+        return ResponseEntity.ok(new AuthResponse(Status.SUCCESS, userService.logout(request, response)));
     }
 }

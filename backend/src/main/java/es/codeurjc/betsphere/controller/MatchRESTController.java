@@ -11,6 +11,7 @@ import es.codeurjc.betsphere.service.MatchService;
 import java.util.List;
 import java.net.URI;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,12 +28,12 @@ import static org.springframework.web.servlet.support.ServletUriComponentsBuilde
 @RestController
 @RequestMapping("/api/v1/matches")
 
-public class MatchRESTController {
+public class MatchRestController {
     
     private final MatchService matchService;
     private final MatchMapper mapper;
 
-    public MatchRESTController(MatchService matchService, MatchMapper mapper){
+    public MatchRestController(MatchService matchService, MatchMapper mapper){
         this.matchService = matchService;
         this.mapper = mapper;
     }
@@ -46,7 +47,7 @@ public class MatchRESTController {
     public ResponseEntity<?> getMatch(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(mapper.toDTO(matchService.getMatch(id)));
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
@@ -60,7 +61,7 @@ public class MatchRESTController {
             return ResponseEntity.created(location).body(mapper.toDTO(match));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(Map.of("error", e.getMessage()));
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
@@ -71,7 +72,7 @@ public class MatchRESTController {
             return ResponseEntity.ok(mapper.toDTO(matchService.update(id, mapper.toEntity(dto))));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(Map.of("error", e.getMessage()));
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
@@ -81,7 +82,7 @@ public class MatchRESTController {
         try {
             matchService.delete(id);
             return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }

@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +25,8 @@ import es.codeurjc.betsphere.repository.UserRepository;
 @Service
 @ConditionalOnProperty(name = "betsphere.seeder.enabled", havingValue = "true")
 public class DatabaseInitializer {
+
+    private static final Logger log = LoggerFactory.getLogger(DatabaseInitializer.class);
 
     private final MatchRepository matchRepository;
     private final UserRepository userRepository;
@@ -76,7 +80,7 @@ public class DatabaseInitializer {
             match3.setAwayTeamRef(dortmund);
             match3.setCompetition(competition);
             matchRepository.saveAll(List.of(match1, match2, match3));
-            System.out.println("Matches initialized with dummy data.");
+            log.info("Matches initialized with dummy data.");
         }
 
         // Users
@@ -94,7 +98,7 @@ public class DatabaseInitializer {
             user.setRole(List.of("ROLE_REGISTERED"));
 
             userRepository.saveAll(List.of(admin, user));
-            System.out.println("Users initialized with dummy data.");
+            log.info("Users initialized with dummy data.");
         }
     }
 }

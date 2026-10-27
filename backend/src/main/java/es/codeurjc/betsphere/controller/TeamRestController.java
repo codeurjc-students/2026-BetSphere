@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import es.codeurjc.betsphere.service.ImageStorageService;
 
 import es.codeurjc.betsphere.dto.TeamDTO;
@@ -24,7 +25,7 @@ import es.codeurjc.betsphere.dto.TeamMapper;
 import es.codeurjc.betsphere.model.Team;
 import es.codeurjc.betsphere.service.TeamService;
 
-@RestController 
+@RestController
 @RequestMapping("/api/v1/teams")
 public class TeamRestController {
 
@@ -50,7 +51,7 @@ public class TeamRestController {
             return ResponseEntity.ok(Map.of("url", team.getLogoUrl()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
         }
     }
@@ -67,7 +68,7 @@ public class TeamRestController {
         try {
             Team team = teamService.findById(id);
             return ResponseEntity.ok(mapper.toDTO(team));
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
@@ -82,7 +83,7 @@ public class TeamRestController {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(Map.of("error", e.getMessage()));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
@@ -94,10 +95,8 @@ public class TeamRestController {
             return ResponseEntity.noContent().build();
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        } catch (RuntimeException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
         }
     }
-
-    
 }
