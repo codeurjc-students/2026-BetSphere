@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import jakarta.annotation.PostConstruct;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,7 @@ import es.codeurjc.betsphere.repository.MatchRepository;
 import es.codeurjc.betsphere.repository.UserRepository;
 
 @Service
+@ConditionalOnProperty(name = "betsphere.seeder.enabled", havingValue = "true")
 public class DatabaseInitializer {
 
     private final MatchRepository matchRepository;
