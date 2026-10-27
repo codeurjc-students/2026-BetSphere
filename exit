@@ -1,0 +1,21 @@
+[33mcommit e8e44df6d0cde6e8b42b9dafde3ec3f5cfdd2314[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/backend-quality-revision[m[33m, [m[1;31morigin/feature/backend-quality-revision[m[33m)[m
+Author: huugooocm <cmhugo307@gmail.com>
+Date:   Tue Oct 27 11:58:31 2026 +0100
+
+    fix(backend): standardize REST responses and authorization
+
+M	backend/src/main/java/es/codeurjc/betsphere/controller/CompetitionRestController.java
+M	backend/src/main/java/es/codeurjc/betsphere/controller/LoginRestController.java
+M	backend/src/main/java/es/codeurjc/betsphere/controller/MatchRESTController.java
+M	backend/src/main/java/es/codeurjc/betsphere/controller/SportRestController.java
+M	backend/src/main/java/es/codeurjc/betsphere/controller/TeamRestController.java
+M	backend/src/main/java/es/codeurjc/betsphere/controller/UserRestController.java
+M	backend/src/main/java/es/codeurjc/betsphere/model/User.java
+M	backend/src/main/java/es/codeurjc/betsphere/security/SecurityConfig.java
+M	backend/src/main/java/es/codeurjc/betsphere/security/jwt/UserLoginService.java
+M	backend/src/main/java/es/codeurjc/betsphere/service/CompetitionService.java
+M	backend/src/main/java/es/codeurjc/betsphere/service/DatabaseInitializer.java
+M	backend/src/main/java/es/codeurjc/betsphere/service/MatchService.java
+M	backend/src/main/java/es/codeurjc/betsphere/service/SportService.java
+M	backend/src/main/java/es/codeurjc/betsphere/service/TeamService.java
+M	backend/src/main/java/es/codeurjc/betsphere/service/UserService.java
