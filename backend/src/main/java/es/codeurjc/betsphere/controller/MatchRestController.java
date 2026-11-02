@@ -43,6 +43,15 @@ public class MatchRestController {
         return mapper.toDTOs(matchService.getAllMatches());
     }
 
+    @GetMapping("/by-competition/{competitionId}")
+    public ResponseEntity<?> getMatchesByCompetition(@PathVariable Long competitionId) {
+        try {
+            return ResponseEntity.ok(mapper.toDTOs(matchService.getMatchesByCompetition(competitionId)));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getMatch(@PathVariable Long id) {
         try {

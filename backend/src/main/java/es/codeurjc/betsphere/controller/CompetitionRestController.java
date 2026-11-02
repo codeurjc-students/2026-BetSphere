@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import es.codeurjc.betsphere.service.ImageStorageService;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.transaction.annotation.Transactional;
 import static org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentRequest;
 
 import es.codeurjc.betsphere.dto.CompetitionBasicInfoDTO;
@@ -66,6 +67,7 @@ public class CompetitionRestController {
     }
 
     @GetMapping({"", "/"})
+    @Transactional(readOnly = true)
     public ResponseEntity<List<CompetitionDTO>> getAllCompetitions() {
         List<CompetitionDTO> competitions = competitionService.findAll().stream()
                 .map(mapper::toDTO)
@@ -73,7 +75,20 @@ public class CompetitionRestController {
         return ResponseEntity.ok(competitions);
     }
 
+    @GetMapping("/by-sport/{sportId}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getCompetitionsBySport(@PathVariable Long sportId) {
+        try {
+            return ResponseEntity.ok(competitionService.findBySportId(sportId).stream()
+                    .map(mapper::toDTO)
+                    .toList());
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/{id}")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getCompetitionById(@PathVariable Long id) {
         try {
             Competition competition = competitionService.findById(id);

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
@@ -59,6 +60,7 @@ public class SportRestController {
     }
 
     @GetMapping({"", "/"})
+    @Transactional(readOnly = true)
     public ResponseEntity<List<SportDTO>> getAllSports() {
         List<SportDTO> sports = sportService.findAll().stream()
                 .map(mapper::toDTO)
@@ -67,6 +69,7 @@ public class SportRestController {
     }
 
     @GetMapping("/{id}")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getSportById(@PathVariable Long id) {
         try {
             Sport sport = sportService.findById(id);
@@ -77,6 +80,7 @@ public class SportRestController {
     }
 
     @PostMapping({"", "/"})
+    @Transactional
     public ResponseEntity<?> createSport(@RequestBody SportBasicInfoDTO dto) {
         try {
             Sport sport = mapper.toEntity(dto);
@@ -94,6 +98,7 @@ public class SportRestController {
     }
 
     @PutMapping("/{id}")
+    @Transactional
     public ResponseEntity<?> updateSport(@PathVariable Long id, @RequestBody SportBasicInfoDTO dto) {
         try {
             Sport updatedSport = sportService.update(id, mapper.toEntity(dto));

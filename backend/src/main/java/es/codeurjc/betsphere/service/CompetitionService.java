@@ -31,6 +31,11 @@ public class CompetitionService {
         return competitionRepository.findAll();
     }
 
+    public List<Competition> findBySportId(Long sportId) {
+        sportService.findById(sportId);
+        return competitionRepository.findBySportId(sportId);
+    }
+
     public Competition findById(Long id) {
         return competitionRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Competition not found."));

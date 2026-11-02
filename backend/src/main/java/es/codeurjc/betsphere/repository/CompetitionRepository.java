@@ -16,5 +16,8 @@ public interface CompetitionRepository extends JpaRepository<Competition, Long>{
     @Override
     @EntityGraph(attributePaths = {"sport", "matches", "matches.homeTeamRef", "matches.awayTeamRef", "teams"})
     Optional<Competition> findById(Long id);
+
+    @EntityGraph(attributePaths = {"sport", "matches", "matches.homeTeamRef", "matches.awayTeamRef"})
+    List<Competition> findBySportId(Long sportId);
     
 }

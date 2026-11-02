@@ -38,14 +38,7 @@ jobs:
         working-directory: ./frontend
         run: npm run build
 
-      # --- 3. LAUNCH FRONTEND IN THE BACKGROUND ---
-      - name: Start frontend in background
-        working-directory: ./frontend
-        run: |
-          npm run dev &
-          npx wait-on tcp:5173
-
-      # --- 4. BACKEND (Unit, integration & System) ---
+      # --- 3. BACKEND (Unit, integration & System) ---
       - name: Make Maven Wrapper executable
         working-directory: ./backend
         run: chmod +x mvnw

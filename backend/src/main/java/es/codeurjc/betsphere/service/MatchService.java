@@ -30,6 +30,13 @@ public class MatchService {
         return matchRepo.findAll();
     }
 
+    public List<Match> getMatchesByCompetition(Long competitionId) {
+        if (!competitionRepository.existsById(competitionId)) {
+            throw new NoSuchElementException("Competition not found.");
+        }
+        return matchRepo.findByCompetitionId(competitionId);
+    }
+
     public Match getMatch(Long id) {
         return matchRepo.findById(id).orElseThrow(() -> new NoSuchElementException("Match not found"));
     }

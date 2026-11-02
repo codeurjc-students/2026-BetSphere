@@ -6,5 +6,8 @@ export interface MatchDTO{
     homeOdds: number,
     drawOdds: number,
     awayOdds: number,
-    gameStatus: string
+    gameStatus: string;
+    homeTeamId: number | null;
+    awayTeamId: number | null;
+    competitionId: number | null;
 }
