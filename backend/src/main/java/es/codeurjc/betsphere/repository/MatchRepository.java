@@ -3,12 +3,16 @@ package es.codeurjc.betsphere.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import es.codeurjc.betsphere.model.Match;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface MatchRepository extends JpaRepository<Match, Long> {
+
+    @EntityGraph(attributePaths = {"homeTeamRef", "awayTeamRef", "competition"})
+    List<Match> findByCompetitionId(Long competitionId);
 
     @Override
     @EntityGraph(attributePaths = {"homeTeamRef", "awayTeamRef", "competition"})

@@ -4,7 +4,7 @@ import org.mapstruct.Mapper;
 
 import es.codeurjc.betsphere.model.Sport;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = CompetitionMapper.class)
 public interface SportMapper {
     SportDTO toDTO(Sport sport);
     Sport toEntity(SportBasicInfoDTO dto);

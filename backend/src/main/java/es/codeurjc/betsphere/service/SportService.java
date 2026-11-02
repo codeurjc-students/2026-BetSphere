@@ -50,7 +50,9 @@ public class SportService {
             });
 
         existingSport.setName(updatedSport.getName());
-        existingSport.setIconUrl(updatedSport.getIconUrl());
+        if (updatedSport.getIconUrl() != null) {
+            existingSport.setIconUrl(updatedSport.getIconUrl());
+        }
         return sportRepository.save(existingSport);
     }
 

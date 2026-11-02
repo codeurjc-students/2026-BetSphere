@@ -73,6 +73,17 @@ public class CompetitionRestController {
         return ResponseEntity.ok(competitions);
     }
 
+    @GetMapping("/by-sport/{sportId}")
+    public ResponseEntity<?> getCompetitionsBySport(@PathVariable Long sportId) {
+        try {
+            return ResponseEntity.ok(competitionService.findBySportId(sportId).stream()
+                    .map(mapper::toDTO)
+                    .toList());
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getCompetitionById(@PathVariable Long id) {
         try {
