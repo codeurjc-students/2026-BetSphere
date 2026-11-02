@@ -3,4 +3,10 @@ export interface TeamDTO {
     name: string;
     country: string;
     logoUrl: string | null;
+    wins: number;
+    draws: number;
+    losses: number;
+    goalsFor: number;
+    goalsAgainst: number;
+    totalMatches: number;
 }

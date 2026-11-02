@@ -1,5 +1,6 @@
 import type { MatchDTO } from "./MatchDTO";
 import type { SportSummaryDTO } from "./SportSummaryDTO";
+import type { TeamDTO } from "./TeamDTO";
 
 export interface CompetitionDTO{
     id: number;
@@ -7,6 +8,7 @@ export interface CompetitionDTO{
     country: string;
     iconUrl: string | null;
     sport: SportSummaryDTO;
+    teams: TeamDTO[];
     matches: MatchDTO[];
 }
 
