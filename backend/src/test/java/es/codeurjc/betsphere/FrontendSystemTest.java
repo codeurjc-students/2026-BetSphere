@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,8 +26,11 @@ import java.time.LocalDateTime;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @TestPropertySource(properties = {
-    "server.port=8080",
-    "server.ssl.enabled=false"
+    "server.port=443",
+    "server.ssl.enabled=true",
+    "server.ssl.key-store=classpath:keystore.jks",
+    "server.ssl.key-store-password=password",
+    "server.ssl.key-password=secret"
 })
 @Testcontainers
 @ExtendWith(SeleniumJupiter.class)
@@ -50,7 +54,9 @@ class FrontendSystemTest {
     }
 
     @Test
-    void mainPageShowsMatches(ChromeDriver driver) {
+    void mainPageShowsMatches(ChromeOptions options) {
+        options.setAcceptInsecureCerts(true);
+        ChromeDriver driver = new ChromeDriver(options);
         driver.get("http://localhost:5173/");
 
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(60));
@@ -59,5 +65,6 @@ class FrontendSystemTest {
         String bodyText = driver.findElement(By.tagName("body")).getText();
         assertThat(bodyText).contains("Real Madrid");
         assertThat(bodyText).contains("Barcelona");
+        driver.quit();
     }
 }
