@@ -1,4 +1,5 @@
 import type { SportDTO } from "../dtos/SportDTO";
+import type { SportInputDTO } from "../dtos/SportInputDTO";
 
 const API_URL = "/api/v1/sports";
 
@@ -18,11 +19,11 @@ export async function getById(id: number): Promise<SportDTO>{
     return res.json();
 }
 
-export async function addSport(name: string, iconUrl?: string | null): Promise<SportDTO>{
+export async function addSport(sport: SportInputDTO): Promise<SportDTO>{
     const res = await fetch(`${API_URL}/`,{
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, iconUrl }),
+        body: JSON.stringify(sport),
     });
     if(!res.ok){
         throw new Error("Failed to add Sport");
@@ -32,11 +33,11 @@ export async function addSport(name: string, iconUrl?: string | null): Promise<S
 
 //TODO: upload sport image
 
-export async function updateSport(id: number, name: string, iconUrl?: string | null): Promise<SportDTO>{
+export async function updateSport(id: number, sport: SportInputDTO): Promise<SportDTO>{
     const res = await fetch(`${API_URL}/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, iconUrl }),
+        body: JSON.stringify(sport),
     });
     if(!res.ok){
         throw new Error("Failed to update sport");

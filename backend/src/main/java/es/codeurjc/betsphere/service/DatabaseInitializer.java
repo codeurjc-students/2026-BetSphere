@@ -51,37 +51,51 @@ public class DatabaseInitializer {
 
     @PostConstruct
     public void init() {
-        // Matches
-        if (matchRepository.count() == 0) {
-            Sport football = sportRepository.save(new Sport("Football", null));
-            Competition competition = competitionRepository.save(new Competition("Premier League", "England", football, null));
-            Team realMadrid = teamRepository.save(new Team("Real Madrid", "Spain", null));
-            Team barcelona = teamRepository.save(new Team("Barcelona", "Spain", null));
-            Team manchesterCity = teamRepository.save(new Team("Manchester City", "England", null));
-            Team arsenal = teamRepository.save(new Team("Arsenal", "England", null));
-            Team bayern = teamRepository.save(new Team("Bayern Munich", "Germany", null));
-            Team dortmund = teamRepository.save(new Team("B. Dortmund", "Germany", null));
-            competition.getTeams().addAll(List.of(realMadrid, barcelona, manchesterCity, arsenal, bayern, dortmund));
-            competitionRepository.save(competition);
+        // Seed sports independently so existing matches cannot prevent setup.
+        Sport football = getOrCreateSport("Football");
+        Sport basketball = getOrCreateSport("Basketball");
+        Sport tennis = getOrCreateSport("Tennis");
 
-            Match match1 = new Match("Real Madrid", "Barcelona", LocalDateTime.now().plusDays(2), 2.10, 3.40, 3.10,
-                    "SCHEDULED");
-            match1.setHomeTeamRef(realMadrid);
-            match1.setAwayTeamRef(barcelona);
-            match1.setCompetition(competition);
-            Match match2 = new Match("Manchester City", "Arsenal", LocalDateTime.now().plusDays(3), 1.95, 3.60, 4.00,
-                    "SCHEDULED");
-            match2.setHomeTeamRef(manchesterCity);
-            match2.setAwayTeamRef(arsenal);
-            match2.setCompetition(competition);
-            Match match3 = new Match("Bayern Munich", "B. Dortmund", LocalDateTime.now().plusDays(4), 1.60, 4.20, 5.50,
-                    "SCHEDULED");
-            match3.setHomeTeamRef(bayern);
-            match3.setAwayTeamRef(dortmund);
-            match3.setCompetition(competition);
-            matchRepository.saveAll(List.of(match1, match2, match3));
-            log.info("Matches initialized with dummy data.");
-        }
+        Competition premierLeague = getOrCreateCompetition("Premier League", "England", football);
+        Competition laLiga = getOrCreateCompetition("La Liga", "Spain", football);
+        Competition bundesliga = getOrCreateCompetition("Bundesliga", "Germany", football);
+        Competition euroleague = getOrCreateCompetition("EuroLeague", "Europe", basketball);
+        Competition atpTour = getOrCreateCompetition("ATP Tour", "International", tennis);
+
+        Team manCity = getOrCreateTeam("Manchester City", "England");
+        Team arsenal = getOrCreateTeam("Arsenal", "England");
+        Team liverpool = getOrCreateTeam("Liverpool", "England");
+        Team realMadrid = getOrCreateTeam("Real Madrid", "Spain");
+        Team barcelona = getOrCreateTeam("Barcelona", "Spain");
+        Team atletico = getOrCreateTeam("Atletico Madrid", "Spain");
+        Team bayern = getOrCreateTeam("Bayern Munich", "Germany");
+        Team dortmund = getOrCreateTeam("Borussia Dortmund", "Germany");
+        Team alba = getOrCreateTeam("ALBA Berlin", "Germany");
+        Team olympiacos = getOrCreateTeam("Olympiacos", "Greece");
+        Team nadal = getOrCreateTeam("Rafael Nadal", "Spain");
+        Team alcaraz = getOrCreateTeam("Carlos Alcaraz", "Spain");
+
+        addTeams(premierLeague, manCity, arsenal, liverpool);
+        addTeams(laLiga, realMadrid, barcelona, atletico);
+        addTeams(bundesliga, bayern, dortmund);
+        addTeams(euroleague, alba, olympiacos);
+        addTeams(atpTour, nadal, alcaraz);
+
+        // Add missing example matches without duplicating them on every startup.
+        createMatchIfMissing("Manchester City", "Arsenal", LocalDateTime.now().plusDays(2), 1.95, 3.60, 4.00,
+                "SCHEDULED", manCity, arsenal, premierLeague);
+        createMatchIfMissing("Liverpool", "Manchester City", LocalDateTime.now().plusDays(4), 2.45, 3.50, 2.70,
+                "SCHEDULED", liverpool, manCity, premierLeague);
+        createMatchIfMissing("Real Madrid", "Barcelona", LocalDateTime.now().plusDays(3), 2.10, 3.40, 3.10,
+                "SCHEDULED", realMadrid, barcelona, laLiga);
+        createMatchIfMissing("Atletico Madrid", "Real Madrid", LocalDateTime.now().plusDays(6), 2.80, 3.20, 2.45,
+                "SCHEDULED", atletico, realMadrid, laLiga);
+        createMatchIfMissing("Bayern Munich", "Borussia Dortmund", LocalDateTime.now().plusDays(5), 1.60, 4.20, 5.50,
+                "SCHEDULED", bayern, dortmund, bundesliga);
+        createMatchIfMissing("ALBA Berlin", "Olympiacos", LocalDateTime.now().plusDays(7), 2.60, 0.0, 1.50,
+                "SCHEDULED", alba, olympiacos, euroleague);
+        createMatchIfMissing("Rafael Nadal", "Carlos Alcaraz", LocalDateTime.now().plusDays(8), 3.20, 0.0, 1.30,
+                "SCHEDULED", nadal, alcaraz, atpTour);
 
         // Users
         if (userRepository.count() == 0) {
@@ -99,6 +113,53 @@ public class DatabaseInitializer {
 
             userRepository.saveAll(List.of(admin, user));
             log.info("Users initialized with dummy data.");
+        }
+    }
+
+    private Sport getOrCreateSport(String name) {
+        return sportRepository.findAll().stream()
+                .filter(sport -> sport.getName().equalsIgnoreCase(name))
+                .findFirst()
+                .orElseGet(() -> sportRepository.save(new Sport(name, null)));
+    }
+
+    private Competition getOrCreateCompetition(String name, String country, Sport sport) {
+        return competitionRepository.findAll().stream()
+                .filter(competition -> competition.getName().equalsIgnoreCase(name))
+                .findFirst()
+                .orElseGet(() -> competitionRepository.save(new Competition(name, country, sport, null)));
+    }
+
+    private Team getOrCreateTeam(String name, String country) {
+        return teamRepository.findAll().stream()
+                .filter(team -> team.getName().equalsIgnoreCase(name))
+                .findFirst()
+                .orElseGet(() -> teamRepository.save(new Team(name, country, null)));
+    }
+
+    private void addTeams(Competition competition, Team... teams) {
+        for (Team team : teams) {
+            if (competition.getTeams().stream().noneMatch(existing -> existing.getId().equals(team.getId()))) {
+                competition.getTeams().add(team);
+            }
+        }
+        competitionRepository.save(competition);
+    }
+
+    private void createMatchIfMissing(String home, String away, LocalDateTime date,
+            double homeOdds, double drawOdds, double awayOdds, String status,
+            Team homeTeam, Team awayTeam, Competition competition) {
+        boolean exists = matchRepository.findAll().stream().anyMatch(match ->
+                match.getHomeTeam().equalsIgnoreCase(home)
+                        && match.getAwayTeam().equalsIgnoreCase(away)
+                        && match.getCompetition() != null
+                        && match.getCompetition().getId().equals(competition.getId()));
+        if (!exists) {
+            Match match = new Match(home, away, date, homeOdds, drawOdds, awayOdds, status);
+            match.setHomeTeamRef(homeTeam);
+            match.setAwayTeamRef(awayTeam);
+            match.setCompetition(competition);
+            matchRepository.save(match);
         }
     }
 }
