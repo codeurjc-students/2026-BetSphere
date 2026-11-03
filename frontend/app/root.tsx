@@ -1,4 +1,11 @@
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, isRouteErrorResponse } from "react-router";
+import {
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  isRouteErrorResponse,
+} from "react-router";
 import "./index.css";
 import type { Route } from "./+types/root";
 
@@ -53,7 +60,9 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
       <h1>{message}</h1>
       <p>{details}</p>
       {stack && (
-        <pre style={{ overflowX: "auto", padding: "1rem", background: "#f4f4f4" }}>
+        <pre
+          style={{ overflowX: "auto", padding: "1rem", background: "#f4f4f4" }}
+        >
           <code>{stack}</code>
         </pre>
       )}
