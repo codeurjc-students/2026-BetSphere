@@ -62,11 +62,14 @@ describe("Matches route", () => {
 
     // 3. Await the heading to ensure the loader has finished executing
     expect(
-      await screen.findByRole("heading", { name: "Available Matches:" })
+      await screen.findByRole("heading", { name: "Partidos" })
     ).toBeInTheDocument();
 
     // 4. Assert the main entity data is rendered
-    expect(screen.getByText("Real Madrid vs Barcelona")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Real Madrid.*vs.*Barcelona/ })).toHaveAttribute(
+      "href",
+      "/match/1",
+    );
     expect(screen.getByText(/SCHEDULED/)).toBeInTheDocument();
   });
 
@@ -76,11 +79,9 @@ describe("Matches route", () => {
     renderMatchesRoute();
 
     expect(
-      await screen.findByRole("heading", { name: "Available Matches:" })
+      await screen.findByRole("heading", { name: "Partidos" })
     ).toBeInTheDocument();
 
-    // Verify the <ul> is empty if no matches are returned
-    const list = screen.getByRole("list");
-    expect(list).toBeEmptyDOMElement();
+    expect(screen.getByText("No hay partidos disponibles.")).toBeInTheDocument();
   });
 });
