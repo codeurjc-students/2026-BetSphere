@@ -14,7 +14,10 @@ export async function getSports(): Promise<SportDTO[]>{
 export async function getById(id: number): Promise<SportDTO>{
     const res = await fetch(`${API_URL}/${id}`);
     if(!res.ok){
-        throw new Error("Failed to fetch the sport");
+        throw new Response("Failed to fetch the sport", {
+            status: res.status,
+            statusText: res.statusText,
+        });
     }
     return res.json();
 }
