@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import es.codeurjc.betsphere.dto.MatchDTO;
+import es.codeurjc.betsphere.dto.MatchDetailDTO;
 import es.codeurjc.betsphere.dto.MatchMapper;
 import es.codeurjc.betsphere.model.Match;
 import es.codeurjc.betsphere.service.MatchService;
@@ -55,7 +56,7 @@ public class MatchRestController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getMatch(@PathVariable Long id) {
         try {
-            return ResponseEntity.ok(mapper.toDTO(matchService.getMatch(id)));
+            return ResponseEntity.ok(mapper.toDetailDTO(matchService.getMatch(id)));
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
