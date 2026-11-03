@@ -1,5 +1,6 @@
 import type { Route } from "./+types/matches";
 import { getMatches } from "../services/match-service";
+import { Link } from "react-router";
 import 'bootstrap/dist/css/bootstrap.min.css'
 
 export async function clientLoader(){
@@ -16,7 +17,7 @@ export default function MatchList({ loaderData }: Route.ComponentProps){
             <ul>
                 {matches.map(match => (
                     <li key={match.id}>
-                        <strong>{match.homeTeam} vs {match.awayTeam}</strong><br/>
+                        <Link to={`/match/${match.id}`}><strong>{match.homeTeam} vs {match.awayTeam}</strong></Link><br/>
                         <span>Date: {match.matchDate}</span><br/>
                         <span>Status: {match.gameStatus}</span>
                     </li>

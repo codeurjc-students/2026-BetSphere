@@ -4,6 +4,7 @@ export default [
   layout("routes/home.tsx", [
     index("routes/sports-index.tsx"),
     route("matches", "routes/matches.tsx"),
+    route("match/:id", "routes/match.tsx"),
     route("sport/:id", "routes/sports.tsx"),
     route("competition/:id", "routes/competitions.tsx"),
   ]),

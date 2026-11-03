@@ -1,5 +1,6 @@
 import type { Route } from "./+types/competitions";
 import { getById } from "../services/competition-service";
+import { Link } from "react-router";
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs){
     const id = Number(params.id);
@@ -25,7 +26,7 @@ export default function CompetitionPage({ loaderData: competition }: Route.Compo
             {upcomingMatches.length === 0 ? <p>No hay próximos partidos.</p> : (
                 <ul className="list-group">
                     {upcomingMatches.map(match => <li className="list-group-item" key={match.id}>
-                        <strong>{match.homeTeam} vs {match.awayTeam}</strong>
+                        <Link to={`/match/${match.id}`}><strong>{match.homeTeam} vs {match.awayTeam}</strong></Link>
                         <div>{new Date(match.matchDate).toLocaleString("es-ES")}</div>
                     </li>)}
                 </ul>
@@ -35,7 +36,7 @@ export default function CompetitionPage({ loaderData: competition }: Route.Compo
                 <ul className="list-group">
                     {competition.matches.map(match => (
                         <li className="list-group-item" key={match.id}>
-                            <strong>{match.homeTeam} vs {match.awayTeam}</strong>
+                            <Link to={`/match/${match.id}`}><strong>{match.homeTeam} vs {match.awayTeam}</strong></Link>
                             <div>{new Date(match.matchDate).toLocaleString("es-ES")}</div>
                             <small>{match.gameStatus}</small>
                         </li>
