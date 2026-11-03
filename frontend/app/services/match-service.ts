@@ -14,7 +14,10 @@ export async function getMatches(): Promise<MatchDTO[]>{
 export async function getMatchById(id: number): Promise<MatchViewDTO> {
     const res = await fetch(`${API_URL}/${id}`);
     if (!res.ok) {
-        throw new Error("Failed to fetch the match");
+        throw new Response("Failed to fetch the match", {
+            status: res.status,
+            statusText: res.statusText,
+        });
     }
     return res.json();
 }

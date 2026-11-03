@@ -16,7 +16,10 @@ export async function getCompetitions(): Promise<CompetitionDTO[]>{
 export async function getById(id: number): Promise<CompetitionDTO>{
     const res = await fetch(`${API_URL}/${id}`)
     if(!res.ok){
-        throw new Error("Failed to fetch the competition")
+        throw new Response("Failed to fetch the competition", {
+            status: res.status,
+            statusText: res.statusText,
+        })
     }
     return res.json();
 }
