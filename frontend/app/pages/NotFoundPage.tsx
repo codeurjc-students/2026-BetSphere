@@ -21,7 +21,6 @@ export function NotFoundPage() {
           <div className="error-ball">404</div>
           <span className="error-orbit error-orbit--one" />
           <span className="error-orbit error-orbit--two" />
-          <span className="error-art-caption">PARTIDO NO ENCONTRADO</span>
         </div>
       </section>
     </main>
