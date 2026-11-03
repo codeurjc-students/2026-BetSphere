@@ -15,6 +15,13 @@ public interface MatchMapper {
     @Mapping(target = "competitionId", source = "competition.id")
     MatchDTO toDTO(Match match);
 
+    @Mapping(target = "homeTeam", source = "homeTeamRef")
+    @Mapping(target = "awayTeam", source = "awayTeamRef")
+    @Mapping(target = "competition", source = "competition")
+    MatchDetailDTO toDetailDTO(Match match);
+
+    CompetitionSummaryDTO toSummaryDTO(es.codeurjc.betsphere.model.Competition competition);
+
     @Mapping(target = "homeTeamRef.id", source = "homeTeamId")
     @Mapping(target = "awayTeamRef.id", source = "awayTeamId")
     @Mapping(target = "competition.id", source = "competitionId")
