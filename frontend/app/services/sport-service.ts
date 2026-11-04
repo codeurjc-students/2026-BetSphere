@@ -1,5 +1,6 @@
 import type { SportDTO } from "../dtos/SportDTO";
 import type { SportInputDTO } from "../dtos/SportInputDTO";
+import { adminFetch, adminResponseError } from "./admin-api";
 
 const API_URL = "/api/v1/sports";
 
@@ -23,7 +24,7 @@ export async function getById(id: number): Promise<SportDTO>{
 }
 
 export async function addSport(sport: SportInputDTO): Promise<SportDTO>{
-    const res = await fetch(`${API_URL}/`,{
+    const res = await adminFetch(`${API_URL}/`,{
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(sport),
@@ -37,7 +38,7 @@ export async function addSport(sport: SportInputDTO): Promise<SportDTO>{
 //TODO: upload sport image
 
 export async function updateSport(id: number, sport: SportInputDTO): Promise<SportDTO>{
-    const res = await fetch(`${API_URL}/${id}`, {
+    const res = await adminFetch(`${API_URL}/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(sport),
@@ -49,11 +50,11 @@ export async function updateSport(id: number, sport: SportInputDTO): Promise<Spo
 }
 
 export async function deleteSport(id: number): Promise<void>{
-    const res = await fetch(`${API_URL}/${id}`,{
+    const res = await adminFetch(`${API_URL}/${id}`,{
         method: "DELETE",
     });
     if(!res.ok){
-        throw new Error("Failed to delete Sport");
+        throw new Error(await adminResponseError(res, "No se pudo borrar el deporte"));
     }
 
 }
