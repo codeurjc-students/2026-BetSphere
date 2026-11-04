@@ -1,5 +1,7 @@
 import type { MatchDTO } from "../dtos/MatchDTO";
+import type { MatchInputDTO } from "../dtos/MatchInputDTO";
 import type { MatchViewDTO } from "../dtos/MatchViewDTO";
+import { adminFetch, adminResponseError } from "./admin-api";
 
 const API_URL = "/api/v1/matches"
 
@@ -28,4 +30,21 @@ export async function getByCompetition(competitionId: number): Promise<MatchDTO[
         throw new Error("Failed to fetch matches for the competition");
     }
     return res.json();
+}
+
+export async function addMatch(match: MatchInputDTO): Promise<MatchDTO> {
+    const res = await adminFetch(`${API_URL}/`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(match) });
+    if (!res.ok) throw new Error("No se pudo crear el partido");
+    return res.json();
+}
+
+export async function updateMatch(id: number, match: MatchInputDTO): Promise<MatchDTO> {
+    const res = await adminFetch(`${API_URL}/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(match) });
+    if (!res.ok) throw new Error("No se pudo actualizar el partido");
+    return res.json();
+}
+
+export async function deleteMatch(id: number): Promise<void> {
+    const res = await adminFetch(`${API_URL}/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error(await adminResponseError(res, "No se pudo borrar el partido"));
 }

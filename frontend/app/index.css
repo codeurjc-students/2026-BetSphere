@@ -559,6 +559,12 @@ body { background: #101311; color: var(--ink); }
     color: #d7ff45;
     font-size: 1.5rem;
 }
+.admin-tabs { border-bottom: 1px solid var(--line); padding-bottom: 1rem; }
+.admin-count { display: inline-block; margin-left: .3rem; font-size: .75em; opacity: .75; }
+.admin-role { display: inline-block; padding: .3rem .55rem; border: 1px solid #424b3a; border-radius: 999px; color: #d2f34d; font-size: .78rem; }
+.admin-modal-backdrop { position: fixed; inset: 0; z-index: 1080; display: grid; place-items: center; padding: 1rem; background: #050806c9; backdrop-filter: blur(5px); }
+.admin-modal { width: min(100%, 28rem); padding: clamp(1.4rem, 4vw, 2rem); box-shadow: 0 24px 80px #0009; animation: rise-in .18s ease-out both; }
+.admin-modal-icon { display: grid; place-items: center; width: 2.8rem; height: 2.8rem; margin-bottom: 1.1rem; border: 1px solid #ccff0066; border-radius: .9rem; background: #ccff0018; color: #d7ff45; font-size: 1.5rem; font-weight: 850; }
 @media (max-width: 991.98px) {
     .header-account { align-items: flex-start !important; }
 }
