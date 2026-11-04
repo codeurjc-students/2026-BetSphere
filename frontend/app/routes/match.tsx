@@ -3,15 +3,20 @@ import { Link } from "react-router";
 import type { Route } from "./+types/match";
 import type { MatchViewDTO } from "../dtos/MatchViewDTO";
 import { getMatchById } from "../services/match-service";
+import { optionalUser } from "../services/auth-guards";
 
 export async function clientLoader({
   params,
-}: Route.ClientLoaderArgs): Promise<MatchViewDTO> {
+}: Route.ClientLoaderArgs) {
   const id = Number(params.id);
   if (!Number.isInteger(id) || id <= 0)
     throw new Response("Invalid match id", { status: 400 });
 
-  return getMatchById(id);
+  const [match, user] = await Promise.all([
+    getMatchById(id),
+    optionalUser(),
+  ]);
+  return { match, user };
 }
 
 function formatDate(value: string) {
@@ -53,7 +58,8 @@ function TeamStats({
 }
 
 export default function MatchPage({ loaderData }: Route.ComponentProps) {
-  const match = loaderData;
+  const { match, user } = loaderData;
+  const loginHref = `/login?returnTo=${encodeURIComponent(`/match/${match.id}`)}`;
   const odds = [
     { label: "1", name: match.homeTeam.name, value: match.homeOdds },
     { label: "X", name: "Empate", value: match.drawOdds },
@@ -144,21 +150,41 @@ export default function MatchPage({ loaderData }: Route.ComponentProps) {
             <Card.Body>
               <div className="eyebrow mb-2">Comunidad</div>
               <h2 className="h5 fw-bold">Chat en directo</h2>
-              <p className="muted mb-0">
-                La conversación del partido estará disponible próximamente.
-              </p>
+              {user ? (
+                <p className="muted mb-0">
+                  La conversación del partido estará disponible próximamente.
+                </p>
+              ) : (
+                <>
+                  <p className="muted">Inicia sesión para participar en el chat.</p>
+                  <Link className="btn btn-outline-dark w-100" to={loginHref}>
+                    Iniciar sesión
+                  </Link>
+                </>
+              )}
             </Card.Body>
           </Card>
           <Card className="stats-card">
             <Card.Body>
               <div className="eyebrow mb-2">Tu siguiente paso</div>
               <h2 className="h5 fw-bold">Acciones del partido</h2>
-              <Button className="btn-brand w-100 mb-2" disabled>
-                Iniciar apuesta · Próximamente
-              </Button>
-              <Button className="btn-outline-light w-100" disabled>
-                Generar predicción con IA · Próximamente
-              </Button>
+              {user ? (
+                <>
+                  <Button className="btn-brand w-100 mb-2" disabled>
+                    Iniciar apuesta · Próximamente
+                  </Button>
+                  <Button className="btn-outline-light w-100" disabled>
+                    Generar predicción con IA · Próximamente
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <p className="muted">Inicia sesión para apostar o generar un resumen con IA.</p>
+                  <Link className="btn btn-brand w-100" to={loginHref}>
+                    Iniciar sesión
+                  </Link>
+                </>
+              )}
             </Card.Body>
           </Card>
         </Col>

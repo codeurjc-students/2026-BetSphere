@@ -503,6 +503,65 @@ body { background: #101311; color: var(--ink); }
 .form-control, .form-select { background: #151a17; color: #e9ece8; border-color: #414941; }
 .form-control:focus, .form-select:focus { background: #191e1b; color: #fff; border-color: #a9c83d; }
 .form-control::placeholder { color: #818a83; }
+
+.header-account { color: #c2c8c3; }
+.header-greeting { white-space: nowrap; font-size: .92rem; }
+.header-greeting strong { color: #f2f4f2; }
+.header-avatar-link { display: inline-flex; text-decoration: none; border-radius: 50%; }
+.header-avatar {
+    display: grid;
+    place-items: center;
+    width: 2.55rem;
+    height: 2.55rem;
+    border: 2px solid #ccff00;
+    border-radius: 50%;
+    background: #2a3026;
+    color: #d7ff45;
+    font-weight: 800;
+}
+.header-avatar-link:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.header-logout {
+    border: 0;
+    background: transparent;
+    color: #a2aaa4;
+    font-size: .85rem;
+    padding: .4rem .2rem;
+}
+.header-logout:hover, .header-logout:focus-visible { color: #fff; }
+.header-logout span { margin-right: .25rem; color: #ccff00; }
+.profile-avatar {
+    display: grid;
+    place-items: center;
+    width: 4.5rem;
+    height: 4.5rem;
+    border: 2px solid #ccff00;
+    border-radius: 50%;
+    background: #2a3026;
+    color: #d7ff45;
+    font-size: 1.8rem;
+    font-weight: 850;
+}
+.profile-stat { display: block; color: #f2f4f2; font-size: 1.8rem; line-height: 1.2; }
+.history-empty-state {
+    padding: 2rem 1rem;
+    border: 1px dashed #414941;
+    border-radius: 1rem;
+    text-align: center;
+}
+.history-empty-icon {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    background: #2a3026;
+    color: #d7ff45;
+    font-size: 1.5rem;
+}
+@media (max-width: 991.98px) {
+    .header-account { align-items: flex-start !important; }
+}
 .text-secondary, .text-body-secondary, .muted { color: #a2aaa4 !important; }
 .btn-outline-light { color: #e9ece8; border-color: #5b645d; }
 .btn-outline-light:hover { background: #272e29; color: #fff; }
@@ -572,4 +631,13 @@ body { background: #101311; color: var(--ink); }
     .error-art { min-height: 13rem; }
     .error-orbit { width: 15rem; }
     .error-orbit--two { width: 20rem; }
+}
+
+.auth-card .form-control:-webkit-autofill,
+.auth-card .form-control:-webkit-autofill:hover,
+.auth-card .form-control:-webkit-autofill:focus {
+    -webkit-text-fill-color: #e9ece8;
+    caret-color: #e9ece8;
+    box-shadow: 0 0 0 1000px #151a17 inset;
+    transition: background-color 9999s ease-out;
 }

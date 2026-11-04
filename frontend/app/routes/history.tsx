@@ -1,57 +1,63 @@
-export default function HistoryPage() {
+import { Badge, Card, Col, Row } from "react-bootstrap";
+import { Link } from "react-router";
+import type { Route } from "./+types/history";
+import { requireUser } from "../services/auth-guards";
+
+export function clientLoader(args: Route.ClientLoaderArgs) {
+  return requireUser(args);
+}
+
+function formatBalance(value: number) {
+  return new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    currency: "EUR",
+  }).format(value);
+}
+
+export default function HistoryPage({ loaderData: user }: Route.ComponentProps) {
   return (
-    <main className="container-xl py-5">
+    <main className="container-xl py-5 page-enter">
       <div className="eyebrow">Tu actividad</div>
       <h1 className="page-title">Historial</h1>
-      <p className="muted">
-        Resumen de ingresos y resultados · Datos de demostración
-      </p>
-      <div className="row g-3 mt-3">
-        <div className="col-md-4">
-          <div className="stat-card">
-            <span>Balance neto</span>
-            <strong>+84,20 €</strong>
+      <p className="muted">Actividad de la cuenta de {user.username}</p>
+
+      <Row className="g-3 mt-2">
+        <Col md={6}>
+          <Card className="stats-card h-100">
+            <Card.Body>
+              <div className="eyebrow mb-2">Saldo virtual actual</div>
+              <strong className="profile-stat">{formatBalance(user.virtualBalance)}</strong>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={6}>
+          <Card className="stats-card h-100">
+            <Card.Body>
+              <div className="eyebrow mb-2">Apuestas registradas</div>
+              <strong className="profile-stat">—</strong>
+              <p className="muted mt-2 mb-0">El historial de apuestas aún no está disponible.</p>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      <Card className="stats-card mt-4">
+        <Card.Body className="p-4">
+          <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+              <h2 className="h5 fw-bold mb-1">Actividad reciente</h2>
+              <p className="muted mb-0">Aquí aparecerán tus apuestas cuando esté disponible esa función.</p>
+            </div>
+            <Badge bg="secondary">Sin movimientos</Badge>
           </div>
-        </div>
-        <div className="col-md-4">
-          <div className="stat-card">
-            <span>Ingresos</span>
-            <strong>250,00 €</strong>
+          <div className="history-empty-state mt-4">
+            <div className="history-empty-icon" aria-hidden="true">↗</div>
+            <p className="fw-semibold mb-1">Todavía no hay actividad que mostrar</p>
+            <p className="muted mb-3">Explora los partidos y vuelve cuando puedas registrar tus apuestas.</p>
+            <Link className="btn btn-brand" to="/matches">Explorar partidos</Link>
           </div>
-        </div>
-        <div className="col-md-4">
-          <div className="stat-card">
-            <span>Actividad</span>
-            <strong>18</strong>
-            <span>apuestas de ejemplo</span>
-          </div>
-        </div>
-      </div>
-      <section className="surface-card mt-4">
-        <div className="d-flex justify-content-between">
-          <h2 className="h5 fw-bold">Balance en el tiempo</h2>
-          <span className="badge text-bg-light">Últimos 30 días</span>
-        </div>
-        <div
-          className="chart-placeholder mt-3"
-          aria-label="Gráfico ilustrativo"
-        >
-          {[
-            28, 42, 36, 58, 49, 72, 63, 88, 76, 95, 81, 100, 91, 110, 97, 120,
-          ].map((h, i) => (
-            <span key={i} style={{ height: `${h}px` }} />
-          ))}
-        </div>
-        <p className="small muted mt-3 mb-0">
-          Gráfico ilustrativo; el historial real se conectará más adelante.
-        </p>
-      </section>
-      <section className="surface-card mt-4">
-        <h2 className="h5 fw-bold">Actividad reciente</h2>
-        <p className="muted mb-0">
-          Todavía no hay movimientos reales que mostrar.
-        </p>
-      </section>
+        </Card.Body>
+      </Card>
     </main>
   );
 }
