@@ -1,3 +1,10 @@
+import type { Route } from "./+types/admin";
+import { requireAdmin } from "../services/auth-guards";
+
+export function clientLoader(args: Route.ClientLoaderArgs) {
+  return requireAdmin(args);
+}
+
 export default function AdminPage() {
   return (
     <main className="container-xl py-5">

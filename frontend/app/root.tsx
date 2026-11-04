@@ -6,10 +6,12 @@ import {
   ScrollRestoration,
   isRouteErrorResponse,
 } from "react-router";
+import { useEffect } from "react";
 import "./index.css";
 import type { Route } from "./+types/root";
 import { GlobalErrorPage } from "./pages/GlobalErrorPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { restoreSession } from "./stores/auth-store";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -30,6 +32,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function Root() {
+  useEffect(() => {
+    void restoreSession();
+  }, []);
+
   return <Outlet />;
 }
 

@@ -3,13 +3,15 @@ package es.codeurjc.betsphere.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import es.codeurjc.betsphere.model.Match;
 import es.codeurjc.betsphere.model.User;
@@ -24,7 +26,7 @@ import es.codeurjc.betsphere.repository.UserRepository;
 
 @Service
 @ConditionalOnProperty(name = "betsphere.seeder.enabled", havingValue = "true")
-public class DatabaseInitializer {
+public class DatabaseInitializer implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseInitializer.class);
 
@@ -49,8 +51,9 @@ public class DatabaseInitializer {
         this.competitionRepository = competitionRepository;
     }
 
-    @PostConstruct
-    public void init() {
+    @Override
+    @Transactional
+    public void run(ApplicationArguments args) {
         // Seed sports independently so existing matches cannot prevent setup.
         Sport football = getOrCreateSport("Football");
         Sport basketball = getOrCreateSport("Basketball");

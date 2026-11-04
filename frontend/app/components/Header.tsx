@@ -1,8 +1,25 @@
-import { Link, NavLink } from "react-router";
+import { Link, NavLink, useNavigate } from "react-router";
 import { useState } from "react";
+import { logout } from "../services/auth-service";
+import { useAuthStore } from "../stores/auth-store";
 
 export default function Header() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const user = useAuthStore((state) => state.user);
+  const clearSession = useAuthStore((state) => state.clearSession);
+  const initials = user?.username.slice(0, 1).toLocaleUpperCase("es-ES");
+
+  async function handleLogout() {
+    try {
+      await logout();
+    } finally {
+      clearSession();
+      setOpen(false);
+      navigate("/");
+    }
+  }
+
   return (
     <header className="site-header">
       <nav
@@ -36,17 +53,47 @@ export default function Header() {
             <NavLink className="nav-link" to="/history">
               Historial
             </NavLink>
+            {user?.roles.includes("ROLE_ADMIN") && (
+              <NavLink
+                className="nav-link"
+                to="/admin"
+                onClick={() => setOpen(false)}
+              >
+                Panel de administración
+              </NavLink>
+            )}
           </div>
-          <div className="d-flex gap-2 align-items-center py-2 py-lg-0">
-            <Link
-              className="btn btn-link text-decoration-none text-dark fw-semibold"
-              to="/login"
-            >
-              Iniciar sesión
-            </Link>
-            <Link className="btn btn-brand" to="/register">
-              Crear cuenta
-            </Link>
+          <div className="header-account d-flex gap-3 align-items-center py-2 py-lg-0">
+            {user ? (
+              <>
+                <span className="header-greeting">Hola, <strong>{user.username}</strong></span>
+                <Link
+                  className="header-avatar-link"
+                  to="/profile"
+                  onClick={() => setOpen(false)}
+                  aria-label={`Ver perfil de ${user.email}`}
+                  title="Mi perfil"
+                >
+                  <span className="header-avatar" aria-hidden="true">{initials}</span>
+                </Link>
+                <button className="header-logout" type="button" onClick={handleLogout}>
+                    Cerrar sesión
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  className="btn btn-link text-decoration-none text-dark fw-semibold"
+                  to="/login"
+                  onClick={() => setOpen(false)}
+                >
+                  Iniciar sesión
+                </Link>
+                <Link className="btn btn-brand" to="/register" onClick={() => setOpen(false)}>
+                  Crear cuenta
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
