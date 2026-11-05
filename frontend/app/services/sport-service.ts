@@ -35,7 +35,12 @@ export async function addSport(sport: SportInputDTO): Promise<SportDTO>{
     return res.json();
 }
 
-//TODO: upload sport image
+export async function uploadSportImage(id: number, file: File): Promise<string> {
+    const data = new FormData(); data.append("file", file);
+    const res = await adminFetch(`${API_URL}/${id}/image`, { method: "POST", body: data });
+    if (!res.ok) throw new Error(await adminResponseError(res, `No se pudo subir la imagen (${res.status})`));
+    return (await res.json()).url;
+}
 
 export async function updateSport(id: number, sport: SportInputDTO): Promise<SportDTO>{
     const res = await adminFetch(`${API_URL}/${id}`, {

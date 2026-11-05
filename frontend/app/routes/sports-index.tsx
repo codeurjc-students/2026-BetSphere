@@ -43,7 +43,7 @@ export default function SportsHome({
           <div className="col-12 col-sm-6 col-lg-4" key={sport.id}>
             <Link className="sport-card" to={`/sport/${sport.id}`}>
               <span className="sport-icon" aria-hidden="true">
-                {["⚽", "🏀", "🎾", "🏈", "🏐", "🏒"][index % 6]}
+                {sport.iconUrl ? <img src={sport.iconUrl} alt="" /> : ["⚽", "🏀", "🎾", "🏈", "🏐", "🏒"][index % 6]}
               </span>
               <h3>{sport.name}</h3>
               <p>Competiciones, equipos y partidos</p>

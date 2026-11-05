@@ -73,6 +73,8 @@ export default function MatchPage({ loaderData }: Route.ComponentProps) {
       </Link>
       <section className="match-hero my-3">
         <div className="eyebrow">
+          {match.competition.sport.iconUrl && <img className="entity-logo me-2" src={match.competition.sport.iconUrl} alt="" />}
+          {match.competition.iconUrl && <img className="entity-logo me-2" src={match.competition.iconUrl} alt="" />}
           {match.competition.name} · {match.competition.sport.name}
         </div>
         <div className="match-header-meta mt-3">
@@ -83,6 +85,7 @@ export default function MatchPage({ loaderData }: Route.ComponentProps) {
         </div>
         <Row className="align-items-center text-center mt-4 gy-3">
           <Col xs={5}>
+            {match.homeTeam.logoUrl && <img className="match-team-logo mb-2" src={match.homeTeam.logoUrl} alt={`Logo de ${match.homeTeam.name}`} />}
             <h1 className="match-team-title">{match.homeTeam.name}</h1>
           </Col>
           <Col xs={2}>
@@ -94,6 +97,7 @@ export default function MatchPage({ loaderData }: Route.ComponentProps) {
             </strong>
           </Col>
           <Col xs={5}>
+            {match.awayTeam.logoUrl && <img className="match-team-logo mb-2" src={match.awayTeam.logoUrl} alt={`Logo de ${match.awayTeam.name}`} />}
             <h1 className="match-team-title">{match.awayTeam.name}</h1>
           </Col>
         </Row>

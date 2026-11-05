@@ -74,7 +74,9 @@ export default function Header() {
                   aria-label={`Ver perfil de ${user.email}`}
                   title="Mi perfil"
                 >
-                  <span className="header-avatar" aria-hidden="true">{initials}</span>
+                  <span className="header-avatar" aria-hidden="true">
+                    {user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : initials}
+                  </span>
                 </Link>
                 <button className="header-logout" type="button" onClick={handleLogout}>
                     Cerrar sesión

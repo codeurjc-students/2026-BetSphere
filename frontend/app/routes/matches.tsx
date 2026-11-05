@@ -19,7 +19,9 @@ export default function MatchList({ loaderData }: Route.ComponentProps) {
           <Link className="match-row" to={`/match/${match.id}`} key={match.id}>
             <div>
               <div className="match-teams">
+                {match.homeTeamLogoUrl && <img className="entity-logo me-2" src={match.homeTeamLogoUrl} alt="" />}
                 {match.homeTeam} <span className="muted">vs</span>{" "}
+                {match.awayTeamLogoUrl && <img className="entity-logo me-2" src={match.awayTeamLogoUrl} alt="" />}
                 {match.awayTeam}
               </div>
               <div className="match-meta">

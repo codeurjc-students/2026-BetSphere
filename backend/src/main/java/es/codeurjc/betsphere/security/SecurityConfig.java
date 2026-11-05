@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/matches/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/users/").permitAll()       
+                .requestMatchers(HttpMethod.GET, "/api/v1/images/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/sports/**").permitAll() 
                 .requestMatchers(HttpMethod.GET, "/api/v1/competitions/**").permitAll() 
                 .requestMatchers(HttpMethod.GET, "/api/v1/teams/**").permitAll()
@@ -48,6 +49,9 @@ public class SecurityConfig {
                 
                 //PRIVATE
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/sports/*/image").hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/competitions/*/image").hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/teams/*/image").hasAuthority("ROLE_ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/v1/sports/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/v1/sports/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/sports/**").hasRole("ADMIN")
@@ -60,8 +64,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/matches/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/v1/matches/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/matches/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/v1/images/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/v1/images/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/images").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/images/**").authenticated()
                 //AUTHENTICATED
                 .requestMatchers("/api/v1/users/**").authenticated()
                 

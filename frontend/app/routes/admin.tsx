@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import type { Route } from "./+types/admin";
 import { requireAdmin } from "../services/auth-guards";
-import { getSports, addSport, updateSport, deleteSport } from "../services/sport-service";
-import { getCompetitions, addCompetition, updateCompetition, deleteCompetition, createTeam, removeTeam } from "../services/competition-service";
+import { getSports, addSport, updateSport, deleteSport, uploadSportImage } from "../services/sport-service";
+import { getCompetitions, addCompetition, updateCompetition, deleteCompetition, createTeam, removeTeam, uploadCompetitionImage } from "../services/competition-service";
 import { getMatches, addMatch, updateMatch, deleteMatch } from "../services/match-service";
-import { getTeams, updateTeam, deleteTeam } from "../services/team-service";
+import { getTeams, updateTeam, deleteTeam, uploadTeamImage } from "../services/team-service";
 import type { SportDTO } from "../dtos/SportDTO";
 import type { CompetitionDTO } from "../dtos/CompetitionDTO";
 import type { TeamDTO } from "../dtos/TeamDTO";
@@ -21,9 +21,9 @@ const entityNames: Record<Entity, string> = { users: "Usuarios", sports: "Deport
 
 const fieldMap: Record<Entity, Field[]> = {
   users: [],
-  sports: [{ name: "name", label: "Nombre" }, { name: "iconUrl", label: "URL del icono", type: "url" }],
-  competitions: [{ name: "name", label: "Nombre" }, { name: "country", label: "País" }, { name: "sportId", label: "Deporte", type: "select" }],
-  teams: [{ name: "name", label: "Nombre" }, { name: "country", label: "País" }, { name: "logoUrl", label: "URL del logo", type: "url" }, { name: "competitionId", label: "Competición", type: "select" }],
+  sports: [{ name: "name", label: "Nombre" }, { name: "image", label: "Imagen", type: "file" }],
+  competitions: [{ name: "name", label: "Nombre" }, { name: "country", label: "País" }, { name: "sportId", label: "Deporte", type: "select" }, { name: "image", label: "Imagen", type: "file" }],
+  teams: [{ name: "name", label: "Nombre" }, { name: "country", label: "País" }, { name: "image", label: "Imagen", type: "file" }, { name: "competitionId", label: "Competición", type: "select" }],
   matches: [
     { name: "homeTeamId", label: "Equipo local", type: "select" }, { name: "awayTeamId", label: "Equipo visitante", type: "select" },
     { name: "competitionId", label: "Competición", type: "select" }, { name: "matchDate", label: "Fecha y hora", type: "datetime-local" },
@@ -47,6 +47,7 @@ export default function AdminPage() {
   const [notice, setNotice] = useState("");
   const [editing, setEditing] = useState<Item | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Item | null>(null);
 
@@ -70,6 +71,7 @@ export default function AdminPage() {
   function startCreate() {
     setEditing(null);
     setFormOpen(true);
+    setImageFile(null);
     setFormError("");
     const defaults: Record<string, string> = {};
     if (active === "matches") defaults.gameStatus = "SCHEDULED";
@@ -88,6 +90,7 @@ export default function AdminPage() {
       else values[field.name] = source[field.name] == null ? "" : String(source[field.name]);
     }
     setForm(values);
+    setImageFile(null);
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -95,20 +98,22 @@ export default function AdminPage() {
     const id = editing ? (editing as { id: number }).id : undefined;
     try {
       if (active === "sports") {
-        const data = { name: form.name, iconUrl: form.iconUrl || null };
-        if (id) await updateSport(id, data); else await addSport(data);
+        const data = { name: form.name, iconUrl: editing ? (editing as SportDTO).iconUrl : null };
+        const saved = id ? await updateSport(id, data) : await addSport(data);
+        if (imageFile) await uploadSportImage(saved.id, imageFile);
       } else if (active === "competitions") {
-        const data = { name: form.name, country: form.country, sportId: Number(form.sportId) };
-        if (id) await updateCompetition(id, data); else await addCompetition(data);
+        const data = { name: form.name, country: form.country, sportId: Number(form.sportId), iconUrl: editing ? (editing as CompetitionDTO).iconUrl : null };
+        const saved = id ? await updateCompetition(id, data) : await addCompetition(data);
+        if (imageFile) await uploadCompetitionImage(saved.id, imageFile);
       } else if (active === "teams") {
-        const data = { name: form.name, country: form.country, logoUrl: form.logoUrl || null };
-        if (id) await updateTeam(id, data);
-        else await createTeam(Number(form.competitionId), data);
+        const data = { name: form.name, country: form.country, logoUrl: editing ? (editing as TeamDTO).logoUrl : null };
+        const saved = id ? await updateTeam(id, data) : await createTeam(Number(form.competitionId), data);
+        if (imageFile) await uploadTeamImage(saved.id, imageFile);
       } else {
         const data = { homeTeam: teams.find((team) => team.id === Number(form.homeTeamId))?.name ?? "", awayTeam: teams.find((team) => team.id === Number(form.awayTeamId))?.name ?? "", matchDate: form.matchDate, homeOdds: form.homeOdds ? Number(form.homeOdds) : null, drawOdds: form.drawOdds ? Number(form.drawOdds) : null, awayOdds: form.awayOdds ? Number(form.awayOdds) : null, gameStatus: form.gameStatus, homeTeamId: Number(form.homeTeamId), awayTeamId: Number(form.awayTeamId), competitionId: Number(form.competitionId) };
         if (id) await updateMatch(id, data); else await addMatch(data);
       }
-      setEditing(null); setForm({}); setFormOpen(false); setNotice(`${entityNames[active]} ${id ? "actualizado" : "creado"}.`); await refresh();
+      setEditing(null); setForm({}); setImageFile(null); setFormOpen(false); setNotice(`${entityNames[active]} ${id ? "actualizado" : "creado"}.`); await refresh();
     } catch (err) { setFormError(err instanceof Error ? err.message : "No se pudo guardar el registro."); }
   }
 
@@ -181,8 +186,8 @@ export default function AdminPage() {
       {formError && <div className="alert alert-danger mb-3" role="alert">{formError}</div>}
       <form onSubmit={submit}><div className="row g-3">{fields.map((field) => {
         const options = field.options ?? optionsFor(field.name);
-        const required = field.name !== "logoUrl" && field.name !== "homeOdds" && field.name !== "drawOdds" && field.name !== "awayOdds" && !(active === "teams" && editing && field.name === "competitionId");
-        return <div className="col-md-6" key={field.name}><label className="form-label" htmlFor={`admin-${field.name}`}>{field.label}</label>{field.type === "select" ? <select id={`admin-${field.name}`} className="form-select" required={required} value={form[field.name] ?? ""} onChange={(event) => setForm({ ...form, [field.name]: event.target.value })}><option value="">Selecciona…</option>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select> : <input id={`admin-${field.name}`} className="form-control" type={field.type ?? "text"} required={required} step={field.type === "number" ? "any" : undefined} value={form[field.name] ?? ""} onChange={(event) => setForm({ ...form, [field.name]: event.target.value })} />}</div>;
+        const required = field.name !== "image" && field.name !== "homeOdds" && field.name !== "drawOdds" && field.name !== "awayOdds" && !(active === "teams" && editing && field.name === "competitionId");
+        return <div className="col-md-6" key={field.name}><label className="form-label" htmlFor={`admin-${field.name}`}>{field.label}</label>{field.type === "select" ? <select id={`admin-${field.name}`} className="form-select" required={required} value={form[field.name] ?? ""} onChange={(event) => setForm({ ...form, [field.name]: event.target.value })}><option value="">Selecciona…</option>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select> : field.type === "file" ? <input id={`admin-${field.name}`} className="form-control" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => setImageFile(event.target.files?.[0] ?? null)} /> : <input id={`admin-${field.name}`} className="form-control" type={field.type ?? "text"} required={required} step={field.type === "number" ? "any" : undefined} value={form[field.name] ?? ""} onChange={(event) => setForm({ ...form, [field.name]: event.target.value })} />}</div>;
       })}</div><div className="d-flex justify-content-end gap-2 mt-4"><button type="button" className="btn btn-outline-light" onClick={() => { setForm({}); setEditing(null); setFormOpen(false); setFormError(""); }}>Cancelar</button><button type="submit" className="btn btn-brand">Guardar</button></div></form>
     </section>}
     {pendingDelete && <div className="admin-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) { setPendingDelete(null); setDeleteError(""); } }}>
