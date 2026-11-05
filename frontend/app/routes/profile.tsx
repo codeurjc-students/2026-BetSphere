@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge, Card, Col, Row } from "react-bootstrap";
 import { Link } from "react-router";
 import type { Route } from "./+types/profile";
@@ -22,6 +22,11 @@ export default function ProfilePage({ loaderData: user }: Route.ComponentProps) 
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const setCurrentUser = useAuthStore((state) => state.setUser);
+  useEffect(() => {
+    if (!message) return;
+    const timeout = window.setTimeout(() => setMessage(""), 4000);
+    return () => window.clearTimeout(timeout);
+  }, [message]);
   const initials = user.username.slice(0, 1).toLocaleUpperCase("es-ES");
 
   async function uploadAvatar(file?: File) {

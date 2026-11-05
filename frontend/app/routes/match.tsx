@@ -4,6 +4,7 @@ import type { Route } from "./+types/match";
 import type { MatchViewDTO } from "../dtos/MatchViewDTO";
 import { getMatchById } from "../services/match-service";
 import { optionalUser } from "../services/auth-guards";
+import { formatDateTime } from "../services/format-date";
 
 export async function clientLoader({
   params,
@@ -17,11 +18,6 @@ export async function clientLoader({
     optionalUser(),
   ]);
   return { match, user };
-}
-
-function formatDate(value: string) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString("es-ES");
 }
 
 function TeamStats({
@@ -68,8 +64,8 @@ export default function MatchPage({ loaderData }: Route.ComponentProps) {
 
   return (
     <Container as="main" className="py-5 page-enter">
-      <Link className="back-link" to="/matches">
-        ← Todos los partidos
+      <Link className="back-link" to={`/competition/${match.competition.id}`}>
+        ← {match.competition.name}
       </Link>
       <section className="match-hero my-3">
         <div className="eyebrow">
@@ -78,7 +74,7 @@ export default function MatchPage({ loaderData }: Route.ComponentProps) {
           {match.competition.name} · {match.competition.sport.name}
         </div>
         <div className="match-header-meta mt-3">
-          <span>{formatDate(match.matchDate)}</span>
+        <span>{formatDateTime(match.matchDate)}</span>
           <Badge bg="dark" className="status-badge">
             {match.gameStatus}
           </Badge>

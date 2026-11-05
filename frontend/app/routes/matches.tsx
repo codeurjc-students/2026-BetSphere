@@ -1,6 +1,7 @@
 import type { Route } from "./+types/matches";
 import { getMatches } from "../services/match-service";
 import { Link } from "react-router";
+import { formatDateTime } from "../services/format-date";
 
 export async function clientLoader() {
   const matches = await getMatches();
@@ -25,7 +26,7 @@ export default function MatchList({ loaderData }: Route.ComponentProps) {
                 {match.awayTeam}
               </div>
               <div className="match-meta">
-                {new Date(match.matchDate).toLocaleString("es-ES")}
+                {formatDateTime(match.matchDate)}
               </div>
             </div>
             <div className="text-end">

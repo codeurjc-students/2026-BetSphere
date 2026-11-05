@@ -1,19 +1,21 @@
 import { Link } from "react-router";
 import type { Route } from "./+types/team";
 import { getTeam } from "../services/team-service";
+import { getCompetitions } from "../services/competition-service";
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   const id = Number(params.id);
   if (!Number.isInteger(id) || id <= 0) throw new Response("ID de equipo no válido", { status: 400 });
-  return getTeam(id);
+  const [team, competitions] = await Promise.all([getTeam(id), getCompetitions()]);
+  const competition = competitions.find((row) => row.teams.some((entry) => entry.id === id));
+  return { team, competition };
 }
 
-export default function TeamPage({ loaderData: team }: Route.ComponentProps) {
+export default function TeamPage({ loaderData: data }: Route.ComponentProps) {
+  const { team, competition } = data;
   return (
     <main className="container-xl py-5">
-      <Link to="/matches" className="text-link">
-        ← Volver
-      </Link>
+      <Link to={competition ? `/competition/${competition.id}` : "/"} className="back-link">← {competition?.name ?? "Deportes"}</Link>
       <div className="surface-card mt-3">
         <div className="d-flex align-items-center gap-3">
           {team.logoUrl ? <img className="team-avatar" src={team.logoUrl} alt={`Logo de ${team.name}`} /> : <div className="team-avatar">{team.name.slice(0, 1)}</div>}

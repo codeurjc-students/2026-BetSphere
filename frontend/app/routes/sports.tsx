@@ -11,24 +11,38 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 
 export default function SportPage({ loaderData: sport }: Route.ComponentProps) {
   return (
-    <main className="container py-4">
-      <h1>{sport.name}</h1>
-      {sport.iconUrl && <img className="entity-logo mb-3" src={sport.iconUrl} alt={`Logo de ${sport.name}`} />}
-      <h2 className="h4 mt-4">Competiciones</h2>
+    <main className="container-xl py-5 page-enter">
+      <Link className="back-link" to="/">← Todos los deportes</Link>
+      <section className="sport-hero mt-4">
+        {sport.iconUrl && <img className="sport-hero-logo" src={sport.iconUrl} alt="" />}
+        <div>
+          <div className="eyebrow mb-1">Explora el deporte</div>
+          <h1 className="page-title mb-0">{sport.name}</h1>
+        </div>
+      </section>
+      <div className="section-heading mt-5">
+        <div><div className="eyebrow mb-2">Competiciones disponibles</div><h2 className="section-title mb-0">Competiciones</h2></div>
+        <span className="muted small">{sport.competitions.length} en total</span>
+      </div>
       {sport.competitions.length === 0 ? (
-        <p>No hay competiciones disponibles.</p>
+        <div className="surface-card muted">Todavía no hay competiciones para este deporte.</div>
       ) : (
-        <ul className="list-group">
+        <div className="row g-3">
           {sport.competitions.map((competition) => (
-            <li className="list-group-item" key={competition.id}>
-              <Link to={`/competition/${competition.id}`}>
-                {competition.iconUrl && <img className="entity-logo me-2" src={competition.iconUrl} alt="" />}
-                {competition.name}
+            <div className="col-12 col-md-6 col-lg-4" key={competition.id}>
+              <Link className="sport-competition-card" to={`/competition/${competition.id}`}>
+                <span className="sport-competition-logo">
+                  {competition.iconUrl ? <img src={competition.iconUrl} alt="" /> : <span aria-hidden="true">🏆</span>}
+                </span>
+                <span className="sport-competition-copy">
+                  <strong>{competition.name}</strong>
+                  {competition.country && <span>{competition.country}</span>}
+                </span>
+                <span className="sport-competition-arrow" aria-hidden="true">→</span>
               </Link>
-              {competition.country && <span> · {competition.country}</span>}
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </main>
   );
