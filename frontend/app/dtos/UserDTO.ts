@@ -5,4 +5,5 @@ export interface UserDTO {
   roles: string[];
   birthDate: string;
   virtualBalance: number;
+  avatarUrl?: string | null;
 }

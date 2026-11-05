@@ -50,6 +50,7 @@ public class ImageStorageService {
             throw new IllegalArgumentException("Only JPEG, PNG, WebP, or GIF images are allowed.");
         }
 
+        ensureBucketExists();
         String key = UUID.randomUUID().toString();
         s3Client.putObject(PutObjectRequest.builder()
                         .bucket(bucket)

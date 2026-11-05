@@ -6,6 +6,13 @@ import { adminFetch, adminResponseError } from "./admin-api";
 
 const API_URL = "/api/v1/competitions"
 
+export async function uploadCompetitionImage(id: number, file: File): Promise<string> {
+    const data = new FormData(); data.append("file", file);
+    const res = await adminFetch(`${API_URL}/${id}/image`, { method: "POST", body: data });
+    if (!res.ok) throw new Error(await adminResponseError(res, `No se pudo subir la imagen (${res.status})`));
+    return (await res.json()).url;
+}
+
 export async function getCompetitions(): Promise<CompetitionDTO[]>{
     const res = await fetch(`${API_URL}/`)
     if(!res.ok){

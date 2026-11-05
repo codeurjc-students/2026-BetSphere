@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Badge, Card, Col, Row } from "react-bootstrap";
 import { Link } from "react-router";
 import type { Route } from "./+types/profile";
 import { requireUser } from "../services/auth-guards";
+import { adminFetch, adminResponseError } from "../services/admin-api";
+import { useAuthStore } from "../stores/auth-store";
 
 export function clientLoader(args: Route.ClientLoaderArgs) {
   return requireUser(args);
@@ -15,7 +18,26 @@ function formatBalance(value: number) {
 }
 
 export default function ProfilePage({ loaderData: user }: Route.ComponentProps) {
+  const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl);
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const setCurrentUser = useAuthStore((state) => state.setUser);
   const initials = user.username.slice(0, 1).toLocaleUpperCase("es-ES");
+
+  async function uploadAvatar(file?: File) {
+    if (!file) return;
+    setBusy(true); setMessage("");
+    try {
+      const form = new FormData(); form.append("file", file);
+      const response = await adminFetch("/api/v1/images", { method: "POST", body: form });
+      if (!response.ok) throw new Error(await adminResponseError(response, "No se pudo subir la imagen"));
+      const result = await response.json();
+      setAvatarUrl(result.url);
+      setCurrentUser({ ...user, avatarUrl: result.url });
+      setMessage("Foto de perfil actualizada.");
+    } catch (error) { setMessage(error instanceof Error ? error.message : "No se pudo subir la imagen"); }
+    finally { setBusy(false); }
+  }
 
   return (
     <main className="container-xl py-5 page-enter">
@@ -26,8 +48,10 @@ export default function ProfilePage({ loaderData: user }: Route.ComponentProps) 
           <Card className="stats-card h-100">
             <Card.Body className="p-4">
               <div className="profile-avatar mb-3" aria-label={`Avatar de ${user.username}`}>
-                {initials}
+                {avatarUrl ? <img src={avatarUrl} alt={`Foto de ${user.username}`} /> : initials}
               </div>
+              <label className="btn btn-outline-light w-100 mb-2">Cambiar foto<input className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={busy} onChange={(event) => { void uploadAvatar(event.target.files?.[0]); event.target.value = ""; }} /></label>
+              {message && <p role="status" className="small muted">{message}</p>}
               <h2 className="h4 fw-bold mb-1">{user.username}</h2>
               <p className="muted text-break">{user.email}</p>
               <Badge bg="success" className="mb-3">Cuenta registrada</Badge>

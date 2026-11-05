@@ -10,4 +10,6 @@ export interface MatchDTO {
     homeTeamId: number | null;
     awayTeamId: number | null;
     competitionId: number | null;
+    homeTeamLogoUrl?: string | null;
+    awayTeamLogoUrl?: string | null;
 }

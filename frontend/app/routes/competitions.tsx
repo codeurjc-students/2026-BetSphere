@@ -26,6 +26,7 @@ export default function CompetitionPage({
       </div>
       <section className="competition-hero mt-3">
         <div className="eyebrow mb-2">Competición</div>
+        {competition.iconUrl && <img className="entity-logo mb-2" src={competition.iconUrl} alt={`Logo de ${competition.name}`} />}
         <h1 className="page-title">{competition.name}</h1>
         <p className="muted mb-0">
           {competition.teams.length} equipos · {competition.matches.length}{" "}
@@ -47,6 +48,7 @@ export default function CompetitionPage({
             <div className="col-12 col-sm-6 col-lg-4" key={team.id}>
               <Link className="team-link" to={`/team/${team.id}`}>
                 <span>
+                  {team.logoUrl && <img className="entity-logo me-2" src={team.logoUrl} alt="" />}
                   <strong>{team.name}</strong>
                   <span className="d-block small muted">{team.country}</span>
                 </span>
@@ -71,8 +73,10 @@ export default function CompetitionPage({
         upcomingMatches.map((match) => (
           <Link className="match-row" to={`/match/${match.id}`} key={match.id}>
             <span>
+              {match.homeTeamLogoUrl && <img className="entity-logo me-2" src={match.homeTeamLogoUrl} alt="" />}
               <span className="match-teams">
                 {match.homeTeam} <span className="muted">vs</span>{" "}
+                {match.awayTeamLogoUrl && <img className="entity-logo me-2" src={match.awayTeamLogoUrl} alt="" />}
                 {match.awayTeam}
               </span>
               <span className="match-meta d-block">
@@ -96,8 +100,10 @@ export default function CompetitionPage({
         competition.matches.map((match) => (
           <Link className="match-row" to={`/match/${match.id}`} key={match.id}>
             <span>
+              {match.homeTeamLogoUrl && <img className="entity-logo me-2" src={match.homeTeamLogoUrl} alt="" />}
               <span className="match-teams">
                 {match.homeTeam} <span className="muted">vs</span>{" "}
+                {match.awayTeamLogoUrl && <img className="entity-logo me-2" src={match.awayTeamLogoUrl} alt="" />}
                 {match.awayTeam}
               </span>
               <span className="match-meta d-block">

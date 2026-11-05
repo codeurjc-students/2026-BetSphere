@@ -13,6 +13,8 @@ public interface MatchMapper {
     @Mapping(target = "homeTeamId", source = "homeTeamRef.id")
     @Mapping(target = "awayTeamId", source = "awayTeamRef.id")
     @Mapping(target = "competitionId", source = "competition.id")
+    @Mapping(target = "homeTeamLogoUrl", source = "homeTeamRef.logoUrl")
+    @Mapping(target = "awayTeamLogoUrl", source = "awayTeamRef.logoUrl")
     MatchDTO toDTO(Match match);
 
     @Mapping(target = "homeTeam", source = "homeTeamRef")

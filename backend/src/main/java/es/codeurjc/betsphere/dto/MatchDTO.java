@@ -12,6 +12,8 @@ public record MatchDTO(
         String gameStatus,
         Long homeTeamId,
         Long awayTeamId,
-        Long competitionId
+        Long competitionId,
+        String homeTeamLogoUrl,
+        String awayTeamLogoUrl
 ) {
 }

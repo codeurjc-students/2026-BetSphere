@@ -4,6 +4,19 @@ import { adminFetch, adminResponseError } from "./admin-api";
 
 const API_URL = "/api/v1/teams";
 
+export async function getTeam(id: number): Promise<TeamDTO> {
+  const response = await fetch(`${API_URL}/${id}`);
+  if (!response.ok) throw new Response("No se pudo cargar el equipo", { status: response.status });
+  return response.json();
+}
+
+export async function uploadTeamImage(id: number, file: File): Promise<string> {
+  const data = new FormData(); data.append("file", file);
+  const response = await adminFetch(`${API_URL}/${id}/image`, { method: "POST", body: data });
+  if (!response.ok) throw new Error(await adminResponseError(response, `No se pudo subir la imagen (${response.status})`));
+  return (await response.json()).url;
+}
+
 export async function getTeams(): Promise<TeamDTO[]> {
   // The endpoint is pageable. A large page keeps the current admin view unpaginated.
   const response = await fetch(`${API_URL}/?page=0&size=10000`);

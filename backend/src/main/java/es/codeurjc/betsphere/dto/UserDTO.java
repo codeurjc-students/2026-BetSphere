@@ -9,7 +9,8 @@ public record UserDTO(
     String email,
     List<String> roles,
     LocalDate birthDate,
-    Double virtualBalance
+    Double virtualBalance,
+    String avatarUrl
 ){
     
 }
