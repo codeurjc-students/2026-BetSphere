@@ -546,6 +546,18 @@ body { background: #101311; color: var(--ink); }
 .sport-icon img, .entity-logo { width: 2.5rem; height: 2.5rem; object-fit: contain; vertical-align: middle; }
 .entity-logo { border-radius: .5rem; }
 .match-team-logo { width: clamp(5rem, 10vw, 7rem); height: clamp(5rem, 10vw, 7rem); object-fit: contain; }
+.back-link { display: flex; width: fit-content; align-items: center; gap: .4rem; margin-bottom: 1.25rem; color: #d7ff45; text-decoration: none; font-weight: 700; padding: .5rem .85rem; border: 1px solid #46513f; border-radius: 999px; background: #1b241e; transition: background-color .2s, border-color .2s, transform .2s; }
+.back-link:hover { color: #e7ff9a; border-color: #8fa94d; background: #252f25; transform: translateX(-2px); }
+.sport-hero { display: flex; align-items: center; gap: 1.25rem; min-height: 9rem; padding: clamp(1.25rem, 4vw, 2rem); border: 1px solid #34433a; border-radius: 1.1rem; background: radial-gradient(ellipse at 90% 10%, #33472e 0, transparent 42%), linear-gradient(135deg, #17241f, #101816); }
+.sport-hero-logo { width: 5rem; height: 5rem; object-fit: contain; border-radius: .9rem; background: #111a16; padding: .4rem; }
+.sport-competition-card { display: flex; align-items: center; gap: 1rem; min-height: 6.4rem; height: 100%; padding: 1rem 1.15rem; border: 1px solid #34433a; border-radius: .95rem; color: #edf3ee; text-decoration: none; background: linear-gradient(135deg, #1a2721, #151e19); transition: transform .2s, border-color .2s, box-shadow .2s; }
+.sport-competition-card:hover { transform: translateY(-3px); border-color: #82994c; color: #fff; box-shadow: 0 12px 28px #0004; }
+.sport-competition-logo { display: grid; place-items: center; flex: 0 0 3.5rem; width: 3.5rem; height: 3.5rem; overflow: hidden; border: 1px solid #3b493e; border-radius: .8rem; background: #111a16; font-size: 1.5rem; }
+.sport-competition-logo img { width: 100%; height: 100%; object-fit: contain; padding: .25rem; }
+.sport-competition-copy { display: grid; gap: .3rem; min-width: 0; }
+.sport-competition-copy strong { overflow-wrap: anywhere; }
+.sport-competition-copy span { color: #a2aaa4; font-size: .85rem; }
+.sport-competition-arrow { margin-left: auto; color: #d7ff45; font-size: 1.25rem; }
 .profile-stat { display: block; color: #f2f4f2; font-size: 1.8rem; line-height: 1.2; }
 .history-empty-state {
     padding: 2rem 1rem;

@@ -11,6 +11,7 @@ import type { TeamDTO } from "../dtos/TeamDTO";
 import type { MatchDTO } from "../dtos/MatchDTO";
 import type { UserDTO } from "../dtos/UserDTO";
 import { getUsers } from "../services/user-service";
+import { formatDateTime } from "../services/format-date";
 
 export function clientLoader(args: Route.ClientLoaderArgs) { return requireAdmin(args); }
 
@@ -61,6 +62,12 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => { void refresh(); }, [refresh]);
+
+  useEffect(() => {
+    if (!notice && !formError && !deleteError) return;
+    const timeout = window.setTimeout(() => { setNotice(""); setFormError(""); setDeleteError(""); }, 4500);
+    return () => window.clearTimeout(timeout);
+  }, [notice, formError, deleteError]);
 
   const rows: Item[] = active === "users" ? users : active === "sports" ? sports : active === "competitions" ? competitions : active === "teams" ? teams : matches;
   const fields = active === "users" ? [] : fieldMap[active];
@@ -158,7 +165,7 @@ export default function AdminPage() {
     if (active === "sports") { const row = item as SportDTO; return [row.name, `${row.competitions?.length ?? 0} competiciones`]; }
     if (active === "competitions") { const row = item as CompetitionDTO; return [row.name, `${row.country} · ${row.sport.name}`]; }
     if (active === "teams") { const row = item as TeamDTO; return [row.name, row.country]; }
-    const row = item as MatchDTO; return [`${row.homeTeam} vs ${row.awayTeam}`, `${row.matchDate} · ${row.gameStatus}`];
+    const row = item as MatchDTO; return [`${row.homeTeam} vs ${row.awayTeam}`, `${formatDateTime(row.matchDate)} · ${row.gameStatus}`];
   }
 
   return <main className="container-xl py-5">

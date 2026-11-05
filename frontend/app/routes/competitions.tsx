@@ -1,6 +1,7 @@
 import type { Route } from "./+types/competitions";
 import { Link } from "react-router";
 import { getById } from "../services/competition-service";
+import { formatDateTime } from "../services/format-date";
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   const id = Number(params.id);
@@ -21,6 +22,7 @@ export default function CompetitionPage({
 
   return (
     <main className="container-xl py-5 page-enter">
+      <Link className="back-link" to={`/sport/${competition.sport.id}`}>← {competition.sport.name}</Link>
       <div className="eyebrow">
         {competition.sport.name} · {competition.country}
       </div>
@@ -80,7 +82,7 @@ export default function CompetitionPage({
                 {match.awayTeam}
               </span>
               <span className="match-meta d-block">
-                {new Date(match.matchDate).toLocaleString("es-ES")}
+                {formatDateTime(match.matchDate)}
               </span>
             </span>
             <span className="match-status">{match.gameStatus} →</span>
@@ -107,7 +109,7 @@ export default function CompetitionPage({
                 {match.awayTeam}
               </span>
               <span className="match-meta d-block">
-                {new Date(match.matchDate).toLocaleString("es-ES")}
+                {formatDateTime(match.matchDate)}
               </span>
             </span>
             <span className="match-status">{match.gameStatus} →</span>
