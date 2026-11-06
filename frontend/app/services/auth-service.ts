@@ -2,6 +2,7 @@ import type { LoginRequestDTO } from "../dtos/LoginRequestDTO";
 import type { AuthResponseDTO } from "../dtos/AuthResponseDTO";
 import type { RegisterRequestDTO } from "../dtos/RegisterRequestDTO";
 import type { UserDTO } from "../dtos/UserDTO";
+import { apiFetch, ApiError } from "./api-client";
 
 const AUTH_URL = "/api/v1/auth";
 const USERS_URL = "/api/v1/users";
@@ -20,34 +21,23 @@ export class AuthServiceError extends Error {
   }
 }
 
-async function readErrorMessage(response: Response, fallback: string) {
+async function authRequest(input: RequestInfo | URL, init: RequestInit & { errorMessage: string }) {
   try {
-    const body: unknown = await response.json();
-    if (body && typeof body === "object") {
-      const data = body as { message?: unknown; error?: unknown };
-      if (typeof data.message === "string") return data.message;
-      if (typeof data.error === "string") return data.error;
-    }
-  } catch {
-    // Some API errors have no JSON body, so use the caller's fallback.
+    return await apiFetch(input, { ...init, unauthenticated: true });
+  } catch (error) {
+    if (error instanceof ApiError) throw new AuthServiceError(error.message, error.status);
+    throw error;
   }
-  return fallback;
 }
 
 export async function login(credentials: LoginRequestDTO): Promise<AuthResponseDTO> {
-  const response = await fetch(`${AUTH_URL}/login`, {
+  const response = await authRequest(`${AUTH_URL}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: JSON.stringify(credentials),
+    errorMessage: "Could not log in",
   });
-
-  if (!response.ok) {
-    throw new AuthServiceError(
-      await readErrorMessage(response, "Could not log in"),
-      response.status,
-    );
-  }
 
   const result = (await response.json()) as AuthResponseDTO;
   if (result.status !== "SUCCESS" || !result.accessToken) {
@@ -60,58 +50,42 @@ export async function login(credentials: LoginRequestDTO): Promise<AuthResponseD
 export async function register(
   details: RegisterRequestDTO,
 ): Promise<UserDTO> {
-  const response = await fetch(`${USERS_URL}/`, {
+  const response = await authRequest(`${USERS_URL}/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: JSON.stringify(details),
+    errorMessage: "Could not create the account",
   });
-
-  if (!response.ok) {
-    throw new AuthServiceError(
-      await readErrorMessage(response, "Could not create the account"),
-      response.status,
-    );
-  }
 
   return (await response.json()) as UserDTO;
 }
 
 export async function getCurrentUser(accessToken: string): Promise<UserDTO> {
-  const response = await fetch(`${USERS_URL}/me`, {
+  const response = await authRequest(`${USERS_URL}/me`, {
     headers: { Authorization: `Bearer ${accessToken}` },
     signal: AbortSignal.timeout(SESSION_REQUEST_TIMEOUT_MS),
+    errorMessage: "Could not load the user.",
   });
-
-  if (!response.ok) {
-    throw new AuthServiceError(
-      await readErrorMessage(response, "Could not load the user."),
-      response.status,
-    );
-  }
 
   return (await response.json()) as UserDTO;
 }
 
 export async function logout() {
-  await fetch(`${AUTH_URL}/logout`, {
+  await authRequest(`${AUTH_URL}/logout`, {
     method: "POST",
     credentials: "include",
+    errorMessage: "Could not log out.",
   });
 }
 
 export async function refreshAccessToken(): Promise<string> {
-  const response = await fetch(`${AUTH_URL}/refresh`, {
+  const response = await authRequest(`${AUTH_URL}/refresh`, {
     method: "POST",
     credentials: "include",
     signal: AbortSignal.timeout(SESSION_REQUEST_TIMEOUT_MS),
+    errorMessage: "Sesion expired.",
   });
-  if (!response.ok) {
-    throw new AuthServiceError(
-      await readErrorMessage(response, "Sesion expired."),
-      response.status,
-    );
-  }
   const result = (await response.json()) as AuthResponseDTO;
   if (result.status !== "SUCCESS" || !result.accessToken) {
     throw new AuthServiceError(result.message || "Sesion expired.", response.status);
