@@ -54,7 +54,7 @@ afterEach(() => {
 describe("Matches route", () => {
   it("renders the matches returned through the mocked HTTP fetch", async () => {
     // 1. Stub the global fetch to return our mock matches
-    const fetchSpy = vi.fn().mockResolvedValue(Response.json(mockMatches));
+    const fetchSpy = vi.fn().mockResolvedValue(Response.json({ content: mockMatches, number: 0, size: 10, totalElements: 1, totalPages: 1, last: true }));
     vi.stubGlobal("fetch", fetchSpy);
 
     // 2. Render the full routing context
@@ -74,7 +74,7 @@ describe("Matches route", () => {
   });
 
   it("renders an empty list when the API returns no matches", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json([])));
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ content: [], number: 0, size: 10, totalElements: 0, totalPages: 0, last: true })));
 
     renderMatchesRoute();
 
