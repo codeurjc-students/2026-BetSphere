@@ -57,8 +57,8 @@ class MatchApiE2ETest {
         .then()
                 .statusCode(200)
                 .contentType(ContentType.JSON)
-                .body("size()", equalTo(1))
-                .body("[0].homeTeam", equalTo("Real Madrid"))
-                .body("[0].awayTeam", equalTo("Barcelona"));
+                .body("content.size()", equalTo(1))
+                .body("content[0].homeTeam", equalTo("Real Madrid"))
+                .body("content[0].awayTeam", equalTo("Barcelona"));
     }
 }

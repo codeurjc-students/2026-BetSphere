@@ -3,6 +3,7 @@ import type { CompetitionInputDTO } from "../dtos/CompetitionInputDTO";
 import type { TeamDTO } from "../dtos/TeamDTO";
 import type { TeamInputDTO } from "../dtos/TeamInputDTO";
 import { adminFetch, adminResponseError } from "./admin-api";
+import type { PageDTO } from "../dtos/PageDTO";
 
 const API_URL = "/api/v1/competitions"
 
@@ -14,10 +15,17 @@ export async function uploadCompetitionImage(id: number, file: File): Promise<st
 }
 
 export async function getCompetitions(): Promise<CompetitionDTO[]>{
-    const res = await fetch(`${API_URL}/`)
+    const res = await fetch(`${API_URL}/?page=0&size=10000`)
     if(!res.ok){
         throw new Error("Failed to fetch competitions")
     }
+    const page = await res.json();
+    return Array.isArray(page) ? page : page.content;
+}
+
+export async function getCompetitionsPage(page = 0, size = 10): Promise<PageDTO<CompetitionDTO>> {
+    const res = await fetch(`${API_URL}/?page=${page}&size=${size}`);
+    if (!res.ok) throw new Error("Failed to fetch competitions");
     return res.json();
 }
 

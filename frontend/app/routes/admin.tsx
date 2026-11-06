@@ -1,19 +1,33 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useFetcher } from "react-router";
 import type { Route } from "./+types/admin";
 import { requireAdmin } from "../services/auth-guards";
-import { getSports, addSport, updateSport, deleteSport, uploadSportImage } from "../services/sport-service";
-import { getCompetitions, addCompetition, updateCompetition, deleteCompetition, createTeam, removeTeam, uploadCompetitionImage } from "../services/competition-service";
-import { getMatches, addMatch, updateMatch, deleteMatch } from "../services/match-service";
-import { getTeams, updateTeam, deleteTeam, uploadTeamImage } from "../services/team-service";
+import { getSportsPage, addSport, updateSport, deleteSport, uploadSportImage } from "../services/sport-service";
+import { getCompetitionsPage, addCompetition, updateCompetition, deleteCompetition, createTeam, removeTeam, uploadCompetitionImage } from "../services/competition-service";
+import { getMatchesPage, addMatch, updateMatch, deleteMatch } from "../services/match-service";
+import { getTeamsPage, updateTeam, deleteTeam, uploadTeamImage } from "../services/team-service";
 import type { SportDTO } from "../dtos/SportDTO";
 import type { CompetitionDTO } from "../dtos/CompetitionDTO";
 import type { TeamDTO } from "../dtos/TeamDTO";
 import type { MatchDTO } from "../dtos/MatchDTO";
 import type { UserDTO } from "../dtos/UserDTO";
-import { getUsers } from "../services/user-service";
+import { getUsersPage } from "../services/user-service";
 import { formatDateTime } from "../services/format-date";
+import LoadMore from "../components/LoadMore";
+import type { PageDTO } from "../dtos/PageDTO";
 
-export function clientLoader(args: Route.ClientLoaderArgs) { return requireAdmin(args); }
+const PAGE_SIZE = 10;
+
+const pageLoaders = { users: getUsersPage, sports: getSportsPage, competitions: getCompetitionsPage, teams: getTeamsPage, matches: getMatchesPage };
+
+export async function clientLoader(args: Route.ClientLoaderArgs) {
+  await requireAdmin(args);
+  const url = new URL(args.request.url);
+  const entity = url.searchParams.get("entity") as Entity | null;
+  if (!entity || !(entity in pageLoaders)) return null;
+  const page = Math.max(0, Number(url.searchParams.get("page") ?? 0));
+  return { entity, page: await pageLoaders[entity](page, PAGE_SIZE) };
+}
 
 type Entity = "users" | "sports" | "competitions" | "teams" | "matches";
 type Item = UserDTO | SportDTO | CompetitionDTO | TeamDTO | MatchDTO;
@@ -51,17 +65,35 @@ export default function AdminPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Item | null>(null);
+  const [pages, setPages] = useState<Record<Entity, { page: number; totalPages: number; totalElements: number }>>({
+    users: { page: 0, totalPages: 0, totalElements: 0 }, sports: { page: 0, totalPages: 0, totalElements: 0 }, competitions: { page: 0, totalPages: 0, totalElements: 0 }, teams: { page: 0, totalPages: 0, totalElements: 0 }, matches: { page: 0, totalPages: 0, totalElements: 0 },
+  });
+  const fetcher = useFetcher<typeof clientLoader>();
 
   const refresh = useCallback(async () => {
     setLoading(true); setError("");
     try {
-      const [userRows, sportRows, competitionRows, teamRows, matchRows] = await Promise.all([getUsers(), getSports(), getCompetitions(), getTeams(), getMatches()]);
-      setUsers(userRows); setSports(sportRows); setCompetitions(competitionRows); setTeams(teamRows); setMatches(matchRows);
+      const [userPage, sportPage, competitionPage, teamPage, matchPage] = await Promise.all([getUsersPage(), getSportsPage(), getCompetitionsPage(), getTeamsPage(), getMatchesPage()]);
+      setUsers(userPage.content); setSports(sportPage.content); setCompetitions(competitionPage.content); setTeams(teamPage.content); setMatches(matchPage.content);
+      setPages({ users: { page: userPage.number, totalPages: userPage.totalPages, totalElements: userPage.totalElements }, sports: { page: sportPage.number, totalPages: sportPage.totalPages, totalElements: sportPage.totalElements }, competitions: { page: competitionPage.number, totalPages: competitionPage.totalPages, totalElements: competitionPage.totalElements }, teams: { page: teamPage.number, totalPages: teamPage.totalPages, totalElements: teamPage.totalElements }, matches: { page: matchPage.number, totalPages: matchPage.totalPages, totalElements: matchPage.totalElements } });
     } catch (err) { setError(err instanceof Error ? err.message : "No se pudieron cargar los listados."); }
     finally { setLoading(false); }
   }, []);
 
   useEffect(() => { void refresh(); }, [refresh]);
+
+  useEffect(() => {
+    const result = fetcher.data;
+    if (!result || !("entity" in result) || !result.page) return;
+    const { entity, page } = result as { entity: Entity; page: PageDTO<Item> };
+    const append = <T,>(current: T[], incoming: T[]) => [...current, ...incoming];
+    if (entity === "users") setUsers((current) => append(current, page.content as UserDTO[]));
+    else if (entity === "sports") setSports((current) => append(current, page.content as SportDTO[]));
+    else if (entity === "competitions") setCompetitions((current) => append(current, page.content as CompetitionDTO[]));
+    else if (entity === "teams") setTeams((current) => append(current, page.content as TeamDTO[]));
+    else setMatches((current) => append(current, page.content as MatchDTO[]));
+    setPages((current) => ({ ...current, [entity]: { page: page.number, totalPages: page.totalPages, totalElements: page.totalElements } }));
+  }, [fetcher.data]);
 
   useEffect(() => {
     if (!notice && !formError && !deleteError) return;
@@ -174,7 +206,7 @@ export default function AdminPage() {
     <p className="muted">Gestiona las entidades deportivas y consulta todos sus registros.</p>
 
     <div className="admin-tabs d-flex flex-wrap gap-2 mt-4" role="tablist" aria-label="Entidades">
-      {(Object.keys(entityNames) as Entity[]).map((entity) => <button key={entity} type="button" role="tab" aria-selected={active === entity} className={`btn ${active === entity ? "btn-brand" : "btn-outline-light"}`} onClick={() => { setActive(entity); setEditing(null); setForm({}); setFormOpen(false); setPendingDelete(null); setFormError(""); setDeleteError(""); setError(""); setNotice(""); }}>{entityNames[entity]} <span className="admin-count">{entity === "users" ? users.length : entity === "sports" ? sports.length : entity === "competitions" ? competitions.length : entity === "teams" ? teams.length : matches.length}</span></button>)}
+      {(Object.keys(entityNames) as Entity[]).map((entity) => <button key={entity} type="button" role="tab" aria-selected={active === entity} className={`btn ${active === entity ? "btn-brand" : "btn-outline-light"}`} onClick={() => { setActive(entity); setEditing(null); setForm({}); setFormOpen(false); setPendingDelete(null); setFormError(""); setDeleteError(""); setError(""); setNotice(""); }}>{entityNames[entity]} <span className="admin-count">{pages[entity].totalElements}</span></button>)}
     </div>
 
     {error && <div className="alert alert-danger mt-3" role="alert">{error}</div>}
@@ -182,10 +214,10 @@ export default function AdminPage() {
 
     <section className="surface-card mt-3">
       <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div><h2 className="h5 fw-bold mb-1">{entityNames[active]}</h2><p className="muted small mb-0">Listado completo · {rows.length} registros</p></div>
+        <div><h2 className="h5 fw-bold mb-1">{entityNames[active]}</h2><p className="muted small mb-0">{rows.length} de {pages[active].totalElements} registros</p></div>
         {active !== "users" && <button className="btn btn-brand" type="button" onClick={startCreate}>Nuevo registro</button>}
       </div>
-      {loading ? <p className="muted mt-4 mb-0">Cargando datos…</p> : rows.length === 0 ? <p className="muted mt-4 mb-0">Todavía no hay registros.</p> : <div className="table-responsive mt-3"><table className="table align-middle"><thead><tr><th>ID</th><th>{active === "users" ? "Usuario" : "Nombre / partido"}</th><th>{active === "users" ? "Correo" : "Detalles"}</th>{active === "users" && <th>Rol</th>}{active !== "users" && <th className="text-end">Acciones</th>}</tr></thead><tbody>{rows.map((item) => { const [name, details] = describe(item); const userRow = active === "users" ? item as UserDTO : null; return <tr key={(item as { id: number }).id}><td>{(item as { id: number }).id}</td><td className="fw-semibold">{name}</td><td className="muted">{details}</td>{userRow ? <td><span className="admin-role">{userRow.roles.join(", ") || "Sin rol"}</span></td> : <td className="text-end text-nowrap"><button type="button" className="btn btn-sm btn-outline-light me-2" onClick={() => startEdit(item)}>Editar</button><button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setPendingDelete(item)}>Borrar</button></td>}</tr>; })}</tbody></table></div>}
+      {loading ? <p className="muted mt-4 mb-0">Cargando datos…</p> : rows.length === 0 ? <p className="muted mt-4 mb-0">Todavía no hay registros.</p> : <><div className="table-responsive mt-3"><table className="table align-middle"><thead><tr><th>ID</th><th>{active === "users" ? "Usuario" : "Nombre / partido"}</th><th>{active === "users" ? "Correo" : "Detalles"}</th>{active === "users" && <th>Rol</th>}{active !== "users" && <th className="text-end">Acciones</th>}</tr></thead><tbody>{rows.map((item) => { const [name, details] = describe(item); const userRow = active === "users" ? item as UserDTO : null; return <tr key={(item as { id: number }).id}><td>{(item as { id: number }).id}</td><td className="fw-semibold">{name}</td><td className="muted">{details}</td>{userRow ? <td><span className="admin-role">{userRow.roles.join(", ") || "Sin rol"}</span></td> : <td className="text-end text-nowrap"><button type="button" className="btn btn-sm btn-outline-light me-2" onClick={() => startEdit(item)}>Editar</button><button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setPendingDelete(item)}>Borrar</button></td>}</tr>; })}</tbody></table></div>{pages[active].page + 1 < pages[active].totalPages && <LoadMore loading={fetcher.state !== "idle"} onClick={() => fetcher.load(`/admin?entity=${active}&page=${pages[active].page + 1}&size=${PAGE_SIZE}`)} />}</>}
     </section>
 
     {formOpen && <section className="surface-card mt-3" aria-label={`Formulario de ${entityNames[active].toLowerCase()}`}>

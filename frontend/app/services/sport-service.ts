@@ -1,14 +1,22 @@
 import type { SportDTO } from "../dtos/SportDTO";
 import type { SportInputDTO } from "../dtos/SportInputDTO";
+import type { PageDTO } from "../dtos/PageDTO";
 import { adminFetch, adminResponseError } from "./admin-api";
 
 const API_URL = "/api/v1/sports";
 
 export async function getSports(): Promise<SportDTO[]>{
-    const res = await fetch(`${API_URL}/`);
+    const res = await fetch(`${API_URL}/?page=0&size=10000`);
     if(!res.ok){
         throw new Error("Failed to fetch sports");
     }
+    const page = await res.json();
+    return Array.isArray(page) ? page : page.content;
+}
+
+export async function getSportsPage(page = 0, size = 10): Promise<PageDTO<SportDTO>> {
+    const res = await fetch(`${API_URL}/?page=${page}&size=${size}`);
+    if (!res.ok) throw new Error("Failed to fetch sports");
     return res.json();
 }
 

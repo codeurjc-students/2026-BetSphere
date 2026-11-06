@@ -1,11 +1,12 @@
 package es.codeurjc.betsphere.controller;
 
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -61,11 +62,8 @@ public class SportRestController {
 
     @GetMapping({"", "/"})
     @Transactional(readOnly = true)
-    public ResponseEntity<List<SportDTO>> getAllSports() {
-        List<SportDTO> sports = sportService.findAll().stream()
-                .map(mapper::toDTO)
-                .toList();
-        return ResponseEntity.ok(sports);
+    public ResponseEntity<Page<SportDTO>> getAllSports(Pageable pageable) {
+        return ResponseEntity.ok(sportService.findAll(pageable).map(mapper::toDTO));
     }
 
     @GetMapping("/{id}")
