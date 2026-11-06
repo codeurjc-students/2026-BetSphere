@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Badge, Card, Col, Row } from "react-bootstrap";
-import { Link } from "react-router";
+import { Link, useFetcher } from "react-router";
 import type { Route } from "./+types/profile";
 import { requireUser } from "../services/auth-guards";
 import { apiFetch } from "../services/api-client";
@@ -8,6 +8,21 @@ import { useAuthStore } from "../stores/auth-store";
 
 export function clientLoader(args: Route.ClientLoaderArgs) {
   return requireUser(args);
+}
+
+export async function clientAction(args: Route.ClientActionArgs) {
+  await requireUser(args);
+  const formData = await args.request.formData();
+  const file = formData.get("avatar");
+  if (!(file instanceof File) || file.size === 0) return { error: "Selecciona una imagen." };
+  try {
+    const body = new FormData(); body.append("file", file);
+    const response = await apiFetch("/api/v1/images", { method: "POST", body });
+    const result = await response.json() as { url: string };
+    return { avatarUrl: result.url };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "No se pudo subir la imagen." };
+  }
 }
 
 function formatBalance(value: number) {
@@ -18,31 +33,14 @@ function formatBalance(value: number) {
 }
 
 export default function ProfilePage({ loaderData: user }: Route.ComponentProps) {
-  const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl);
-  const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
+  const fetcher = useFetcher<typeof clientAction>();
   const setCurrentUser = useAuthStore((state) => state.setUser);
   useEffect(() => {
-    if (!message) return;
-    const timeout = window.setTimeout(() => setMessage(""), 4000);
-    return () => window.clearTimeout(timeout);
-  }, [message]);
+    if (fetcher.data && "avatarUrl" in fetcher.data) setCurrentUser({ ...user, avatarUrl: fetcher.data.avatarUrl });
+  }, [fetcher.data, setCurrentUser, user]);
+  const avatarUrl = fetcher.data && "avatarUrl" in fetcher.data ? fetcher.data.avatarUrl : user.avatarUrl;
+  const busy = fetcher.state !== "idle";
   const initials = user.username.slice(0, 1).toLocaleUpperCase("es-ES");
-
-  async function uploadAvatar(file?: File) {
-    if (!file) return;
-    setBusy(true); setMessage("");
-    try {
-      const form = new FormData(); form.append("file", file);
-      const response = await apiFetch("/api/v1/images", { method: "POST", body: form });
-
-      const result = await response.json();
-      setAvatarUrl(result.url);
-      setCurrentUser({ ...user, avatarUrl: result.url });
-      setMessage("Foto de perfil actualizada.");
-    } catch (error) { setMessage(error instanceof Error ? error.message : "No se pudo subir la imagen"); }
-    finally { setBusy(false); }
-  }
 
   return (
     <main className="container-xl py-5 page-enter">
@@ -55,8 +53,9 @@ export default function ProfilePage({ loaderData: user }: Route.ComponentProps) 
               <div className="profile-avatar mb-3" aria-label={`Avatar de ${user.username}`}>
                 {avatarUrl ? <img src={avatarUrl} alt={`Foto de ${user.username}`} /> : initials}
               </div>
-              <label className="btn btn-outline-light w-100 mb-2">Cambiar foto<input className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={busy} onChange={(event) => { void uploadAvatar(event.target.files?.[0]); event.target.value = ""; }} /></label>
-              {message && <p role="status" className="small muted">{message}</p>}
+              <label className="btn btn-outline-light w-100 mb-2">{busy ? "Subiendo…" : "Cambiar foto"}<input className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={busy} onChange={(event) => { const file = event.target.files?.[0]; if (file) { const body = new FormData(); body.append("avatar", file); fetcher.submit(body, { method: "post", encType: "multipart/form-data" }); } event.target.value = ""; }} /></label>
+              {fetcher.data && "error" in fetcher.data && <p role="alert" className="small text-danger">{fetcher.data.error}</p>}
+              {fetcher.data && "avatarUrl" in fetcher.data && <p role="status" className="small muted">Foto de perfil actualizada.</p>}
               <h2 className="h4 fw-bold mb-1">{user.username}</h2>
               <p className="muted text-break">{user.email}</p>
               <Badge bg="success" className="mb-3">Cuenta registrada</Badge>
