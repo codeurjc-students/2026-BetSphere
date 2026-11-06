@@ -3,7 +3,7 @@ import { Badge, Card, Col, Row } from "react-bootstrap";
 import { Link } from "react-router";
 import type { Route } from "./+types/profile";
 import { requireUser } from "../services/auth-guards";
-import { adminFetch, adminResponseError } from "../services/admin-api";
+import { apiFetch } from "../services/api-client";
 import { useAuthStore } from "../stores/auth-store";
 
 export function clientLoader(args: Route.ClientLoaderArgs) {
@@ -34,8 +34,8 @@ export default function ProfilePage({ loaderData: user }: Route.ComponentProps) 
     setBusy(true); setMessage("");
     try {
       const form = new FormData(); form.append("file", file);
-      const response = await adminFetch("/api/v1/images", { method: "POST", body: form });
-      if (!response.ok) throw new Error(await adminResponseError(response, "No se pudo subir la imagen"));
+      const response = await apiFetch("/api/v1/images", { method: "POST", body: form });
+
       const result = await response.json();
       setAvatarUrl(result.url);
       setCurrentUser({ ...user, avatarUrl: result.url });
