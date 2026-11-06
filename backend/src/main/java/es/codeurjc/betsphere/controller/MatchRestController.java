@@ -9,13 +9,14 @@ import es.codeurjc.betsphere.dto.MatchMapper;
 import es.codeurjc.betsphere.model.Match;
 import es.codeurjc.betsphere.service.MatchService;
 
-import java.util.List;
 import java.net.URI;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,8 +41,8 @@ public class MatchRestController {
     }
 
     @GetMapping({"", "/"})
-    public List<MatchDTO> getMatches() {
-        return mapper.toDTOs(matchService.getAllMatches());
+    public ResponseEntity<Page<MatchDTO>> getMatches(Pageable pageable) {
+        return ResponseEntity.ok(matchService.getAllMatches(pageable).map(mapper::toDTO));
     }
 
     @GetMapping("/by-competition/{competitionId}")

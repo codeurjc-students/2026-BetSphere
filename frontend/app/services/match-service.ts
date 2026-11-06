@@ -1,16 +1,24 @@
 import type { MatchDTO } from "../dtos/MatchDTO";
 import type { MatchInputDTO } from "../dtos/MatchInputDTO";
 import type { MatchViewDTO } from "../dtos/MatchViewDTO";
+import type { PageDTO } from "../dtos/PageDTO";
 import { adminFetch, adminResponseError } from "./admin-api";
 
 const API_URL = "/api/v1/matches"
 
 export async function getMatches(): Promise<MatchDTO[]>{
-    const res = await fetch(`${API_URL}/`);
+    const res = await fetch(`${API_URL}/?page=0&size=10000`);
     if(!res.ok){
         throw new Error("Failed to fetch matches");
     }
-    return await res.json();
+    const page = await res.json();
+    return Array.isArray(page) ? page : page.content;
+}
+
+export async function getMatchesPage(page = 0, size = 10): Promise<PageDTO<MatchDTO>> {
+    const res = await fetch(`${API_URL}/?page=${page}&size=${size}`);
+    if (!res.ok) throw new Error("Failed to fetch matches");
+    return res.json();
 }
 
 export async function getMatchById(id: number): Promise<MatchViewDTO> {

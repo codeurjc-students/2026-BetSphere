@@ -1,15 +1,29 @@
 import type { Route } from "./+types/matches";
-import { getMatches } from "../services/match-service";
-import { Link } from "react-router";
+import { Link, useFetcher } from "react-router";
 import { formatDateTime } from "../services/format-date";
+import { useEffect, useState } from "react";
+import LoadMore from "../components/LoadMore";
+import { getMatchesPage } from "../services/match-service";
+import type { PageDTO } from "../dtos/PageDTO";
 
-export async function clientLoader() {
-  const matches = await getMatches();
-  return matches;
+const PAGE_SIZE = 10;
+
+export async function clientLoader({ request }: Route.ClientLoaderArgs) {
+  const url = new URL(request.url);
+  const page = Math.max(0, Number(url.searchParams.get("page") ?? 0));
+  return getMatchesPage(page, PAGE_SIZE);
 }
 
 export default function MatchList({ loaderData }: Route.ComponentProps) {
-  const matches = loaderData;
+  const [matches, setMatches] = useState(loaderData.content);
+  const [page, setPage] = useState(loaderData);
+  const fetcher = useFetcher<typeof clientLoader>();
+  useEffect(() => {
+    if (!fetcher.data || !("content" in fetcher.data)) return;
+    const next = fetcher.data as PageDTO<(typeof matches)[number]>;
+    setMatches((current) => [...current, ...next.content]);
+    setPage(next);
+  }, [fetcher.data]);
   return (
     <main className="container-xl py-5">
       <div className="eyebrow">Calendario</div>
@@ -38,6 +52,7 @@ export default function MatchList({ loaderData }: Route.ComponentProps) {
       ) : (
         <div className="surface-card muted">No hay partidos disponibles.</div>
       )}
+      {!page.last && <LoadMore loading={fetcher.state !== "idle"} onClick={() => fetcher.load(`/matches?page=${page.number + 1}&size=${PAGE_SIZE}`)} />}
     </main>
   );
 }

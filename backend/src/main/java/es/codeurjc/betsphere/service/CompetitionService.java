@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 import es.codeurjc.betsphere.model.Competition;
@@ -30,6 +32,8 @@ public class CompetitionService {
     public List<Competition> findAll() {
         return competitionRepository.findAll();
     }
+
+    public Page<Competition> findAll(Pageable pageable) { return competitionRepository.findAll(pageable); }
 
     public List<Competition> findBySportId(Long sportId) {
         sportService.findById(sportId);

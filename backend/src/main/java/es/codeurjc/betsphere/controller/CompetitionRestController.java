@@ -1,12 +1,13 @@
 package es.codeurjc.betsphere.controller;
 
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -68,11 +69,8 @@ public class CompetitionRestController {
 
     @GetMapping({"", "/"})
     @Transactional(readOnly = true)
-    public ResponseEntity<List<CompetitionDTO>> getAllCompetitions() {
-        List<CompetitionDTO> competitions = competitionService.findAll().stream()
-                .map(mapper::toDTO)
-                .toList();
-        return ResponseEntity.ok(competitions);
+    public ResponseEntity<Page<CompetitionDTO>> getAllCompetitions(Pageable pageable) {
+        return ResponseEntity.ok(competitionService.findAll(pageable).map(mapper::toDTO));
     }
 
     @GetMapping("/by-sport/{sportId}")
