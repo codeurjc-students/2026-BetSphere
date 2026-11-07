@@ -29,6 +29,7 @@ public class SportService {
         return sportRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Sport not found."));
     }
 
+    @Transactional
     public Sport save(Sport sport) {
         if (sport.getName() == null || sport.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Sport name cannot be empty.");
@@ -39,6 +40,7 @@ public class SportService {
         return sportRepository.save(sport);
     }
 
+    @Transactional
     public Sport update(Long id, Sport updatedSport) {
         if (updatedSport.getName() == null || updatedSport.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Sport name cannot be empty.");

@@ -69,6 +69,7 @@ public class MatchService {
         return matchRepo.save(match);
     }
 
+    @Transactional
     public void delete(Long id) {
         matchRepo.delete(getMatch(id));
     }

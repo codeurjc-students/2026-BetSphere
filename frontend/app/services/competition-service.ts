@@ -2,7 +2,8 @@ import type { CompetitionDTO } from "../dtos/CompetitionDTO";
 import type { CompetitionInputDTO } from "../dtos/CompetitionInputDTO";
 import type { TeamDTO } from "../dtos/TeamDTO";
 import type { TeamInputDTO } from "../dtos/TeamInputDTO";
-import { apiFetch, responseError } from "./api-client";
+import type { CompetitionSummaryDTO } from "../dtos/CompetitionSummaryDTO";
+import { apiFetch, throwRouteResponse } from "./api-client";
 import type { PageDTO } from "../dtos/PageDTO";
 
 const API_URL = "/api/v1/competitions"
@@ -10,41 +11,37 @@ const API_URL = "/api/v1/competitions"
 export async function uploadCompetitionImage(id: number, file: File): Promise<string> {
     const data = new FormData(); data.append("file", file);
     const res = await apiFetch(`${API_URL}/${id}/image`, { method: "POST", body: data });
-    if (!res.ok) throw new Error(await responseError(res, `No se pudo subir la imagen (${res.status})`));
     return (await res.json()).url;
 }
 
 export async function getCompetitions(): Promise<CompetitionDTO[]>{
     const res = await apiFetch(`${API_URL}/?page=0&size=10000`)
-    if(!res.ok){
-        throw new Error("Failed to fetch competitions")
-    }
+    const page = await res.json();
+    return Array.isArray(page) ? page : page.content;
+}
+
+export async function getCompetitionOptions(): Promise<CompetitionSummaryDTO[]> {
+    const res = await apiFetch(`${API_URL}/options?page=0&size=10000`);
     const page = await res.json();
     return Array.isArray(page) ? page : page.content;
 }
 
 export async function getCompetitionsPage(page = 0, size = 10): Promise<PageDTO<CompetitionDTO>> {
     const res = await apiFetch(`${API_URL}/?page=${page}&size=${size}`);
-    if (!res.ok) throw new Error("Failed to fetch competitions");
     return res.json();
 }
 
 export async function getById(id: number): Promise<CompetitionDTO>{
-    const res = await apiFetch(`${API_URL}/${id}`)
-    if(!res.ok){
-        throw new Response("Failed to fetch the competition", {
-            status: res.status,
-            statusText: res.statusText,
-        })
+    try {
+        const res = await apiFetch(`${API_URL}/${id}`);
+        return res.json();
+    } catch (error) {
+        throwRouteResponse(error, "No se pudo cargar la competición.");
     }
-    return res.json();
 }
 
 export async function getBySport(sportId: number): Promise<CompetitionDTO[]> {
     const res = await apiFetch(`${API_URL}/by-sport/${sportId}`);
-    if (!res.ok) {
-        throw new Error("Failed to fetch competitions for the sport");
-    }
     return res.json();
 }
 
@@ -54,7 +51,6 @@ export async function addCompetition(competition: CompetitionInputDTO): Promise<
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(competition),
     });
-    if (!res.ok) throw new Error("Failed to add competition");
     return res.json();
 }
 
@@ -64,13 +60,11 @@ export async function updateCompetition(id: number, competition: CompetitionInpu
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(competition),
     });
-    if (!res.ok) throw new Error("Failed to update competition");
     return res.json();
 }
 
 export async function deleteCompetition(id: number): Promise<void> {
-    const res = await apiFetch(`${API_URL}/${id}`, { method: "DELETE" });
-    if (!res.ok) throw new Error(await responseError(res, "No se pudo borrar la competición"));
+    await apiFetch(`${API_URL}/${id}`, { method: "DELETE" });
 }
 
 export async function createTeam(competitionId: number, team: TeamInputDTO): Promise<TeamDTO> {
@@ -79,17 +73,14 @@ export async function createTeam(competitionId: number, team: TeamInputDTO): Pro
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(team),
     });
-    if (!res.ok) throw new Error("Failed to create team for competition");
     return res.json();
 }
 
 export async function addExistingTeam(competitionId: number, teamId: number): Promise<CompetitionDTO> {
     const res = await apiFetch(`${API_URL}/${competitionId}/teams/${teamId}`, { method: "POST" });
-    if (!res.ok) throw new Error("Failed to add team to competition");
     return res.json();
 }
 
 export async function removeTeam(competitionId: number, teamId: number): Promise<void> {
-    const res = await apiFetch(`${API_URL}/${competitionId}/teams/${teamId}`, { method: "DELETE" });
-    if (!res.ok) throw new Error(await responseError(res, "No se pudo desvincular el equipo de la competición"));
+    await apiFetch(`${API_URL}/${competitionId}/teams/${teamId}`, { method: "DELETE" });
 }

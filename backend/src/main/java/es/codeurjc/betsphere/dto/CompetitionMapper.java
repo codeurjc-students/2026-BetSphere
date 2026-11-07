@@ -9,5 +9,7 @@ public interface CompetitionMapper {
     
     CompetitionDTO toDTO(Competition competition);
 
+    CompetitionSummaryDTO toSummaryDTO(Competition competition);
+
     Competition toEntity(CompetitionBasicInfoDTO competitionBasicInfoDTO);
 }

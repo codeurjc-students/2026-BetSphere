@@ -3,6 +3,8 @@ package es.codeurjc.betsphere.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -32,6 +34,18 @@ public class SecurityConfig {
 
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint((request, response, exception) -> {
+                    response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                    response.getWriter().write("{\"error\":\"Authentication required.\"}");
+                })
+                .accessDeniedHandler((request, response, exception) -> {
+                    response.setStatus(HttpStatus.FORBIDDEN.value());
+                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                    response.getWriter().write("{\"error\":\"Access denied.\"}");
+                })
+            )
             // Don't save sessions
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             

@@ -45,10 +45,12 @@ public class CompetitionService {
                 .orElseThrow(() -> new NoSuchElementException("Competition not found."));
     }
 
+    @Transactional
     public Competition save(Competition competition) {
         return competitionRepository.save(competition);
     }
 
+    @Transactional
     public Competition save(Competition competition, Long sportId) {
         validateName(competition.getName());
         

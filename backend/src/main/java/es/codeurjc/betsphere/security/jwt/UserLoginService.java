@@ -41,7 +41,7 @@ public class UserLoginService {
             String accessToken = tokenProvider.generateAccessToken(userDetails);
             String refreshToken = tokenProvider.generateRefreshToken(userDetails);
 
-            Cookie cookie = new Cookie("RefreshToken", refreshToken);
+            Cookie cookie = new Cookie(TokenType.REFRESH_COOKIE_NAME, refreshToken);
             cookie.setHttpOnly(true);
             cookie.setSecure(request.isSecure());
             cookie.setAttribute("SameSite", "Strict");
@@ -84,7 +84,7 @@ public class UserLoginService {
 
     public String logout(HttpServletRequest request, HttpServletResponse response) {
         SecurityContextHolder.clearContext();
-        Cookie cookie = new Cookie("RefreshToken", null);
+        Cookie cookie = new Cookie(TokenType.REFRESH_COOKIE_NAME, null);
         cookie.setHttpOnly(true);
         cookie.setSecure(request.isSecure());
         cookie.setAttribute("SameSite", "Strict");

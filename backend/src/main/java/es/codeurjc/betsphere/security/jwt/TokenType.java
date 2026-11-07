@@ -3,14 +3,13 @@ package es.codeurjc.betsphere.security.jwt;
 import java.time.Duration;
 
 public enum TokenType {
-    ACCESS("access_token", Duration.ofMinutes(15)),
-    REFRESH("refresh_token", Duration.ofDays(7));
+    ACCESS(Duration.ofMinutes(15)),
+    REFRESH(Duration.ofDays(7));
 
-    public final String cookieName;
+    public static final String REFRESH_COOKIE_NAME = "RefreshToken";
     public final Duration duration;
 
-    TokenType(String cookieName, Duration duration) {
-        this.cookieName = cookieName;
+    TokenType(Duration duration) {
         this.duration = duration;
     }
 }

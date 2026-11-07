@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -35,9 +36,14 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         try {
-            // Try to validate JWT token from HTTP headers
-            Claims claims = tokenProvider.validateToken(request, false);
+            Claims claims = tokenProvider.validateToken(authorization.substring(7));
             String username = claims.getSubject();
             String tokenType = claims.get("type", String.class);
 
@@ -52,9 +58,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception ex) {
-            if (ex.getMessage() == null || !ex.getMessage().equals("No access token cookie found in request")) {
-                log.error("Exception processing JWT Token: ", ex);
-            }
+            // Public requests without a token are normal. Invalid bearer tokens
+            // remain anonymous and protected endpoints are rejected by Spring Security.
+            log.debug("Ignoring invalid JWT bearer token: {}", ex.getMessage());
         }
 
         filterChain.doFilter(request, response);

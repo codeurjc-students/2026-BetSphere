@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { useFetcher } from "react-router";
 import type { Route } from "./+types/admin";
 import { requireAdmin } from "../services/auth-guards";
-import { getSportsPage } from "../services/sport-service";
-import { getCompetitionsPage } from "../services/competition-service";
-import { getMatchesPage } from "../services/match-service";
-import { getTeamsPage } from "../services/team-service";
+import { getSportOptions, getSportsPage } from "../services/sport-service";
+import { getCompetitionOptions, getCompetitionsPage } from "../services/competition-service";
+import { getMatches, getMatchesPage } from "../services/match-service";
+import { getTeams, getTeamsPage } from "../services/team-service";
 import type { SportDTO } from "../dtos/SportDTO";
+import type { SportSummaryDTO } from "../dtos/SportSummaryDTO";
 import type { CompetitionDTO } from "../dtos/CompetitionDTO";
+import type { CompetitionSummaryDTO } from "../dtos/CompetitionSummaryDTO";
 import type { TeamDTO } from "../dtos/TeamDTO";
 import type { MatchDTO } from "../dtos/MatchDTO";
 import type { UserDTO } from "../dtos/UserDTO";
@@ -26,8 +28,15 @@ export async function clientLoader(args: Route.ClientLoaderArgs) {
   const url = new URL(args.request.url);
   const entity = url.searchParams.get("entity") as Entity | null;
   if (!entity || !(entity in pageLoaders)) {
-    const [users, sports, competitions, teams, matches] = await Promise.all([getUsersPage(), getSportsPage(), getCompetitionsPage(), getTeamsPage(), getMatchesPage()]);
-    return { kind: "initial" as const, pages: { users, sports, competitions, teams, matches } };
+    const [users, sports, competitions, teams, matches, sportOptions, competitionOptions, teamOptions, matchDependencies] = await Promise.all([
+      getUsersPage(), getSportsPage(), getCompetitionsPage(), getTeamsPage(), getMatchesPage(),
+      getSportOptions(), getCompetitionOptions(), getTeams(), getMatches(),
+    ]);
+    return {
+      kind: "initial" as const,
+      pages: { users, sports, competitions, teams, matches },
+      options: { sports: sportOptions, competitions: competitionOptions, teams: teamOptions, matchDependencies },
+    };
   }
   const page = Math.max(0, Number(url.searchParams.get("page") ?? 0));
   return { kind: "page" as const, entity, page: await pageLoaders[entity](page, PAGE_SIZE) };
@@ -62,11 +71,15 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
   const [sports, setSports] = useState<SportDTO[]>(loaderData.kind === "initial" ? loaderData.pages.sports.content : []);
   const [competitions, setCompetitions] = useState<CompetitionDTO[]>(loaderData.kind === "initial" ? loaderData.pages.competitions.content : []);
   const [teams, setTeams] = useState<TeamDTO[]>(loaderData.kind === "initial" ? loaderData.pages.teams.content : []);
+  const [sportOptions, setSportOptions] = useState<SportSummaryDTO[]>(loaderData.kind === "initial" ? loaderData.options.sports : []);
+  const [competitionOptions, setCompetitionOptions] = useState<CompetitionSummaryDTO[]>(loaderData.kind === "initial" ? loaderData.options.competitions : []);
+  const [teamOptions, setTeamOptions] = useState<TeamDTO[]>(loaderData.kind === "initial" ? loaderData.options.teams : []);
+  const [matchDependencies, setMatchDependencies] = useState<MatchDTO[]>(loaderData.kind === "initial" ? loaderData.options.matchDependencies : []);
   const [matches, setMatches] = useState<MatchDTO[]>(loaderData.kind === "initial" ? loaderData.pages.matches.content : []);
   const [users, setUsers] = useState<UserDTO[]>(loaderData.kind === "initial" ? loaderData.pages.users.content : []);
   const [formError, setFormError] = useState("");
   const [deleteError, setDeleteError] = useState("");
-  const [notice, setNotice] = useState("");
+  const [notice, setNotice] = useState<{ message: string; warning?: boolean } | null>(null);
   const [editing, setEditing] = useState<Item | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
   const [formOpen, setFormOpen] = useState(false);
@@ -76,12 +89,13 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
   } : {
     users: { page: 0, totalPages: 0, totalElements: 0 }, sports: { page: 0, totalPages: 0, totalElements: 0 }, competitions: { page: 0, totalPages: 0, totalElements: 0 }, teams: { page: 0, totalPages: 0, totalElements: 0 }, matches: { page: 0, totalPages: 0, totalElements: 0 },
   });
-  const fetcher = useFetcher<{ ok?: boolean; intent?: string; entity?: Entity; error?: string; page?: PageDTO<Item> }>();
+  const fetcher = useFetcher<{ ok?: boolean; intent?: string; entity?: Entity; error?: string; warning?: string; page?: PageDTO<Item> }>();
 
   useEffect(() => {
     if (loaderData.kind !== "initial") return;
     const { users: userPage, sports: sportPage, competitions: competitionPage, teams: teamPage, matches: matchPage } = loaderData.pages;
     setUsers(userPage.content); setSports(sportPage.content); setCompetitions(competitionPage.content); setTeams(teamPage.content); setMatches(matchPage.content);
+    setSportOptions(loaderData.options.sports); setCompetitionOptions(loaderData.options.competitions); setTeamOptions(loaderData.options.teams); setMatchDependencies(loaderData.options.matchDependencies);
     setPages({ users: { page: userPage.number, totalPages: userPage.totalPages, totalElements: userPage.totalElements }, sports: { page: sportPage.number, totalPages: sportPage.totalPages, totalElements: sportPage.totalElements }, competitions: { page: competitionPage.number, totalPages: competitionPage.totalPages, totalElements: competitionPage.totalElements }, teams: { page: teamPage.number, totalPages: teamPage.totalPages, totalElements: teamPage.totalElements }, matches: { page: matchPage.number, totalPages: matchPage.totalPages, totalElements: matchPage.totalElements } });
   }, [loaderData]);
 
@@ -95,7 +109,8 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
         return;
       }
       setFormError(""); setDeleteError(""); setPendingDelete(null); setFormOpen(false); setEditing(null);
-      setNotice(`${entityNames[result.entity ?? active]} ${result.intent === "delete" ? "eliminado" : result.intent === "edit" ? "actualizado" : "creado"}.`);
+      const message = `${entityNames[result.entity ?? active]} ${result.intent === "delete" ? "eliminado" : result.intent === "edit" ? "actualizado" : "creado"}.`;
+      setNotice({ message: result.warning ? `${message} ${result.warning}` : message, warning: Boolean(result.warning) });
       return;
     }
     if (!("entity" in result) || !result.page) return;
@@ -111,15 +126,17 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
 
   useEffect(() => {
     if (!notice && !formError && !deleteError) return;
-    const timeout = window.setTimeout(() => { setNotice(""); setFormError(""); setDeleteError(""); }, 4500);
+    const timeout = window.setTimeout(() => { setNotice(null); setFormError(""); setDeleteError(""); }, 4500);
     return () => window.clearTimeout(timeout);
   }, [notice, formError, deleteError]);
 
   const rows: Item[] = active === "users" ? users : active === "sports" ? sports : active === "competitions" ? competitions : active === "teams" ? teams : matches;
-  const fields = active === "users" ? [] : fieldMap[active];
-  const optionsFor = (field: string) => field === "sportId" ? sports.map((row) => ({ value: String(row.id), label: row.name }))
-    : field === "competitionId" ? competitions.map((row) => ({ value: String(row.id), label: row.name }))
-    : field === "homeTeamId" || field === "awayTeamId" ? teams.map((row) => ({ value: String(row.id), label: row.name })) : [];
+  const fields = active === "users" ? [] : active === "teams" && editing
+    ? fieldMap.teams.filter((field) => field.name !== "competitionId")
+    : fieldMap[active];
+  const optionsFor = (field: string) => field === "sportId" ? sportOptions.map((row) => ({ value: String(row.id), label: row.name }))
+    : field === "competitionId" ? competitionOptions.map((row) => ({ value: String(row.id), label: row.name }))
+    : field === "homeTeamId" || field === "awayTeamId" ? teamOptions.map((row) => ({ value: String(row.id), label: row.name })) : [];
 
   function startCreate() {
     setEditing(null);
@@ -127,11 +144,11 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
     setFormError("");
     const defaults: Record<string, string> = {};
     if (active === "matches") defaults.gameStatus = "SCHEDULED";
-    setForm(defaults); setNotice("");
+    setForm(defaults); setNotice(null);
   }
 
   function startEdit(item: Item) {
-    setEditing(item); setFormError(""); setNotice("");
+    setEditing(item); setFormError(""); setNotice(null);
     setFormOpen(true);
     const source = item as unknown as Record<string, unknown>;
     const values: Record<string, string> = {};
@@ -148,15 +165,15 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
     if (!item || active === "users") return "";
     const id = (item as { id: number }).id;
     if (active === "sports") {
-      const count = competitions.filter((competition) => competition.sport.id === id).length;
+      const count = competitionOptions.filter((competition) => competition.sport.id === id).length;
       return count ? `Este deporte tiene ${count} ${count === 1 ? "competición asociada" : "competiciones asociadas"}. Elimina primero esas competiciones.` : "";
     }
     if (active === "competitions") {
-      const count = matches.filter((match) => match.competitionId === id).length;
+      const count = matchDependencies.filter((match) => match.competitionId === id).length;
       return count ? `Esta competición tiene ${count} ${count === 1 ? "partido asociado" : "partidos asociados"}. Elimina primero esos partidos.` : "";
     }
     if (active === "teams") {
-      const count = matches.filter((match) => match.homeTeamId === id || match.awayTeamId === id).length;
+      const count = matchDependencies.filter((match) => match.homeTeamId === id || match.awayTeamId === id).length;
       return count ? `Este equipo participa en ${count} ${count === 1 ? "partido" : "partidos"}. Elimina primero esos partidos.` : "";
     }
     return "";
@@ -176,10 +193,10 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
     <p className="muted">Gestiona las entidades deportivas y consulta todos sus registros.</p>
 
     <div className="admin-tabs d-flex flex-wrap gap-2 mt-4" role="tablist" aria-label="Entidades">
-      {(Object.keys(entityNames) as Entity[]).map((entity) => <button key={entity} type="button" role="tab" aria-selected={active === entity} className={`btn ${active === entity ? "btn-brand" : "btn-outline-light"}`} onClick={() => { setActive(entity); setEditing(null); setForm({}); setFormOpen(false); setPendingDelete(null); setFormError(""); setDeleteError(""); setNotice(""); }}>{entityNames[entity]} <span className="admin-count">{pages[entity].totalElements}</span></button>)}
+      {(Object.keys(entityNames) as Entity[]).map((entity) => <button key={entity} type="button" role="tab" aria-selected={active === entity} className={`btn ${active === entity ? "btn-brand" : "btn-outline-light"}`} onClick={() => { setActive(entity); setEditing(null); setForm({}); setFormOpen(false); setPendingDelete(null); setFormError(""); setDeleteError(""); setNotice(null); }}>{entityNames[entity]} <span className="admin-count">{pages[entity].totalElements}</span></button>)}
     </div>
 
-    {notice && <div className="alert alert-success mt-3" role="status">{notice}</div>}
+    {notice && <div className={`alert ${notice.warning ? "alert-warning" : "alert-success"} mt-3`} role="status">{notice.message}</div>}
 
     <section className="surface-card mt-3">
       <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
@@ -192,9 +209,9 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
     {formOpen && <section key={`${active}-${(editing as { id: number } | null)?.id ?? "new"}`} className="surface-card mt-3" aria-label={`Formulario de ${entityNames[active].toLowerCase()}`}>
       <div className="d-flex justify-content-between align-items-center mb-3"><h2 className="h5 fw-bold mb-0">{editing ? "Editar" : "Crear"} {entityNames[active].toLowerCase()}</h2><button type="button" className="btn-close btn-close-white" aria-label="Cerrar formulario" onClick={() => { setForm({}); setEditing(null); setFormOpen(false); setFormError(""); }} /></div>
       {formError && <div className="alert alert-danger mb-3" role="alert">{formError}</div>}
-      <fetcher.Form method="post"><input type="hidden" name="entity" value={active} /><input type="hidden" name="intent" value={editing ? "edit" : "create"} />{editing && <input type="hidden" name="id" value={(editing as { id: number }).id} />}<div className="row g-3">{fields.map((field) => {
+      <fetcher.Form method="post" encType="multipart/form-data"><input type="hidden" name="entity" value={active} /><input type="hidden" name="intent" value={editing ? "edit" : "create"} />{editing && <input type="hidden" name="id" value={(editing as { id: number }).id} />}<div className="row g-3">{fields.map((field) => {
         const options = field.options ?? optionsFor(field.name);
-        const required = field.name !== "image" && field.name !== "homeOdds" && field.name !== "drawOdds" && field.name !== "awayOdds" && !(active === "teams" && editing && field.name === "competitionId");
+        const required = field.name !== "image" && field.name !== "homeOdds" && field.name !== "drawOdds" && field.name !== "awayOdds";
         return <div className="col-md-6" key={field.name}><label className="form-label" htmlFor={`admin-${field.name}`}>{field.label}</label>{field.type === "select" ? <select id={`admin-${field.name}`} name={field.name} className="form-select" required={required} defaultValue={form[field.name] ?? ""}><option value="">Selecciona…</option>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select> : field.type === "file" ? <input id={`admin-${field.name}`} name="image" className="form-control" type="file" accept="image/jpeg,image/png,image/webp,image/gif" /> : <input id={`admin-${field.name}`} name={field.name} className="form-control" type={field.type ?? "text"} required={required} step={field.type === "number" ? "any" : undefined} defaultValue={form[field.name] ?? ""} />}</div>;
       })}</div><div className="d-flex justify-content-end gap-2 mt-4"><button type="button" className="btn btn-outline-light" onClick={() => { setForm({}); setEditing(null); setFormOpen(false); setFormError(""); }}>Cancelar</button><button type="submit" className="btn btn-brand" disabled={fetcher.state !== "idle"}>{fetcher.state !== "idle" ? "Guardando…" : "Guardar"}</button></div></fetcher.Form>
     </section>}
@@ -203,7 +220,7 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
         <div className="admin-modal-icon" aria-hidden="true">!</div>
         <div className="eyebrow">Confirmar acción</div>
         <h2 className="h4 fw-bold mt-2" id="admin-delete-title">¿Borrar este registro?</h2>
-        <p className="muted mt-2 mb-0" id="admin-delete-description">{deleteBlockReason(pendingDelete) || (active === "teams" && competitions.some((competition) => competition.teams.some((team) => team.id === (pendingDelete as { id: number }).id)) ? "El equipo se desvinculará de sus competiciones y se borrará. Esta acción no se puede deshacer." : `Se eliminará de forma permanente de ${entityNames[active].toLowerCase()}. Esta acción no se puede deshacer.`)}</p>
+        <p className="muted mt-2 mb-0" id="admin-delete-description">{deleteBlockReason(pendingDelete) || (active === "teams" ? "El equipo se desvinculará de sus competiciones y se borrará si no participa en partidos. Esta acción no se puede deshacer." : `Se eliminará de forma permanente de ${entityNames[active].toLowerCase()}. Esta acción no se puede deshacer.`)}</p>
         {deleteError && <div className="alert alert-danger mt-3 mb-0" role="alert">{deleteError}</div>}
         <div className="d-flex justify-content-end gap-2 mt-4"><button type="button" autoFocus className="btn btn-outline-light" onClick={() => { setPendingDelete(null); setDeleteError(""); }}>Cancelar</button><fetcher.Form method="post"><input type="hidden" name="entity" value={active} /><input type="hidden" name="intent" value="delete" /><input type="hidden" name="id" value={(pendingDelete as { id: number }).id} /><button type="submit" className="btn btn-danger" disabled={Boolean(deleteBlockReason(pendingDelete)) || fetcher.state !== "idle"}>{fetcher.state !== "idle" ? "Borrando…" : "Borrar"}</button></fetcher.Form></div>
       </section>
