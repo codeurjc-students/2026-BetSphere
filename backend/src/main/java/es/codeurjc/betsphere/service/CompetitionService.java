@@ -52,7 +52,7 @@ public class CompetitionService {
 
     @Transactional
     public Competition save(Competition competition, Long sportId) {
-        validateName(competition.getName());
+        competition.setName(validateName(competition.getName(), null));
         
         Sport sport = sportService.findById(sportId);
         competition.setSport(sport);
@@ -62,14 +62,13 @@ public class CompetitionService {
 
     @Transactional
     public Competition update(Long id, Competition updatedData, Long sportId) {
-        validateName(updatedData.getName());
         if (sportId == null) {
             throw new IllegalArgumentException("Sport ID is required.");
         }
         
         Competition existing = findById(id);
         
-        existing.setName(updatedData.getName());
+        existing.setName(validateName(updatedData.getName(), id));
         existing.setCountry(updatedData.getCountry());
 
         if (!existing.getSport().getId().equals(sportId)) {
@@ -89,10 +88,19 @@ public class CompetitionService {
         competitionRepository.delete(competition);
     }
 
-    private void validateName(String name) {
+    private String validateName(String name, Long currentCompetitionId) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Competition name cannot be empty.");
         }
+
+        String normalizedName = name.trim();
+        boolean alreadyExists = currentCompetitionId == null
+                ? competitionRepository.existsByNameIgnoreCase(normalizedName)
+                : competitionRepository.existsByNameIgnoreCaseAndIdNot(normalizedName, currentCompetitionId);
+        if (alreadyExists) {
+            throw new IllegalArgumentException("A competition with this name already exists.");
+        }
+        return normalizedName;
     }
 
     @Transactional

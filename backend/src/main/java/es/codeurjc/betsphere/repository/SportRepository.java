@@ -9,5 +9,7 @@ import es.codeurjc.betsphere.model.Sport;
 public interface SportRepository extends JpaRepository<Sport, Long>{
 
     Optional<Sport> findByName(String name);
+    boolean existsByNameIgnoreCase(String name);
+    boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
     
 }
