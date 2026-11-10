@@ -55,6 +55,9 @@ class LoginApiE2ETest {
     @Autowired
     private UserLoginService loginService;
 
+    @Autowired
+    private es.codeurjc.betsphere.service.UserService users;
+
     @Test
     void loginIssuesTokenAcceptedByAuthenticatedEndpoint() {
         String token = given()
@@ -141,5 +144,28 @@ class LoginApiE2ETest {
         assertThat(expiredCookie.getPath()).isEqualTo("/");
         assertThat(expiredCookie.hasExpired()).isTrue();
         given().port(port).post("/api/v1/auth/refresh").then().statusCode(400);
+    }
+
+    @Test
+    void userListRequiresAdministratorRole() {
+        given().port(port).auth().oauth2(tokenFor(EMAIL, PASSWORD))
+                .get("/api/v1/users/").then().statusCode(403);
+
+        given().port(port).auth().oauth2(tokenFor("admin@betsphere.com", "admin123"))
+                .get("/api/v1/users/").then().statusCode(200)
+                .body("content.email", org.hamcrest.Matchers.hasItems(EMAIL, "admin@betsphere.com"));
+    }
+
+    @Test
+    void pagedUserServiceLoadsSeededAccountsFromMysql() {
+        var page = users.getAllUsers(org.springframework.data.domain.PageRequest.of(0, 10));
+        assertThat(page.getContent()).extracting(es.codeurjc.betsphere.model.User::getEmail)
+                .contains(EMAIL, "admin@betsphere.com");
+    }
+
+    private String tokenFor(String email, String password) {
+        return given().port(port).contentType(ContentType.JSON)
+                .body(new LoginRequest(email, password)).post("/api/v1/auth/login")
+                .then().statusCode(200).extract().path("accessToken");
     }
 }

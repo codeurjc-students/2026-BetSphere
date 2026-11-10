@@ -537,4 +537,49 @@ class FrontendSystemTest {
 
         assertThat(result).isEqualTo(java.util.List.of("Real Madrid", "Spain", (long) team.getTotalMatches()));
     }
+
+    @Test
+    void administratorCanOpenPanelAndListUsers(ChromeDriver driver) {
+        String baseUrl = "http://127.0.0.1:" + FRONTEND_PORT;
+        driver.get(baseUrl + "/admin");
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        wait.until(ExpectedConditions.urlContains("/login?returnTo="));
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email"))).sendKeys("admin@betsphere.com");
+        driver.findElement(By.id("password")).sendKeys("admin123");
+        driver.findElement(By.cssSelector("form button[type='submit']")).sendKeys(Keys.ENTER);
+        wait.until(ExpectedConditions.urlToBe(baseUrl + "/admin"));
+        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@role='tab' and starts-with(normalize-space(), 'Users')]")))
+                .sendKeys(Keys.ENTER);
+        wait.until(ExpectedConditions.textToBePresentInElementLocated(By.cssSelector("tbody"), "user@betsphere.com"));
+    }
+
+    @Test
+    void regularUserCannotOpenAdminPanel(ChromeDriver driver) {
+        signInThroughForm(driver);
+        String baseUrl = "http://127.0.0.1:" + FRONTEND_PORT;
+        driver.get(baseUrl + "/admin");
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        wait.until(ExpectedConditions.urlToBe(baseUrl + "/"));
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("a.sport-card")));
+    }
+
+    @Test
+    void adminUserServiceReadsUsersFromRealApi(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/");
+        Object result = driver.executeAsyncScript("""
+                const done = arguments[0];
+                (async () => {
+                    const { login, getCurrentUser } = await import('/app/services/auth-service.ts');
+                    const { restoreSession, useAuthStore } = await import('/app/stores/auth-store.ts');
+                    const { getUsersPage } = await import('/app/services/user-service.ts');
+                    await restoreSession();
+                    const session = await login({ email: 'admin@betsphere.com', password: 'admin123' });
+                    useAuthStore.getState().setSession(session.accessToken, await getCurrentUser(session.accessToken));
+                    const page = await getUsersPage(0, 1);
+                    done({ count: page.content.length, page: page.number, hasMore: !page.last });
+                })().catch(error => done({ error: error.message }));
+                """);
+
+        assertThat(result).isEqualTo(java.util.Map.of("count", 1L, "page", 0L, "hasMore", true));
+    }
 }
