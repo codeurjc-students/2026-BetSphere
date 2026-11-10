@@ -120,6 +120,9 @@ class FrontendSystemTest {
     @Autowired
     private MatchRepository matchRepository;
 
+    @Autowired
+    private es.codeurjc.betsphere.repository.CompetitionRepository competitions;
+
     @BeforeEach
     void setUp() {
         matchRepository.deleteAll();
@@ -416,5 +419,43 @@ class FrontendSystemTest {
 
         assertThat(pages).isEqualTo(java.util.Map.of(
                 "differentMatches", true, "page", 1L, "count", 1L, "last", true));
+    }
+
+    @Test
+    void openingCompetitionShowsItsScheduledMatch(ChromeDriver driver) {
+        var competition = addCompetitionMatch();
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/sport/" + competition.getSport().getId());
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        wait.until(ExpectedConditions.elementToBeClickable(
+                By.cssSelector("a[href='/competition/" + competition.getId() + "']"))).sendKeys(Keys.ENTER);
+        wait.until(ExpectedConditions.textToBePresentInElementLocated(By.tagName("h1"), "La Liga"));
+
+        var matches = wait.until(ExpectedConditions.numberOfElementsToBe(By.cssSelector("a.match-row"), 2));
+        assertThat(matches).allSatisfy(match -> assertThat(match.getText()).contains("Valencia", "Sevilla"));
+    }
+
+    @Test
+    void frontendCompetitionServiceReadsScheduleFromRealApi(ChromeDriver driver) {
+        var competition = addCompetitionMatch();
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/");
+
+        Object result = driver.executeAsyncScript("""
+                const [id, done] = arguments;
+                import('/app/services/competition-service.ts')
+                    .then(({ getById }) => getById(id))
+                    .then(competition => done(competition.matches.map(match => match.homeTeam)))
+                    .catch(error => done({ error: error.message }));
+                """, competition.getId());
+
+        assertThat(result).isEqualTo(java.util.List.of("Valencia"));
+    }
+
+    private es.codeurjc.betsphere.model.Competition addCompetitionMatch() {
+        var competition = competitions.findAll().stream().filter(item -> "La Liga".equals(item.getName()))
+                .findFirst().orElseThrow();
+        var match = new Match("Valencia", "Sevilla", LocalDateTime.now().plusDays(2), 2.0, 3.0, 4.0, "SCHEDULED");
+        match.setCompetition(competition);
+        matchRepository.save(match);
+        return competition;
     }
 }
