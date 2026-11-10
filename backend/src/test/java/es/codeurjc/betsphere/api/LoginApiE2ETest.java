@@ -168,4 +168,24 @@ class LoginApiE2ETest {
                 .body(new LoginRequest(email, password)).post("/api/v1/auth/login")
                 .then().statusCode(200).extract().path("accessToken");
     }
+
+    @Test
+    void onlyAdministratorCanManageSportsThroughHttp() {
+        var payload = java.util.Map.of("name", "REST sport QA");
+        given().port(port).auth().oauth2(tokenFor(EMAIL, PASSWORD)).contentType(ContentType.JSON)
+                .body(payload).post("/api/v1/sports/").then().statusCode(403);
+
+        String token = tokenFor("admin@betsphere.com", "admin123");
+        int id = given().port(port).auth().oauth2(token).contentType(ContentType.JSON)
+                .body(payload).post("/api/v1/sports/").then().statusCode(201)
+                .body("name", equalTo("REST sport QA")).extract().path("id");
+
+        given().port(port).auth().oauth2(token).contentType(ContentType.JSON)
+                .body(java.util.Map.of("name", "Updated REST sport QA"))
+                .put("/api/v1/sports/{id}", id).then().statusCode(200)
+                .body("name", equalTo("Updated REST sport QA"));
+        given().port(port).auth().oauth2(token)
+                .delete("/api/v1/sports/{id}", id).then().statusCode(204);
+        given().port(port).get("/api/v1/sports/{id}", id).then().statusCode(404);
+    }
 }

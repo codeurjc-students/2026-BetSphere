@@ -161,4 +161,18 @@ class SportCatalogApiE2ETest {
         assertThat(profile.getName()).isEqualTo("Valencia QA");
         assertThat(profile.getCountry()).isEqualTo("Spain");
     }
+
+    @Test
+    void sportServicePersistsChangesAndDeletesFromMysql() {
+        var saved = sportService.save(new Sport("Database sport QA", null));
+        try {
+            assertThat(sports.findById(saved.getId())).isPresent();
+            sportService.update(saved.getId(), new Sport("Updated database sport QA", null));
+            assertThat(sports.findById(saved.getId()).orElseThrow().getName())
+                    .isEqualTo("Updated database sport QA");
+        } finally {
+            sportService.delete(saved.getId());
+        }
+        assertThat(sports.existsById(saved.getId())).isFalse();
+    }
 }
