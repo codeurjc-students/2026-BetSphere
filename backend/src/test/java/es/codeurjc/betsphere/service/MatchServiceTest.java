@@ -64,4 +64,13 @@ public class MatchServiceTest {
         assertEquals(2, page.getTotalElements());
         verify(matchRepository).findAll(request);
     }
+
+    @Test
+    void rejectsAnUnknownMatch() {
+        when(matchRepository.findById(99L)).thenReturn(java.util.Optional.empty());
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> matchService.getMatch(99L))
+                .isInstanceOf(java.util.NoSuchElementException.class)
+                .hasMessage("Match not found");
+    }
 }

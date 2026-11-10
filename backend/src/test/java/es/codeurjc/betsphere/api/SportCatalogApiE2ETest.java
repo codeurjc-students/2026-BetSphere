@@ -37,6 +37,9 @@ class SportCatalogApiE2ETest {
     @Autowired
     private CompetitionService competitionService;
 
+    @Autowired
+    private es.codeurjc.betsphere.service.MatchService matchService;
+
     @LocalServerPort
     private int port;
 
@@ -101,5 +104,33 @@ class SportCatalogApiE2ETest {
     private Long laLigaId() {
         return competitions.findAll().stream().filter(competition -> "La Liga".equals(competition.getName()))
                 .map(Competition::getId).findFirst().orElseThrow();
+    }
+
+    @Test
+    @org.springframework.transaction.annotation.Transactional
+    void matchDetailEndpointReturnsTeamsCompetitionAndOdds() {
+        given().port(port).pathParam("id", madridBarcelonaId())
+                .get("/api/v1/matches/{id}")
+                .then().statusCode(200)
+                .body("homeTeam.name", org.hamcrest.Matchers.equalTo("Real Madrid"))
+                .body("awayTeam.name", org.hamcrest.Matchers.equalTo("Barcelona"))
+                .body("competition.name", org.hamcrest.Matchers.equalTo("La Liga"))
+                .body("homeOdds", org.hamcrest.Matchers.equalTo(2.1f));
+    }
+
+    @Test
+    @org.springframework.transaction.annotation.Transactional
+    void matchServiceLoadsItsTeamsAndOddsFromMysql() {
+        var match = matchService.getMatch(madridBarcelonaId());
+
+        assertThat(match.getHomeTeamRef().getName()).isEqualTo("Real Madrid");
+        assertThat(match.getAwayTeamRef().getName()).isEqualTo("Barcelona");
+        assertThat(match.getHomeOdds()).isEqualTo(2.10);
+    }
+
+    private Long madridBarcelonaId() {
+        return competitionService.findById(laLigaId()).getMatches().stream()
+                .filter(match -> "Barcelona".equals(match.getAwayTeam()))
+                .map(Match::getId).findFirst().orElseThrow();
     }
 }
