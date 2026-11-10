@@ -14,19 +14,19 @@ export async function clientAction(args: Route.ClientActionArgs) {
   await requireUser(args);
   const formData = await args.request.formData();
   const file = formData.get("avatar");
-  if (!(file instanceof File) || file.size === 0) return { error: "Selecciona una imagen." };
+  if (!(file instanceof File) || file.size === 0) return { error: "Select an image." };
   try {
     const body = new FormData(); body.append("file", file);
     const response = await apiFetch("/api/v1/images", { method: "POST", body });
     const result = await response.json() as { url: string };
     return { avatarUrl: result.url };
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "No se pudo subir la imagen." };
+    return { error: error instanceof Error ? error.message : "Could not upload image." };
   }
 }
 
 function formatBalance(value: number) {
-  return new Intl.NumberFormat("es-ES", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "EUR",
   }).format(value);
@@ -40,32 +40,32 @@ export default function ProfilePage({ loaderData: user }: Route.ComponentProps) 
   }, [fetcher.data, setCurrentUser, user]);
   const avatarUrl = fetcher.data && "avatarUrl" in fetcher.data ? fetcher.data.avatarUrl : user.avatarUrl;
   const busy = fetcher.state !== "idle";
-  const initials = user.username.slice(0, 1).toLocaleUpperCase("es-ES");
+  const initials = user.username.slice(0, 1).toLocaleUpperCase("en-US");
 
   return (
     <main className="container-xl py-5 page-enter">
-      <div className="eyebrow">Tu espacio</div>
-      <h1 className="page-title">Mi perfil</h1>
+      <div className="eyebrow">Your space</div>
+      <h1 className="page-title">My Profile</h1>
       <Row className="g-4 mt-1">
         <Col lg={4}>
           <Card className="stats-card h-100">
             <Card.Body className="p-4">
-              <div className="profile-avatar mb-3" aria-label={`Avatar de ${user.username}`}>
-                {avatarUrl ? <img src={avatarUrl} alt={`Foto de ${user.username}`} /> : initials}
+              <div className="profile-avatar mb-3" aria-label={`${user.username}'s avatar`}>
+                {avatarUrl ? <img src={avatarUrl} alt={`${user.username}'s photo`} /> : initials}
               </div>
-              <label className="btn btn-outline-light w-100 mb-2">{busy ? "Subiendo…" : "Cambiar foto"}<input className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={busy} onChange={(event) => { const file = event.target.files?.[0]; if (file) { const body = new FormData(); body.append("avatar", file); fetcher.submit(body, { method: "post", encType: "multipart/form-data" }); } event.target.value = ""; }} /></label>
+              <label className="btn btn-outline-light w-100 mb-2">{busy ? "Uploading…" : "Change photo"}<input className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={busy} onChange={(event) => { const file = event.target.files?.[0]; if (file) { const body = new FormData(); body.append("avatar", file); fetcher.submit(body, { method: "post", encType: "multipart/form-data" }); } event.target.value = ""; }} /></label>
               {fetcher.data && "error" in fetcher.data && <p role="alert" className="small text-danger">{fetcher.data.error}</p>}
-              {fetcher.data && "avatarUrl" in fetcher.data && <p role="status" className="small muted">Foto de perfil actualizada.</p>}
+              {fetcher.data && "avatarUrl" in fetcher.data && <p role="status" className="small muted">Profile photo updated.</p>}
               <h2 className="h4 fw-bold mb-1">{user.username}</h2>
               <p className="muted text-break">{user.email}</p>
-              <Badge bg="success" className="mb-3">Cuenta registrada</Badge>
+              <Badge bg="success" className="mb-3">Registered account</Badge>
               <hr />
               <Link to="/history" className="btn btn-outline-light w-100">
-                Ver mi historial
+                View my history
               </Link>
               {user.roles.includes("ROLE_ADMIN") && (
                 <Link to="/admin" className="btn btn-brand w-100 mt-2">
-                  Ir al panel de administración
+                  Go to Admin Panel
                 </Link>
               )}
             </Card.Body>
@@ -76,34 +76,34 @@ export default function ProfilePage({ loaderData: user }: Route.ComponentProps) 
             <Col sm={6}>
               <Card className="stats-card h-100">
                 <Card.Body>
-                  <div className="eyebrow mb-2">Saldo virtual</div>
+                  <div className="eyebrow mb-2">Virtual balance</div>
                   <strong className="profile-stat">{formatBalance(user.virtualBalance)}</strong>
-                  <p className="muted mt-2 mb-0">Saldo disponible en tu cuenta</p>
+                  <p className="muted mt-2 mb-0">Available balance in your account</p>
                 </Card.Body>
               </Card>
             </Col>
             <Col sm={6}>
               <Card className="stats-card h-100">
                 <Card.Body>
-                  <div className="eyebrow mb-2">Rol</div>
-                  <strong className="profile-stat">{user.roles.includes("ROLE_ADMIN") ? "Administrador" : "Usuario"}</strong>
-                  <p className="muted mt-2 mb-0">Permisos asociados a tu cuenta</p>
+                  <div className="eyebrow mb-2">Role</div>
+                  <strong className="profile-stat">{user.roles.includes("ROLE_ADMIN") ? "Administrator" : "User"}</strong>
+                  <p className="muted mt-2 mb-0">Permissions associated with your account</p>
                 </Card.Body>
               </Card>
             </Col>
           </Row>
           <Card className="stats-card mt-3">
             <Card.Body>
-              <h2 className="h5 fw-bold">Datos personales</h2>
+              <h2 className="h5 fw-bold">Personal details</h2>
               <dl className="row mb-0 mt-3">
-                <dt className="col-sm-4 muted">Nombre de usuario</dt>
+                <dt className="col-sm-4 muted">Username</dt>
                 <dd className="col-sm-8">{user.username}</dd>
-                <dt className="col-sm-4 muted">Correo electrónico</dt>
+                <dt className="col-sm-4 muted">Email address</dt>
                 <dd className="col-sm-8 text-break">{user.email}</dd>
-                <dt className="col-sm-4 muted">Fecha de nacimiento</dt>
-                <dd className="col-sm-8">{user.birthDate ? new Date(`${user.birthDate}T00:00:00`).toLocaleDateString("es-ES") : "No disponible"}</dd>
+                <dt className="col-sm-4 muted">Birth date</dt>
+                <dd className="col-sm-8">{user.birthDate ? new Date(`${user.birthDate}T00:00:00`).toLocaleDateString("en-US") : "Not available"}</dd>
               </dl>
-              <p className="small muted mb-0">La edición del perfil estará disponible próximamente.</p>
+              <p className="small muted mb-0">Profile editing will be available soon.</p>
             </Card.Body>
           </Card>
         </Col>

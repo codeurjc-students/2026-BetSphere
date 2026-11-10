@@ -7,7 +7,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
-    setupFiles: "./tests/setupTests.ts", // Apuntando a tu setup
+    setupFiles: "./tests/setupTests.ts", // Test setup configuration
     exclude: [
       ...configDefaults.exclude,
       "tests/integration/**",

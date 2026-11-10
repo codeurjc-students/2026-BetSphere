@@ -28,7 +28,7 @@ export async function getById(id: number): Promise<SportDTO>{
         const res = await apiFetch(`${API_URL}/${id}`);
         return res.json();
     } catch (error) {
-        throwRouteResponse(error, "No se pudo cargar el deporte.");
+        throwRouteResponse(error, "Could not load sport.");
     }
 }
 

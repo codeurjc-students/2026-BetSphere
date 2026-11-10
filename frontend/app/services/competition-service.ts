@@ -36,7 +36,7 @@ export async function getById(id: number): Promise<CompetitionDTO>{
         const res = await apiFetch(`${API_URL}/${id}`);
         return res.json();
     } catch (error) {
-        throwRouteResponse(error, "No se pudo cargar la competición.");
+        throwRouteResponse(error, "Could not load competition.");
     }
 }
 

@@ -26,9 +26,9 @@ export default function MatchList({ loaderData }: Route.ComponentProps) {
   }, [fetcher.data]);
   return (
     <main className="container-xl py-5">
-      <div className="eyebrow">Calendario</div>
-      <h1 className="page-title">Partidos</h1>
-      <p className="muted mb-4">Toda la acción, en un solo lugar.</p>
+      <div className="eyebrow">Schedule</div>
+      <h1 className="page-title">Matches</h1>
+      <p className="muted mb-4">All the action, in one place.</p>
       {matches.length ? (
         matches.map((match) => (
           <Link className="match-row" to={`/match/${match.id}`} key={match.id}>
@@ -45,12 +45,12 @@ export default function MatchList({ loaderData }: Route.ComponentProps) {
             </div>
             <div className="text-end">
               <div className="match-status">{match.gameStatus}</div>
-              <span className="small muted">Ver partido →</span>
+              <span className="small muted">View match →</span>
             </div>
           </Link>
         ))
       ) : (
-        <div className="surface-card muted">No hay partidos disponibles.</div>
+        <div className="surface-card muted">No matches available.</div>
       )}
       {!page.last && <LoadMore loading={fetcher.state !== "idle"} onClick={() => fetcher.load(`/matches?page=${page.number + 1}&size=${PAGE_SIZE}`)} />}
     </main>

@@ -22,7 +22,7 @@ export async function getMatchById(id: number): Promise<MatchViewDTO> {
         const res = await apiFetch(`${API_URL}/${id}`);
         return res.json();
     } catch (error) {
-        throwRouteResponse(error, "No se pudo cargar el partido.");
+        throwRouteResponse(error, "Could not load match.");
     }
 }
 

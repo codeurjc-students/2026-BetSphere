@@ -10,7 +10,7 @@ export async function getTeam(id: number): Promise<TeamDTO> {
     const response = await apiFetch(`${API_URL}/${id}`);
     return response.json();
   } catch (error) {
-    throwRouteResponse(error, "No se pudo cargar el equipo.");
+    throwRouteResponse(error, "Could not load team.");
   }
 }
 

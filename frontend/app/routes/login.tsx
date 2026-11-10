@@ -49,27 +49,27 @@ export default function LoginPage() {
     <main className="auth-wrap">
       <section className="auth-card">
         <span className="brand-mark">B</span>
-        <div className="eyebrow mb-2">Qué bueno verte</div>
-        <h1 className="h2 fw-bold">Inicia sesión</h1>
-        <p className="muted mb-4">Vuelve a donde vive el deporte.</p>
+        <div className="eyebrow mb-2">Welcome back</div>
+        <h1 className="h2 fw-bold">Sign in</h1>
+        <p className="muted mb-4">Return to where sports come alive.</p>
         <RouterForm method="post" noValidate>
           {errors.form && <Alert variant="danger">{errors.form}</Alert>}
           <Form.Group className="mb-3" controlId="email">
             <Form.Label className="fw-semibold">
-            Correo electrónico
+              Email address
             </Form.Label>
             <Form.Control
               name="email"
               type="email"
               autoComplete="email"
-              placeholder="tu@email.com"
+              placeholder="you@email.com"
               isInvalid={Boolean(errors.email)}
             />
             <Form.Control.Feedback type="invalid">{errors.email}</Form.Control.Feedback>
           </Form.Group>
           <Form.Group className="mb-3" controlId="password">
             <Form.Label className="fw-semibold">
-            Contraseña
+              Password
             </Form.Label>
             <Form.Control
               name="password"
@@ -81,13 +81,13 @@ export default function LoginPage() {
             <Form.Control.Feedback type="invalid">{errors.password}</Form.Control.Feedback>
           </Form.Group>
           <Button className="btn-brand w-100" type="submit">
-            Iniciar sesión
+            Sign In
           </Button>
         </RouterForm>
         <p className="text-center muted small mt-4 mb-0">
-          ¿Aún no tienes cuenta?{" "}
+          Don't have an account yet?{" "}
           <Link to="/register" className="text-link">
-            Regístrate
+            Register
           </Link>
         </p>
       </section>

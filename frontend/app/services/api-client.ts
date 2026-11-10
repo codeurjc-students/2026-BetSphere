@@ -41,7 +41,7 @@ async function send(input: RequestInfo | URL, init: RequestInit, headers: Header
   } catch (cause) {
     if (cause instanceof Error && cause.name === "AbortError") throw cause;
     throw new ApiError(
-      cause instanceof Error ? cause.message : "No se pudo conectar con el servidor.",
+      cause instanceof Error ? cause.message : "Could not connect to the server.",
       0,
       cause,
     );
@@ -59,7 +59,7 @@ async function throwForResponse(response: Response, fallback: string): Promise<n
  * token gets one refresh attempt and one retry before the error is surfaced.
  */
 export async function apiFetch(input: RequestInfo | URL, init: ApiRequestInit = {}): Promise<Response> {
-  const { token, unauthenticated = false, errorMessage = "La solicitud a la API ha fallado.", ...requestInit } = init;
+  const { token, unauthenticated = false, errorMessage = "The API request failed.", ...requestInit } = init;
   const headers = new Headers(requestInit.headers);
   const accessToken = token === undefined ? useAuthStore.getState().accessToken : token;
   if (!unauthenticated && accessToken && !headers.has("Authorization")) {

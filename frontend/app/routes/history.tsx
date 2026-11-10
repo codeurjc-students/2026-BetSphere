@@ -8,7 +8,7 @@ export function clientLoader(args: Route.ClientLoaderArgs) {
 }
 
 function formatBalance(value: number) {
-  return new Intl.NumberFormat("es-ES", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "EUR",
   }).format(value);
@@ -17,15 +17,15 @@ function formatBalance(value: number) {
 export default function HistoryPage({ loaderData: user }: Route.ComponentProps) {
   return (
     <main className="container-xl py-5 page-enter">
-      <div className="eyebrow">Tu actividad</div>
-      <h1 className="page-title">Historial</h1>
-      <p className="muted">Actividad de la cuenta de {user.username}</p>
+      <div className="eyebrow">Your activity</div>
+      <h1 className="page-title">History</h1>
+      <p className="muted">Account activity for {user.username}</p>
 
       <Row className="g-3 mt-2">
         <Col md={6}>
           <Card className="stats-card h-100">
             <Card.Body>
-              <div className="eyebrow mb-2">Saldo virtual actual</div>
+              <div className="eyebrow mb-2">Current virtual balance</div>
               <strong className="profile-stat">{formatBalance(user.virtualBalance)}</strong>
             </Card.Body>
           </Card>
@@ -33,9 +33,9 @@ export default function HistoryPage({ loaderData: user }: Route.ComponentProps) 
         <Col md={6}>
           <Card className="stats-card h-100">
             <Card.Body>
-              <div className="eyebrow mb-2">Apuestas registradas</div>
+              <div className="eyebrow mb-2">Placed bets</div>
               <strong className="profile-stat">—</strong>
-              <p className="muted mt-2 mb-0">El historial de apuestas aún no está disponible.</p>
+              <p className="muted mt-2 mb-0">Betting history is not yet available.</p>
             </Card.Body>
           </Card>
         </Col>
@@ -45,16 +45,16 @@ export default function HistoryPage({ loaderData: user }: Route.ComponentProps) 
         <Card.Body className="p-4">
           <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
-              <h2 className="h5 fw-bold mb-1">Actividad reciente</h2>
-              <p className="muted mb-0">Aquí aparecerán tus apuestas cuando esté disponible esa función.</p>
+              <h2 className="h5 fw-bold mb-1">Recent activity</h2>
+              <p className="muted mb-0">Your bets will appear here once this feature is available.</p>
             </div>
-            <Badge bg="secondary">Sin movimientos</Badge>
+            <Badge bg="secondary">No activity</Badge>
           </div>
           <div className="history-empty-state mt-4">
             <div className="history-empty-icon" aria-hidden="true">↗</div>
-            <p className="fw-semibold mb-1">Todavía no hay actividad que mostrar</p>
-            <p className="muted mb-3">Explora los partidos y vuelve cuando puedas registrar tus apuestas.</p>
-            <Link className="btn btn-brand" to="/matches">Explorar partidos</Link>
+            <p className="fw-semibold mb-1">No activity to display yet</p>
+            <p className="muted mb-3">Explore matches and check back once betting is enabled.</p>
+            <Link className="btn btn-brand" to="/matches">Explore matches</Link>
           </div>
         </Card.Body>
       </Card>

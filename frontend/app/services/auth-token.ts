@@ -24,7 +24,7 @@ async function requestNewAccessToken(): Promise<string> {
   } catch (cause) {
     if (cause instanceof Error && cause.name === "AbortError") throw cause;
     throw new AuthTokenError(
-      cause instanceof Error ? cause.message : "No se pudo renovar la sesión.",
+      cause instanceof Error ? cause.message : "Could not renew session.",
       0,
     );
   }
@@ -38,7 +38,7 @@ async function requestNewAccessToken(): Promise<string> {
 
   if (!response.ok || result?.status !== "SUCCESS" || !result.accessToken) {
     throw new AuthTokenError(
-      result?.message || "La sesión ha expirado.",
+      result?.message || "Session has expired.",
       response.status,
     );
   }

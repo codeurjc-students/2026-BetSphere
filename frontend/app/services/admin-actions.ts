@@ -19,7 +19,7 @@ export async function performAdminAction(request: Request): Promise<AdminActionR
   let entitySaved = false;
 
   if (!["users", "sports", "competitions", "teams", "matches"].includes(entity)) {
-    return { ok: false, entity: "sports", intent, error: "Tipo de registro no válido." };
+    return { ok: false, entity: "sports", intent, error: "Invalid record type." };
   }
 
   try {
@@ -28,7 +28,7 @@ export async function performAdminAction(request: Request): Promise<AdminActionR
       else if (entity === "competitions") await deleteCompetition(id);
       else if (entity === "teams") await deleteTeam(id);
       else if (entity === "matches") await deleteMatch(id);
-      else throw new Error("No se puede borrar este registro.");
+      else throw new Error("This record cannot be deleted.");
       return { ok: true, entity, intent };
     }
 
@@ -54,17 +54,17 @@ export async function performAdminAction(request: Request): Promise<AdminActionR
       const payload = { homeTeam: homeTeam.name, awayTeam: awayTeam.name, matchDate: value("matchDate"), homeOdds: value("homeOdds") ? Number(value("homeOdds")) : null, drawOdds: value("drawOdds") ? Number(value("drawOdds")) : null, awayOdds: value("awayOdds") ? Number(value("awayOdds")) : null, gameStatus: value("gameStatus"), homeTeamId, awayTeamId, competitionId: Number(value("competitionId")) };
       if (intent === "edit") await updateMatch(id, payload); else await addMatch(payload);
     } else {
-      throw new Error("No se pueden crear ni editar usuarios desde este panel.");
+      throw new Error("Users cannot be created or edited from this panel.");
     }
     return { ok: true, entity, intent };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "No se pudo completar la acción.";
+    const message = error instanceof Error ? error.message : "Could not complete the action.";
     if (entitySaved && image instanceof File && image.size > 0) {
       return {
         ok: true,
         entity,
         intent,
-        warning: `Los datos se guardaron, pero no se pudo subir la imagen: ${message}`,
+        warning: `Data was saved, but the image could not be uploaded: ${message}`,
       };
     }
     return { ok: false, entity, intent, error: message };

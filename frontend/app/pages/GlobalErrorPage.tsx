@@ -13,25 +13,25 @@ export function GlobalErrorPage() {
     <main className="error-page container-fluid px-3 px-md-4" role="main">
       <section className="error-card row g-0" role="alert" aria-labelledby="error-title">
         <div className="col-lg-7 error-copy">
-          <p className="eyebrow mb-3">Pausa técnica</p>
+          <p className="eyebrow mb-3">Technical Timeout</p>
           <h1 className="page-title mb-3" id="error-title">
-            No hemos podido cargar esta jugada.
+            We couldn't load this play.
           </h1>
           <p className="muted error-description">
-            Ha ocurrido un problema inesperado. Puedes volver al inicio o
-            probar de nuevo dentro de un momento.
+            An unexpected problem occurred. You can return home or try again in
+            a moment.
           </p>
           {detail && <p className="error-detail">{detail}</p>}
           <div className="d-flex flex-wrap gap-2">
             <Link className="btn btn-brand" to="/">
-              Volver al inicio <span aria-hidden="true">→</span>
+              Back to home <span aria-hidden="true">→</span>
             </Link>
             <button
               className="btn btn-outline-light error-retry"
               type="button"
               onClick={() => window.location.reload()}
             >
-              Reintentar
+              Retry
             </button>
           </div>
         </div>
@@ -39,7 +39,7 @@ export function GlobalErrorPage() {
           <div className="error-ball error-ball--warning">!</div>
           <span className="error-orbit error-orbit--one" />
           <span className="error-orbit error-orbit--two" />
-          <span className="error-art-caption">REVISANDO EL TERRENO</span>
+          <span className="error-art-caption">CHECKING THE FIELD</span>
         </div>
       </section>
     </main>
