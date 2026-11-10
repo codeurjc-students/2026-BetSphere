@@ -503,4 +503,36 @@ class FrontendSystemTest {
         match.setAwayTeamRef(teams.findByName("Barcelona").orElseThrow());
         return matchRepository.save(match);
     }
+
+    @Test
+    void openingTeamFromCompetitionShowsItsProfile(ChromeDriver driver) {
+        var competition = competitions.findAll().stream().filter(item -> "La Liga".equals(item.getName()))
+                .findFirst().orElseThrow();
+        var team = teams.findByName("Real Madrid").orElseThrow();
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/competition/" + competition.getId());
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        wait.until(ExpectedConditions.elementToBeClickable(
+                By.cssSelector("a.team-link[href='/team/" + team.getId() + "']"))).sendKeys(Keys.ENTER);
+
+        wait.until(ExpectedConditions.textToBePresentInElementLocated(By.tagName("h1"), "Real Madrid"));
+        assertThat(driver.findElement(By.tagName("main")).getText()).contains("Spain", "Season performance");
+        assertThat(driver.findElement(By.cssSelector("a.back-link")).getAttribute("href"))
+                .endsWith("/competition/" + competition.getId());
+    }
+
+    @Test
+    void frontendTeamServiceReadsProfileFromRealApi(ChromeDriver driver) {
+        var team = teams.findByName("Real Madrid").orElseThrow();
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/");
+
+        Object result = driver.executeAsyncScript("""
+                const [id, done] = arguments;
+                import('/app/services/team-service.ts')
+                    .then(({ getTeam }) => getTeam(id))
+                    .then(team => done([team.name, team.country, team.totalMatches]))
+                    .catch(error => done({ error: error.message }));
+                """, team.getId());
+
+        assertThat(result).isEqualTo(java.util.List.of("Real Madrid", "Spain", (long) team.getTotalMatches()));
+    }
 }

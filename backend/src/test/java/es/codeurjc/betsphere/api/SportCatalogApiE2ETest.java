@@ -40,6 +40,12 @@ class SportCatalogApiE2ETest {
     @Autowired
     private es.codeurjc.betsphere.service.MatchService matchService;
 
+    @Autowired
+    private es.codeurjc.betsphere.repository.TeamRepository teams;
+
+    @Autowired
+    private es.codeurjc.betsphere.service.TeamService teamService;
+
     @LocalServerPort
     private int port;
 
@@ -132,5 +138,27 @@ class SportCatalogApiE2ETest {
         return competitionService.findById(laLigaId()).getMatches().stream()
                 .filter(match -> "Barcelona".equals(match.getAwayTeam()))
                 .map(Match::getId).findFirst().orElseThrow();
+    }
+
+    @Test
+    void teamEndpointReturnsProfileAndSeasonStatistics() {
+        var team = teams.findByName("Real Madrid").orElseThrow();
+
+        given().port(port).pathParam("id", team.getId())
+                .get("/api/v1/teams/{id}")
+                .then().statusCode(200)
+                .body("name", org.hamcrest.Matchers.equalTo("Real Madrid"))
+                .body("country", org.hamcrest.Matchers.equalTo("Spain"))
+                .body("totalMatches", org.hamcrest.Matchers.equalTo(team.getTotalMatches()));
+    }
+
+    @Test
+    void teamServiceReadsPersistedProfileFromMysql() {
+        var saved = teams.save(new es.codeurjc.betsphere.model.Team("Valencia QA", "Spain", null));
+
+        var profile = teamService.findById(saved.getId());
+
+        assertThat(profile.getName()).isEqualTo("Valencia QA");
+        assertThat(profile.getCountry()).isEqualTo("Spain");
     }
 }
