@@ -61,4 +61,18 @@ class MatchApiE2ETest {
                 .body("content[0].homeTeam", equalTo("Real Madrid"))
                 .body("content[0].awayTeam", equalTo("Barcelona"));
     }
+
+    @Test
+    void returnsOnlySecondPageThroughHttp() {
+        matchRepository.save(new Match("Liverpool", "Chelsea", LocalDateTime.now(), 2.0, 3.0, 4.0, "SCHEDULED"));
+        matchRepository.save(new Match("Arsenal", "Everton", LocalDateTime.now(), 2.0, 3.0, 4.0, "SCHEDULED"));
+
+        given().port(port).queryParam("page", 1).queryParam("size", 1).queryParam("sort", "id,asc")
+                .get("/api/v1/matches/")
+                .then().statusCode(200)
+                .body("number", equalTo(1))
+                .body("content.size()", equalTo(1))
+                .body("content[0].homeTeam", equalTo("Arsenal"))
+                .body("last", equalTo(true));
+    }
 }

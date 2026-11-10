@@ -49,4 +49,20 @@ class MatchIntegrationTest {
         assertEquals("Chelsea", matches.get(0).getAwayTeam());
         assertTrue(mysqlContainer.isRunning());
     }
+
+    @Test
+    void readsSecondPageFromMysql() {
+        matchRepository.deleteAll();
+        matchRepository.save(new Match("Liverpool", "Chelsea", LocalDateTime.now(), 2.0, 3.0, 4.0, "SCHEDULED"));
+        Match second = matchRepository.save(
+                new Match("Arsenal", "Everton", LocalDateTime.now(), 2.0, 3.0, 4.0, "SCHEDULED"));
+        var request = org.springframework.data.domain.PageRequest.of(
+                1, 1, org.springframework.data.domain.Sort.by("id"));
+
+        var page = matchService.getAllMatches(request);
+
+        assertEquals(List.of(second.getId()), page.map(Match::getId).getContent());
+        assertEquals(2, page.getTotalElements());
+        assertTrue(page.isLast());
+    }
 }

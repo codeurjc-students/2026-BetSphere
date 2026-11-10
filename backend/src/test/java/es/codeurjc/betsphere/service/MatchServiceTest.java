@@ -49,4 +49,28 @@ public class MatchServiceTest {
         // Verify the repository was called exactly once
         verify(matchRepository, times(1)).findAll();
     }
+
+    @Test
+    void preservesTheRequestedSecondPageAndItsMetadata() {
+        var request = org.springframework.data.domain.PageRequest.of(1, 1);
+        var match = new Match("Arsenal", "Everton", LocalDateTime.now(), 2.0, 3.0, 4.0, "SCHEDULED");
+        when(matchRepository.findAll(request)).thenReturn(
+                new org.springframework.data.domain.PageImpl<>(List.of(match), request, 2));
+
+        var page = matchService.getAllMatches(request);
+
+        assertEquals(List.of(match), page.getContent());
+        assertEquals(1, page.getNumber());
+        assertEquals(2, page.getTotalElements());
+        verify(matchRepository).findAll(request);
+    }
+
+    @Test
+    void rejectsAnUnknownMatch() {
+        when(matchRepository.findById(99L)).thenReturn(java.util.Optional.empty());
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> matchService.getMatch(99L))
+                .isInstanceOf(java.util.NoSuchElementException.class)
+                .hasMessage("Match not found");
+    }
 }

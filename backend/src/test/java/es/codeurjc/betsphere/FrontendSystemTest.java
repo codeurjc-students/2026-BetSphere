@@ -1,7 +1,8 @@
 package es.codeurjc.betsphere;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,8 +49,8 @@ class FrontendSystemTest {
     private static Process frontendProcess;
     private static final ByteArrayOutputStream frontendOutput = new ByteArrayOutputStream();
 
-    @BeforeEach
-    void startFrontend() throws IOException, InterruptedException {
+    @BeforeAll
+    static void startFrontend() throws IOException, InterruptedException {
         Path frontendDirectory = findFrontendDirectory();
         List<String> command = System.getProperty("os.name").toLowerCase().contains("win")
                 ? List.of("cmd.exe", "/c", "npm", "run", "dev", "--", "--host", "127.0.0.1",
@@ -62,11 +63,12 @@ class FrontendSystemTest {
         processBuilder.environment().put("API_PROXY_TARGET", "http://localhost:8080");
         processBuilder.redirectErrorStream(true);
         frontendOutput.reset();
-        frontendProcess = processBuilder.start();
+        Process process = processBuilder.start();
+        frontendProcess = process;
 
         Thread outputReader = new Thread(() -> {
             try {
-                frontendProcess.getInputStream().transferTo(frontendOutput);
+                process.getInputStream().transferTo(frontendOutput);
             } catch (IOException ignored) {
                 // The stream closes when Vite exits.
             }
@@ -75,7 +77,7 @@ class FrontendSystemTest {
         outputReader.start();
 
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(60);
-        while (System.nanoTime() < deadline && frontendProcess.isAlive()) {
+        while (System.nanoTime() < deadline && process.isAlive()) {
             try (Socket socket = new Socket()) {
                 socket.connect(new InetSocketAddress("127.0.0.1", FRONTEND_PORT), 500);
                 return;
@@ -89,7 +91,7 @@ class FrontendSystemTest {
                 + frontendOutput.toString(StandardCharsets.UTF_8));
     }
 
-    private Path findFrontendDirectory() {
+    private static Path findFrontendDirectory() {
         Path workingDirectory = Path.of("").toAbsolutePath().normalize();
         for (Path candidate : List.of(workingDirectory.resolve("frontend"),
                 workingDirectory.getParent().resolve("frontend"))) {
@@ -100,8 +102,8 @@ class FrontendSystemTest {
         throw new IllegalStateException("Could not find the frontend directory from " + workingDirectory);
     }
 
-    @AfterEach
-    void stopFrontend() throws InterruptedException {
+    @AfterAll
+    static void stopFrontend() throws InterruptedException {
         if (frontendProcess != null) {
             frontendProcess.toHandle().descendants().forEach(ProcessHandle::destroyForcibly);
             frontendProcess.destroyForcibly();
@@ -119,6 +121,12 @@ class FrontendSystemTest {
 
     @Autowired
     private MatchRepository matchRepository;
+
+    @Autowired
+    private es.codeurjc.betsphere.repository.CompetitionRepository competitions;
+
+    @Autowired
+    private es.codeurjc.betsphere.repository.TeamRepository teams;
 
     @BeforeEach
     void setUp() {
@@ -141,6 +149,28 @@ class FrontendSystemTest {
         } finally {
             driver.quit();
         }
+    }
+
+    @Test
+    void loadMoreAppendsFinalPageOfMatches(ChromeDriver driver) {
+        for (int i = 1; i <= 10; i++) {
+            matchRepository.save(new Match("Home " + i, "Away " + i,
+                    LocalDateTime.now().plusDays(i), 2.10, 3.40, 3.20, "SCHEDULED"));
+        }
+
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/matches");
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        By matchRows = By.cssSelector("a.match-row");
+        By loadMore = By.xpath("//button[normalize-space()='Load more']");
+        var firstPage = wait.until(ExpectedConditions.numberOfElementsToBe(matchRows, 10))
+                .stream().map(row -> row.getAttribute("href")).toList();
+
+        wait.until(ExpectedConditions.elementToBeClickable(loadMore)).sendKeys(Keys.ENTER);
+
+        var allMatches = wait.until(ExpectedConditions.numberOfElementsToBe(matchRows, 11))
+                .stream().map(row -> row.getAttribute("href")).toList();
+        assertThat(allMatches).startsWith(firstPage.toArray(String[]::new)).doesNotHaveDuplicates();
+        wait.until(ExpectedConditions.numberOfElementsToBe(loadMore, 0));
     }
 
     @Test
@@ -308,5 +338,203 @@ class FrontendSystemTest {
                 """);
 
         assertThat(status).isEqualTo(400L);
+    }
+
+    @Test
+    void homeShowsSportsFromTheCatalog(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/");
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        var cards = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.cssSelector("a.sport-card")));
+
+        assertThat(cards).extracting(card -> card.findElement(By.tagName("h3")).getText())
+                .contains("Football", "Basketball", "Tennis");
+    }
+
+    @Test
+    void frontendSportServiceReadsRealCatalogApi(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/");
+        Object names = driver.executeAsyncScript("""
+                const done = arguments[0];
+                import('/app/services/sport-service.ts')
+                    .then(({ getSports }) => getSports())
+                    .then(sports => done(sports.map(sport => sport.name)))
+                    .catch(error => done({ error: error.message }));
+                """);
+
+        assertThat(names).isInstanceOf(java.util.List.class);
+        assertThat(((java.util.List<?>) names).stream().map(Object::toString).toList())
+                .contains("Football", "Basketball", "Tennis");
+    }
+
+    @Test
+    void openingSportFromHomeShowsItsCompetitions(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/");
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        wait.until(ExpectedConditions.elementToBeClickable(
+                By.xpath("//a[contains(@class,'sport-card')][h3='Football']"))).sendKeys(Keys.ENTER);
+        wait.until(ExpectedConditions.textToBePresentInElementLocated(By.tagName("h1"), "Football"));
+        var links = wait.until(ExpectedConditions.numberOfElementsToBe(
+                By.cssSelector("a.sport-competition-card"), 3));
+
+        assertThat(links).extracting(link -> link.findElement(By.tagName("strong")).getText())
+                .containsExactlyInAnyOrder("Premier League", "La Liga", "Bundesliga");
+    }
+
+    @Test
+    void frontendSportDetailServiceReadsCompetitionsFromRealApi(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/");
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        String href = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                By.xpath("//a[contains(@class,'sport-card')][h3='Football']"))).getAttribute("href");
+        String id = href.substring(href.lastIndexOf('/') + 1);
+
+        Object competitions = driver.executeAsyncScript("""
+                const [id, done] = arguments;
+                import('/app/services/sport-service.ts')
+                    .then(({ getById }) => getById(Number(id)))
+                    .then(sport => done(sport.competitions.map(competition => competition.name)))
+                    .catch(error => done({ error: error.message }));
+                """, id);
+
+        assertThat(competitions).isInstanceOf(java.util.List.class);
+        assertThat(((java.util.List<?>) competitions).stream().map(Object::toString).toList())
+                .containsExactlyInAnyOrder("Premier League", "La Liga", "Bundesliga");
+    }
+
+    @Test
+    void matchServiceReadsSecondPageFromRealApi(ChromeDriver driver) {
+        matchRepository.save(new Match("Arsenal", "Everton", LocalDateTime.now(), 2.0, 3.0, 4.0, "SCHEDULED"));
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/matches");
+
+        Object pages = driver.executeAsyncScript("""
+                const done = arguments[0];
+                import('/app/services/match-service.ts')
+                    .then(async ({ getMatchesPage }) => {
+                        const first = await getMatchesPage(0, 1);
+                        const second = await getMatchesPage(1, 1);
+                        done({
+                            differentMatches: first.content[0].id !== second.content[0].id,
+                            page: second.number,
+                            count: second.content.length,
+                            last: second.last
+                        });
+                    })
+                    .catch(error => done({ error: error.message }));
+                """);
+
+        assertThat(pages).isEqualTo(java.util.Map.of(
+                "differentMatches", true, "page", 1L, "count", 1L, "last", true));
+    }
+
+    @Test
+    void openingCompetitionShowsItsScheduledMatch(ChromeDriver driver) {
+        var competition = addCompetitionMatch();
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/sport/" + competition.getSport().getId());
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        wait.until(ExpectedConditions.elementToBeClickable(
+                By.cssSelector("a[href='/competition/" + competition.getId() + "']"))).sendKeys(Keys.ENTER);
+        wait.until(ExpectedConditions.textToBePresentInElementLocated(By.tagName("h1"), "La Liga"));
+
+        var matches = wait.until(ExpectedConditions.numberOfElementsToBe(By.cssSelector("a.match-row"), 2));
+        assertThat(matches).allSatisfy(match -> assertThat(match.getText()).contains("Valencia", "Sevilla"));
+    }
+
+    @Test
+    void frontendCompetitionServiceReadsScheduleFromRealApi(ChromeDriver driver) {
+        var competition = addCompetitionMatch();
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/");
+
+        Object result = driver.executeAsyncScript("""
+                const [id, done] = arguments;
+                import('/app/services/competition-service.ts')
+                    .then(({ getById }) => getById(id))
+                    .then(competition => done(competition.matches.map(match => match.homeTeam)))
+                    .catch(error => done({ error: error.message }));
+                """, competition.getId());
+
+        assertThat(result).isEqualTo(java.util.List.of("Valencia"));
+    }
+
+    private es.codeurjc.betsphere.model.Competition addCompetitionMatch() {
+        var competition = competitions.findAll().stream().filter(item -> "La Liga".equals(item.getName()))
+                .findFirst().orElseThrow();
+        var match = new Match("Valencia", "Sevilla", LocalDateTime.now().plusDays(2), 2.0, 3.0, 4.0, "SCHEDULED");
+        match.setCompetition(competition);
+        matchRepository.save(match);
+        return competition;
+    }
+
+    @Test
+    void openingMatchShowsBothTeamsAndHomeOdds(ChromeDriver driver) {
+        var match = addMatchWithTeams();
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/matches");
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        wait.until(ExpectedConditions.elementToBeClickable(
+                By.cssSelector("a.match-row[href='/match/" + match.getId() + "']"))).sendKeys(Keys.ENTER);
+
+        var titles = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.cssSelector("h1.match-team-title")));
+        assertThat(titles).extracting(org.openqa.selenium.WebElement::getText)
+                .containsExactly("Real Madrid", "Barcelona");
+        assertThat(driver.findElement(By.cssSelector("button[aria-label='Odds 1 disabled']")).getText())
+                .contains("2.10");
+    }
+
+    @Test
+    void frontendMatchServiceReadsDetailFromRealApi(ChromeDriver driver) {
+        var match = addMatchWithTeams();
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/");
+
+        Object result = driver.executeAsyncScript("""
+                const [id, done] = arguments;
+                import('/app/services/match-service.ts')
+                    .then(({ getMatchById }) => getMatchById(id))
+                    .then(match => done([match.homeTeam.name, match.awayTeam.name, match.competition.name]))
+                    .catch(error => done({ error: error.message }));
+                """, match.getId());
+
+        assertThat(result).isEqualTo(java.util.List.of("Real Madrid", "Barcelona", "La Liga"));
+    }
+
+    private Match addMatchWithTeams() {
+        var competition = competitions.findAll().stream().filter(item -> "La Liga".equals(item.getName()))
+                .findFirst().orElseThrow();
+        var match = new Match("Real Madrid", "Barcelona", LocalDateTime.now().plusDays(2),
+                2.10, 3.40, 3.20, "SCHEDULED");
+        match.setCompetition(competition);
+        match.setHomeTeamRef(teams.findByName("Real Madrid").orElseThrow());
+        match.setAwayTeamRef(teams.findByName("Barcelona").orElseThrow());
+        return matchRepository.save(match);
+    }
+
+    @Test
+    void openingTeamFromCompetitionShowsItsProfile(ChromeDriver driver) {
+        var competition = competitions.findAll().stream().filter(item -> "La Liga".equals(item.getName()))
+                .findFirst().orElseThrow();
+        var team = teams.findByName("Real Madrid").orElseThrow();
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/competition/" + competition.getId());
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        wait.until(ExpectedConditions.elementToBeClickable(
+                By.cssSelector("a.team-link[href='/team/" + team.getId() + "']"))).sendKeys(Keys.ENTER);
+
+        wait.until(ExpectedConditions.textToBePresentInElementLocated(By.tagName("h1"), "Real Madrid"));
+        assertThat(driver.findElement(By.tagName("main")).getText()).contains("Spain", "Season performance");
+        assertThat(driver.findElement(By.cssSelector("a.back-link")).getAttribute("href"))
+                .endsWith("/competition/" + competition.getId());
+    }
+
+    @Test
+    void frontendTeamServiceReadsProfileFromRealApi(ChromeDriver driver) {
+        var team = teams.findByName("Real Madrid").orElseThrow();
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/");
+
+        Object result = driver.executeAsyncScript("""
+                const [id, done] = arguments;
+                import('/app/services/team-service.ts')
+                    .then(({ getTeam }) => getTeam(id))
+                    .then(team => done([team.name, team.country, team.totalMatches]))
+                    .catch(error => done({ error: error.message }));
+                """, team.getId());
+
+        assertThat(result).isEqualTo(java.util.List.of("Real Madrid", "Spain", (long) team.getTotalMatches()));
     }
 }
