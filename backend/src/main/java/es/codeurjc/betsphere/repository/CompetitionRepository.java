@@ -9,6 +9,10 @@ import java.util.Optional;
 
 public interface CompetitionRepository extends JpaRepository<Competition, Long>{
 
+    boolean existsByNameIgnoreCase(String name);
+
+    boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
+
     @Override
     @EntityGraph(attributePaths = {"sport", "matches", "matches.homeTeamRef", "matches.awayTeamRef"})
     List<Competition> findAll();

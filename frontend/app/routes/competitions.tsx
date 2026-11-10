@@ -27,23 +27,23 @@ export default function CompetitionPage({
         {competition.sport.name} · {competition.country}
       </div>
       <section className="competition-hero mt-3">
-        <div className="eyebrow mb-2">Competición</div>
-        {competition.iconUrl && <img className="entity-logo mb-2" src={competition.iconUrl} alt={`Logo de ${competition.name}`} />}
+        <div className="eyebrow mb-2">Competition</div>
+        {competition.iconUrl && <img className="entity-logo mb-2" src={competition.iconUrl} alt={`${competition.name} logo`} />}
         <h1 className="page-title">{competition.name}</h1>
         <p className="muted mb-0">
-          {competition.teams.length} equipos · {competition.matches.length}{" "}
-          partidos
+          {competition.teams.length} teams · {competition.matches.length}{" "}
+          matches
         </p>
       </section>
 
       <div className="section-heading">
         <div>
-          <div className="eyebrow mb-2">Participantes</div>
-          <h2 className="section-title mb-0">Equipos</h2>
+          <div className="eyebrow mb-2">Participants</div>
+          <h2 className="section-title mb-0">Teams</h2>
         </div>
       </div>
       {competition.teams.length === 0 ? (
-        <p className="muted">No hay equipos registrados.</p>
+        <p className="muted">No registered teams.</p>
       ) : (
         <div className="row g-3">
           {competition.teams.map((team) => (
@@ -55,7 +55,7 @@ export default function CompetitionPage({
                   <span className="d-block small muted">{team.country}</span>
                 </span>
                 <span className="text-link" aria-hidden="true">
-                  Ver equipo
+                  View team
                 </span>
               </Link>
             </div>
@@ -65,12 +65,12 @@ export default function CompetitionPage({
 
       <div className="section-heading">
         <div>
-          <div className="eyebrow mb-2">Lo que viene</div>
-          <h2 className="section-title mb-0">Próximos partidos</h2>
+          <div className="eyebrow mb-2">Upcoming</div>
+          <h2 className="section-title mb-0">Upcoming matches</h2>
         </div>
       </div>
       {upcomingMatches.length === 0 ? (
-        <p className="muted">No hay próximos partidos.</p>
+        <p className="muted">No upcoming matches.</p>
       ) : (
         upcomingMatches.map((match) => (
           <Link className="match-row" to={`/match/${match.id}`} key={match.id}>
@@ -92,12 +92,12 @@ export default function CompetitionPage({
 
       <div className="section-heading">
         <div>
-          <div className="eyebrow mb-2">Calendario completo</div>
-          <h2 className="section-title mb-0">Todos los partidos</h2>
+          <div className="eyebrow mb-2">Full schedule</div>
+          <h2 className="section-title mb-0">All matches</h2>
         </div>
       </div>
       {competition.matches.length === 0 ? (
-        <p className="muted">No hay partidos disponibles.</p>
+        <p className="muted">No matches available.</p>
       ) : (
         competition.matches.map((match) => (
           <Link className="match-row" to={`/match/${match.id}`} key={match.id}>

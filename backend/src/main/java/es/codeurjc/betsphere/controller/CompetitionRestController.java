@@ -26,6 +26,7 @@ import static org.springframework.web.servlet.support.ServletUriComponentsBuilde
 
 import es.codeurjc.betsphere.dto.CompetitionBasicInfoDTO;
 import es.codeurjc.betsphere.dto.CompetitionDTO;
+import es.codeurjc.betsphere.dto.CompetitionSummaryDTO;
 import es.codeurjc.betsphere.dto.CompetitionMapper;
 import es.codeurjc.betsphere.dto.TeamBasicInfoDTO;
 import es.codeurjc.betsphere.dto.TeamMapper;
@@ -71,6 +72,12 @@ public class CompetitionRestController {
     @Transactional(readOnly = true)
     public ResponseEntity<Page<CompetitionDTO>> getAllCompetitions(Pageable pageable) {
         return ResponseEntity.ok(competitionService.findAll(pageable).map(mapper::toDTO));
+    }
+
+    @GetMapping("/options")
+    @Transactional(readOnly = true)
+    public ResponseEntity<Page<CompetitionSummaryDTO>> getCompetitionOptions(Pageable pageable) {
+        return ResponseEntity.ok(competitionService.findAll(pageable).map(mapper::toSummaryDTO));
     }
 
     @GetMapping("/by-sport/{sportId}")

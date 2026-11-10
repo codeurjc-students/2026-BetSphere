@@ -34,17 +34,17 @@ function TeamStats({
         <p className="muted small">{team.country}</p>
         <>
           <dl className="row mb-0">
-            <dt className="col-8">Partidos</dt>
+            <dt className="col-8">Matches</dt>
             <dd className="col-4">{team.totalMatches}</dd>
-            <dt className="col-8">Victorias</dt>
+            <dt className="col-8">Wins</dt>
             <dd className="col-4">{team.wins}</dd>
-            <dt className="col-8">Empates</dt>
+            <dt className="col-8">Draws</dt>
             <dd className="col-4">{team.draws}</dd>
-            <dt className="col-8">Derrotas</dt>
+            <dt className="col-8">Losses</dt>
             <dd className="col-4">{team.losses}</dd>
-            <dt className="col-8">Goles a favor</dt>
+            <dt className="col-8">Goals for</dt>
             <dd className="col-4">{team.goalsFor}</dd>
-            <dt className="col-8">Goles en contra</dt>
+            <dt className="col-8">Goals against</dt>
             <dd className="col-4">{team.goalsAgainst}</dd>
           </dl>
         </>
@@ -58,7 +58,7 @@ export default function MatchPage({ loaderData }: Route.ComponentProps) {
   const loginHref = `/login?returnTo=${encodeURIComponent(`/match/${match.id}`)}`;
   const odds = [
     { label: "1", name: match.homeTeam.name, value: match.homeOdds },
-    { label: "X", name: "Empate", value: match.drawOdds },
+    { label: "X", name: "Draw", value: match.drawOdds },
     { label: "2", name: match.awayTeam.name, value: match.awayOdds },
   ];
 
@@ -81,7 +81,7 @@ export default function MatchPage({ loaderData }: Route.ComponentProps) {
         </div>
         <Row className="align-items-center text-center mt-4 gy-3">
           <Col xs={5}>
-            {match.homeTeam.logoUrl && <img className="match-team-logo mb-2" src={match.homeTeam.logoUrl} alt={`Logo de ${match.homeTeam.name}`} />}
+            {match.homeTeam.logoUrl && <img className="match-team-logo mb-2" src={match.homeTeam.logoUrl} alt={`${match.homeTeam.name} logo`} />}
             <h1 className="match-team-title">{match.homeTeam.name}</h1>
           </Col>
           <Col xs={2}>
@@ -93,7 +93,7 @@ export default function MatchPage({ loaderData }: Route.ComponentProps) {
             </strong>
           </Col>
           <Col xs={5}>
-            {match.awayTeam.logoUrl && <img className="match-team-logo mb-2" src={match.awayTeam.logoUrl} alt={`Logo de ${match.awayTeam.name}`} />}
+            {match.awayTeam.logoUrl && <img className="match-team-logo mb-2" src={match.awayTeam.logoUrl} alt={`${match.awayTeam.name} logo`} />}
             <h1 className="match-team-title">{match.awayTeam.name}</h1>
           </Col>
         </Row>
@@ -104,10 +104,10 @@ export default function MatchPage({ loaderData }: Route.ComponentProps) {
           <section className="surface-card mb-4">
             <div className="section-heading mt-0">
               <div>
-                <div className="eyebrow mb-2">Mercado principal</div>
-                <h2 className="section-title mb-0">Resultado · 1X2</h2>
+                <div className="eyebrow mb-2">Main market</div>
+                <h2 className="section-title mb-0">Full Time Result · 1X2</h2>
               </div>
-              <span className="muted small">Solo visual · no disponible</span>
+              <span className="muted small">Display only · not available</span>
             </div>
             <Row className="g-2">
               {odds.map((odd) => (
@@ -130,9 +130,9 @@ export default function MatchPage({ loaderData }: Route.ComponentProps) {
           </section>
           <div className="section-heading mt-0">
             <div>
-              <div className="eyebrow mb-2">Forma de temporada</div>
+              <div className="eyebrow mb-2">Season form</div>
               <h2 className="section-title mb-0">
-                Estadísticas de los equipos
+                Team statistics
               </h2>
             </div>
           </div>
@@ -148,17 +148,17 @@ export default function MatchPage({ loaderData }: Route.ComponentProps) {
         <Col lg={4}>
           <Card className="stats-card mb-3">
             <Card.Body>
-              <div className="eyebrow mb-2">Comunidad</div>
-              <h2 className="h5 fw-bold">Chat en directo</h2>
+              <div className="eyebrow mb-2">Community</div>
+              <h2 className="h5 fw-bold">Live chat</h2>
               {user ? (
                 <p className="muted mb-0">
-                  La conversación del partido estará disponible próximamente.
+                  Match chat will be available soon.
                 </p>
               ) : (
                 <>
-                  <p className="muted">Inicia sesión para participar en el chat.</p>
+                  <p className="muted">Sign in to join the chat.</p>
                   <Link className="btn btn-outline-dark w-100" to={loginHref}>
-                    Iniciar sesión
+                    Sign In
                   </Link>
                 </>
               )}
@@ -166,22 +166,22 @@ export default function MatchPage({ loaderData }: Route.ComponentProps) {
           </Card>
           <Card className="stats-card">
             <Card.Body>
-              <div className="eyebrow mb-2">Tu siguiente paso</div>
-              <h2 className="h5 fw-bold">Acciones del partido</h2>
+              <div className="eyebrow mb-2">Next step</div>
+              <h2 className="h5 fw-bold">Match actions</h2>
               {user ? (
                 <>
                   <Button className="btn-brand w-100 mb-2" disabled>
-                    Iniciar apuesta · Próximamente
+                    Place bet · Coming soon
                   </Button>
                   <Button className="btn-outline-light w-100" disabled>
-                    Generar predicción con IA · Próximamente
+                    Generate AI prediction · Coming soon
                   </Button>
                 </>
               ) : (
                 <>
-                  <p className="muted">Inicia sesión para apostar o generar un resumen con IA.</p>
+                  <p className="muted">Sign in to place bets or generate an AI summary.</p>
                   <Link className="btn btn-brand w-100" to={loginHref}>
-                    Iniciar sesión
+                    Sign In
                   </Link>
                 </>
               )}

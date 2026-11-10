@@ -47,10 +47,10 @@ describe("application root", () => {
 
     expect(
       await screen.findByRole("heading", {
-        name: "Esta página no está en el marcador.",
+        name: "This page is not on the scoreboard.",
       }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Volver al inicio/ })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Back to home/ })).toHaveAttribute(
       "href",
       "/",
     );
@@ -61,7 +61,7 @@ describe("application root", () => {
 
     expect(
       await screen.findByRole("heading", {
-        name: "No hemos podido cargar esta jugada.",
+        name: "We couldn't load this play.",
       }),
     ).toBeInTheDocument();
     expect(

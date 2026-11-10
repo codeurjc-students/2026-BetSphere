@@ -26,6 +26,7 @@ import static org.springframework.web.servlet.support.ServletUriComponentsBuilde
 import es.codeurjc.betsphere.dto.SportBasicInfoDTO;
 import es.codeurjc.betsphere.dto.SportDTO;
 import es.codeurjc.betsphere.dto.SportMapper;
+import es.codeurjc.betsphere.dto.SportSummaryDTO;
 import es.codeurjc.betsphere.model.Sport;
 import es.codeurjc.betsphere.service.SportService;
 
@@ -66,6 +67,12 @@ public class SportRestController {
         return ResponseEntity.ok(sportService.findAll(pageable).map(mapper::toDTO));
     }
 
+    @GetMapping("/options")
+    @Transactional(readOnly = true)
+    public ResponseEntity<Page<SportSummaryDTO>> getSportOptions(Pageable pageable) {
+        return ResponseEntity.ok(sportService.findAll(pageable).map(mapper::toSummaryDTO));
+    }
+
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
     public ResponseEntity<?> getSportById(@PathVariable Long id) {
@@ -78,7 +85,6 @@ public class SportRestController {
     }
 
     @PostMapping({"", "/"})
-    @Transactional
     public ResponseEntity<?> createSport(@RequestBody SportBasicInfoDTO dto) {
         try {
             Sport sport = mapper.toEntity(dto);
@@ -96,7 +102,6 @@ public class SportRestController {
     }
 
     @PutMapping("/{id}")
-    @Transactional
     public ResponseEntity<?> updateSport(@PathVariable Long id, @RequestBody SportBasicInfoDTO dto) {
         try {
             Sport updatedSport = sportService.update(id, mapper.toEntity(dto));

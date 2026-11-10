@@ -3,6 +3,7 @@ import type { AuthResponseDTO } from "../dtos/AuthResponseDTO";
 import type { RegisterRequestDTO } from "../dtos/RegisterRequestDTO";
 import type { UserDTO } from "../dtos/UserDTO";
 import { apiFetch, ApiError } from "./api-client";
+import { refreshAccessToken as requestNewAccessToken } from "./auth-token";
 
 const AUTH_URL = "/api/v1/auth";
 const USERS_URL = "/api/v1/users";
@@ -80,15 +81,5 @@ export async function logout() {
 }
 
 export async function refreshAccessToken(): Promise<string> {
-  const response = await authRequest(`${AUTH_URL}/refresh`, {
-    method: "POST",
-    credentials: "include",
-    signal: AbortSignal.timeout(SESSION_REQUEST_TIMEOUT_MS),
-    errorMessage: "Sesion expired.",
-  });
-  const result = (await response.json()) as AuthResponseDTO;
-  if (result.status !== "SUCCESS" || !result.accessToken) {
-    throw new AuthServiceError(result.message || "Sesion expired.", response.status);
-  }
-  return result.accessToken;
+  return requestNewAccessToken();
 }

@@ -39,54 +39,54 @@ export default function RegisterPage() {
     <main className="auth-wrap">
       <section className="auth-card">
         <span className="brand-mark">B</span>
-        <div className="eyebrow mb-2">Empieza tu experiencia</div>
-        <h1 className="h2 fw-bold">Crea tu cuenta</h1>
-        <p className="muted mb-4">Únete a una comunidad que vive el deporte.</p>
+        <div className="eyebrow mb-2">Start your journey</div>
+        <h1 className="h2 fw-bold">Create your account</h1>
+        <p className="muted mb-4">Join a community that lives for sports.</p>
         <RouterForm method="post" noValidate>
           {errors.form && <Alert variant="danger">{errors.form}</Alert>}
           <Form.Group className="mb-3" controlId="username">
             <Form.Label className="fw-semibold">
-            Nombre
+              Username
             </Form.Label>
             <Form.Control
               name="username"
               autoComplete="username"
-              placeholder="Tu nombre de usuario"
+              placeholder="Your username"
               isInvalid={Boolean(errors.username)}
             />
             <Form.Control.Feedback type="invalid">{errors.username}</Form.Control.Feedback>
           </Form.Group>
           <Form.Group className="mb-3" controlId="email">
             <Form.Label className="fw-semibold">
-            Correo electrónico
+              Email address
             </Form.Label>
             <Form.Control
               name="email"
               type="email"
               autoComplete="email"
-              placeholder="tu@email.com"
+              placeholder="you@email.com"
               isInvalid={Boolean(errors.email)}
             />
             <Form.Control.Feedback type="invalid">{errors.email}</Form.Control.Feedback>
           </Form.Group>
           <Form.Group className="mb-3" controlId="password">
             <Form.Label className="fw-semibold">
-            Contraseña
+              Password
             </Form.Label>
             <Form.Control
               name="password"
               type="password"
               autoComplete="new-password"
-              placeholder="Crea una contraseña"
+              placeholder="Create a password"
               isInvalid={Boolean(errors.password)}
             />
             <Form.Control.Feedback type="invalid">{errors.password}</Form.Control.Feedback>
             <Form.Text className="muted">
-              8–64 caracteres, con mayúscula, minúscula, número y símbolo.
+              8–64 characters, with uppercase, lowercase, number, and symbol.
             </Form.Text>
           </Form.Group>
           <Form.Group className="mb-3" controlId="birthDate">
-            <Form.Label className="fw-semibold">Fecha de nacimiento</Form.Label>
+            <Form.Label className="fw-semibold">Birth date</Form.Label>
             <Form.Control
               name="birthDate"
               type="date"
@@ -96,13 +96,13 @@ export default function RegisterPage() {
             <Form.Control.Feedback type="invalid">{errors.birthDate}</Form.Control.Feedback>
           </Form.Group>
           <Button className="btn-brand w-100" type="submit">
-            Crear cuenta
+            Create account
           </Button>
         </RouterForm>
         <p className="text-center muted small mt-4 mb-0">
-          ¿Ya tienes cuenta?{" "}
+          Already have an account?{" "}
           <Link to="/login" className="text-link">
-            Inicia sesión
+            Sign in
           </Link>
         </p>
       </section>

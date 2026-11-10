@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import es.codeurjc.betsphere.model.User;
 import es.codeurjc.betsphere.repository.UserRepository;
@@ -29,6 +30,7 @@ public class UserService {
     }
 
 
+    @Transactional
     public User register(User user) {
         // Username
         if (user.getRealUsername() == null || user.getRealUsername().trim().isEmpty()) {
@@ -90,10 +92,12 @@ public class UserService {
         return userRepository.findByEmail(email).orElseThrow(() -> new NoSuchElementException("User not found."));
     }
 
+    @Transactional
     public User save(User user) {
         return userRepository.save(user);
     }
 
+    @Transactional
     public User update(Long id, User partialUser) {
         User existingUser = getUser(id);
 
@@ -125,6 +129,7 @@ public class UserService {
         return userRepository.save(existingUser);
     }
 
+    @Transactional
     public void delete(Long id) {
         if (!userRepository.existsById(id)) {
             throw new NoSuchElementException("User not found.");

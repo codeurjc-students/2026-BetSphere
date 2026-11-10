@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import es.codeurjc.betsphere.security.jwt.AuthResponse;
 import es.codeurjc.betsphere.security.jwt.AuthResponse.Status;
 import es.codeurjc.betsphere.security.jwt.LoginRequest;
+import es.codeurjc.betsphere.security.jwt.TokenType;
 import es.codeurjc.betsphere.security.jwt.UserLoginService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,7 +35,7 @@ public class LoginRestController {
 
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refreshToken(
-            @CookieValue(name = "RefreshToken", required = false) String refreshToken, 
+            @CookieValue(name = TokenType.REFRESH_COOKIE_NAME, required = false) String refreshToken,
             HttpServletRequest request,
             HttpServletResponse response) {
         return userService.refresh(request, response, refreshToken);

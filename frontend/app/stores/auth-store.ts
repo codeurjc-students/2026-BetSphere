@@ -7,6 +7,7 @@ type AuthState = {
   user: UserDTO | null;
   initialized: boolean;
   setSession: (accessToken: string, user: UserDTO) => void;
+  setAccessToken: (accessToken: string) => void;
   setUser: (user: UserDTO) => void;
   clearSession: () => void;
   setInitialized: () => void;
@@ -17,6 +18,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   initialized: false,
   setSession: (accessToken, user) => set({ accessToken, user, initialized: true }),
+  setAccessToken: (accessToken) => set({ accessToken }),
   setUser: (user) => set({ user }),
   clearSession: () => set({ accessToken: null, user: null, initialized: true }),
   setInitialized: () => set({ initialized: true }),

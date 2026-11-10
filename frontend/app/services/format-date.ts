@@ -1,4 +1,4 @@
-const dateTimeFormatter = new Intl.DateTimeFormat("es-ES", {
+const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
   weekday: "short", day: "numeric", month: "short", year: "numeric",
   hour: "2-digit", minute: "2-digit",
 });

@@ -12,20 +12,20 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 export default function SportPage({ loaderData: sport }: Route.ComponentProps) {
   return (
     <main className="container-xl py-5 page-enter">
-      <Link className="back-link" to="/">← Todos los deportes</Link>
+      <Link className="back-link" to="/">← All sports</Link>
       <section className="sport-hero mt-4">
         {sport.iconUrl && <img className="sport-hero-logo" src={sport.iconUrl} alt="" />}
         <div>
-          <div className="eyebrow mb-1">Explora el deporte</div>
+          <div className="eyebrow mb-1">Explore sport</div>
           <h1 className="page-title mb-0">{sport.name}</h1>
         </div>
       </section>
       <div className="section-heading mt-5">
-        <div><div className="eyebrow mb-2">Competiciones disponibles</div><h2 className="section-title mb-0">Competiciones</h2></div>
-        <span className="muted small">{sport.competitions.length} en total</span>
+        <div><div className="eyebrow mb-2">Available competitions</div><h2 className="section-title mb-0">Competitions</h2></div>
+        <span className="muted small">{sport.competitions.length} total</span>
       </div>
       {sport.competitions.length === 0 ? (
-        <div className="surface-card muted">Todavía no hay competiciones para este deporte.</div>
+        <div className="surface-card muted">There are no competitions for this sport yet.</div>
       ) : (
         <div className="row g-3">
           {sport.competitions.map((competition) => (

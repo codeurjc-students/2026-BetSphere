@@ -7,6 +7,8 @@ import es.codeurjc.betsphere.model.Team;
 
 public interface TeamRepository extends JpaRepository<Team, Long>{
 
-     Optional<Team> findByName(String name);   
+     Optional<Team> findByName(String name);
+     boolean existsByNameIgnoreCase(String name);
+     boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
     
 }

@@ -1,5 +1,6 @@
 package es.codeurjc.betsphere.service;
 
+import java.util.ArrayList;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.NoSuchElementException;
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import es.codeurjc.betsphere.model.Team;
+import es.codeurjc.betsphere.model.Competition;
 import es.codeurjc.betsphere.repository.TeamRepository;
 import es.codeurjc.betsphere.repository.MatchRepository;
 
@@ -30,6 +32,7 @@ public class TeamService {
     }
 
 
+    @Transactional
     public Team save(Team team) {
         validateName(team.getName());
         teamRepository.findByName(team.getName()).ifPresent(existing -> {
@@ -40,6 +43,7 @@ public class TeamService {
         return teamRepository.save(team);
     }
 
+    @Transactional
     public Team update(Long id, Team updatedData) {
         Team team = findById(id);
         team.setName(updatedData.getName());
@@ -51,12 +55,16 @@ public class TeamService {
     @Transactional
     public void delete(Long id) {
         Team team = findById(id);
-        if (!team.getCompetitions().isEmpty()) {
-            throw new IllegalStateException("Cannot delete a team that belongs to competitions. Remove it from all competitions first.");
-        }
         if (matchRepository.existsByHomeTeamRef_IdOrAwayTeamRef_Id(id, id)) {
             throw new IllegalStateException("Cannot delete a team that participates in matches.");
         }
+
+        // Competition owns the join table. Remove every association in this
+        // transaction before deleting the team to keep the operation atomic.
+        for (Competition competition : new ArrayList<>(team.getCompetitions())) {
+            competition.getTeams().removeIf(linkedTeam -> linkedTeam.getId().equals(id));
+        }
+        teamRepository.flush();
         teamRepository.delete(team);
     }
 
