@@ -331,4 +331,30 @@ class FrontendSystemTest {
 
         assertThat(status).isEqualTo(400L);
     }
+
+    @Test
+    void homeShowsSportsFromTheCatalog(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/");
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        var cards = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.cssSelector("a.sport-card")));
+
+        assertThat(cards).extracting(card -> card.findElement(By.tagName("h3")).getText())
+                .contains("Football", "Basketball", "Tennis");
+    }
+
+    @Test
+    void frontendSportServiceReadsRealCatalogApi(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/");
+        Object names = driver.executeAsyncScript("""
+                const done = arguments[0];
+                import('/app/services/sport-service.ts')
+                    .then(({ getSports }) => getSports())
+                    .then(sports => done(sports.map(sport => sport.name)))
+                    .catch(error => done({ error: error.message }));
+                """);
+
+        assertThat(names).isInstanceOf(java.util.List.class);
+        assertThat(((java.util.List<?>) names).stream().map(Object::toString).toList())
+                .contains("Football", "Basketball", "Tennis");
+    }
 }
