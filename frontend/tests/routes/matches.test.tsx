@@ -62,7 +62,7 @@ describe("Matches route", () => {
 
     // 3. Await the heading to ensure the loader has finished executing
     expect(
-      await screen.findByRole("heading", { name: "Partidos" })
+      await screen.findByRole("heading", { name: "Matches" })
     ).toBeInTheDocument();
 
     // 4. Assert the main entity data is rendered
@@ -79,9 +79,9 @@ describe("Matches route", () => {
     renderMatchesRoute();
 
     expect(
-      await screen.findByRole("heading", { name: "Partidos" })
+      await screen.findByRole("heading", { name: "Matches" })
     ).toBeInTheDocument();
 
-    expect(screen.getByText("No hay partidos disponibles.")).toBeInTheDocument();
+    expect(screen.getByText("No matches available.")).toBeInTheDocument();
   });
 });
