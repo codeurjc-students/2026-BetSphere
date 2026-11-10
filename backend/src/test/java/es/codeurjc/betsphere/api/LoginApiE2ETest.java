@@ -128,13 +128,13 @@ class LoginApiE2ETest {
                 .post("/api/v1/auth/login")
                 .then().statusCode(200).extract().cookie(TokenType.REFRESH_COOKIE_NAME);
 
-        var expiredCookie = given().port(port).cookie(TokenType.REFRESH_COOKIE_NAME, refreshCookie)
+        String setCookie = given().port(port).cookie(TokenType.REFRESH_COOKIE_NAME, refreshCookie)
                 .post("/api/v1/auth/logout")
                 .then().statusCode(200).body("status", equalTo("SUCCESS"))
-                .extract().detailedCookie(TokenType.REFRESH_COOKIE_NAME);
+                .extract().header("Set-Cookie");
 
-        assertThat(expiredCookie.getMaxAge()).isZero();
-        assertThat(expiredCookie.getPath()).isEqualTo("/");
+        assertThat(setCookie).startsWith(TokenType.REFRESH_COOKIE_NAME + "=;");
+        assertThat(setCookie.split(";\\s*")).contains("Max-Age=0", "Path=/");
         given().port(port).post("/api/v1/auth/refresh").then().statusCode(400);
     }
 }
