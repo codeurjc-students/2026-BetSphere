@@ -392,4 +392,29 @@ class FrontendSystemTest {
         assertThat(((java.util.List<?>) competitions).stream().map(Object::toString).toList())
                 .containsExactlyInAnyOrder("Premier League", "La Liga", "Bundesliga");
     }
+
+    @Test
+    void matchServiceReadsSecondPageFromRealApi(ChromeDriver driver) {
+        matchRepository.save(new Match("Arsenal", "Everton", LocalDateTime.now(), 2.0, 3.0, 4.0, "SCHEDULED"));
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/matches");
+
+        Object pages = driver.executeAsyncScript("""
+                const done = arguments[0];
+                import('/app/services/match-service.ts')
+                    .then(async ({ getMatchesPage }) => {
+                        const first = await getMatchesPage(0, 1);
+                        const second = await getMatchesPage(1, 1);
+                        done({
+                            differentMatches: first.content[0].id !== second.content[0].id,
+                            page: second.number,
+                            count: second.content.length,
+                            last: second.last
+                        });
+                    })
+                    .catch(error => done({ error: error.message }));
+                """);
+
+        assertThat(pages).isEqualTo(java.util.Map.of(
+                "differentMatches", true, "page", 1L, "count", 1L, "last", true));
+    }
 }
