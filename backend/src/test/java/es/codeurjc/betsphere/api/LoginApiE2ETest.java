@@ -5,6 +5,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.blankOrNullString;
 
+import java.net.HttpCookie;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -133,8 +135,11 @@ class LoginApiE2ETest {
                 .then().statusCode(200).body("status", equalTo("SUCCESS"))
                 .extract().header("Set-Cookie");
 
-        assertThat(setCookie).startsWith(TokenType.REFRESH_COOKIE_NAME + "=;");
-        assertThat(setCookie.split(";\\s*")).contains("Max-Age=0", "Path=/");
+        var expiredCookie = HttpCookie.parse(setCookie).getFirst();
+        assertThat(expiredCookie.getName()).isEqualTo(TokenType.REFRESH_COOKIE_NAME);
+        assertThat(expiredCookie.getValue()).isEmpty();
+        assertThat(expiredCookie.getPath()).isEqualTo("/");
+        assertThat(expiredCookie.hasExpired()).isTrue();
         given().port(port).post("/api/v1/auth/refresh").then().statusCode(400);
     }
 }
