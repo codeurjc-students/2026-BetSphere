@@ -36,4 +36,16 @@ class UserLoginServiceTest {
         assertThat(response.getCookies()).isEmpty();
         verifyNoInteractions(tokenProvider);
     }
+
+    @Test
+    void missingRefreshCookieReturnsBadRequestWithoutCheckingToken() {
+        var tokenProvider = mock(JwtTokenProvider.class);
+        var service = new UserLoginService(mock(AuthenticationManager.class), tokenProvider,
+                mock(RepositoryUserDetailsService.class));
+
+        var result = service.refresh(new MockHttpServletRequest(), new MockHttpServletResponse(), null);
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verifyNoInteractions(tokenProvider);
+    }
 }

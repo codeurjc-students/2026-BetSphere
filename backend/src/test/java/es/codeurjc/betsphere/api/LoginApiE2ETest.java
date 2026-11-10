@@ -17,7 +17,10 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import es.codeurjc.betsphere.repository.UserRepository;
+import es.codeurjc.betsphere.security.jwt.JwtTokenProvider;
 import es.codeurjc.betsphere.security.jwt.LoginRequest;
+import es.codeurjc.betsphere.security.jwt.UserLoginService;
 import es.codeurjc.betsphere.security.jwt.TokenType;
 import io.restassured.http.ContentType;
 
@@ -40,6 +43,15 @@ class LoginApiE2ETest {
 
     @Autowired
     private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private JwtTokenProvider tokenProvider;
+
+    @Autowired
+    private UserLoginService loginService;
 
     @Test
     void loginIssuesTokenAcceptedByAuthenticatedEndpoint() {
@@ -75,5 +87,37 @@ class LoginApiE2ETest {
 
         assertThat(authentication.isAuthenticated()).isTrue();
         assertThat(authentication.getName()).isEqualTo(EMAIL);
+    }
+
+    @Test
+    void refreshCookieRestoresSessionOverHttp() {
+        String cookie = given().port(port).contentType(ContentType.JSON)
+                .body(new LoginRequest(EMAIL, PASSWORD))
+                .post("/api/v1/auth/login")
+                .then().statusCode(200).extract().cookie(TokenType.REFRESH_COOKIE_NAME);
+
+        String token = given().port(port).cookie(TokenType.REFRESH_COOKIE_NAME, cookie)
+                .post("/api/v1/auth/refresh")
+                .then().statusCode(200).body("status", equalTo("SUCCESS"))
+                .extract().path("accessToken");
+
+        given().port(port).auth().oauth2(token).get("/api/v1/users/me")
+                .then().statusCode(200).body("email", equalTo(EMAIL));
+
+        given().port(port).cookie(TokenType.REFRESH_COOKIE_NAME, "invalid")
+                .post("/api/v1/auth/refresh")
+                .then().statusCode(401).body("status", equalTo("FAILURE"));
+    }
+
+    @Test
+    void refreshResolvesPersistedUser() {
+        var persistedUser = userRepository.findByEmail(EMAIL).orElseThrow();
+        String refreshToken = tokenProvider.generateRefreshToken(persistedUser);
+
+        var result = loginService.refresh(null, null, refreshToken);
+
+        assertThat(result.getStatusCode().value()).isEqualTo(200);
+        assertThat(tokenProvider.validateToken(result.getBody().getAccessToken()).getSubject())
+                .isEqualTo(EMAIL);
     }
 }

@@ -143,6 +143,11 @@ class FrontendSystemTest {
 
     @Test
     void userCanSignInThroughLoginForm(ChromeDriver driver) {
+        signInThroughForm(driver);
+        assertThat(driver.getCurrentUrl()).endsWith(":" + FRONTEND_PORT + "/");
+    }
+
+    private void signInThroughForm(ChromeDriver driver) {
         driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/login");
 
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(60));
@@ -153,7 +158,7 @@ class FrontendSystemTest {
 
         wait.until(ExpectedConditions.visibilityOfElementLocated(
                 By.cssSelector("a[aria-label='View profile of user@betsphere.com']")));
-        assertThat(driver.getCurrentUrl()).endsWith(":" + FRONTEND_PORT + "/");
+
     }
 
     @Test
@@ -224,5 +229,40 @@ class FrontendSystemTest {
     private void setBirthDate(ChromeDriver driver, String date) {
         driver.executeScript("arguments[0].value = arguments[1];",
                 driver.findElement(By.id("birthDate")), date);
+    }
+
+    @Test
+    void reloadRestoresSessionAndInvalidCookieRedirectsToLogin(ChromeDriver driver) {
+        signInThroughForm(driver);
+        driver.findElement(By.cssSelector("a[aria-label='View profile of user@betsphere.com']")).click();
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+        wait.until(ExpectedConditions.urlContains("/profile"));
+        driver.navigate().refresh();
+        wait.until(ExpectedConditions.visibilityOfElementLocated(
+                By.cssSelector("a[aria-label='View profile of user@betsphere.com']")));
+        assertThat(driver.getCurrentUrl()).endsWith("/profile");
+
+        driver.manage().deleteCookieNamed("RefreshToken");
+        driver.manage().addCookie(new org.openqa.selenium.Cookie("RefreshToken", "invalid"));
+        driver.navigate().refresh();
+        wait.until(ExpectedConditions.urlContains("/login?returnTo="));
+    }
+
+    @Test
+    void frontendRefreshServiceRenewsSessionThroughRealApi(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/login");
+        driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(30));
+        Object email = driver.executeAsyncScript("""
+                const done = arguments[0];
+                import('/app/services/auth-service.ts')
+                    .then(async ({ login, refreshAccessToken, getCurrentUser }) => {
+                        await login({ email: 'user@betsphere.com', password: 'user123' });
+                        const user = await getCurrentUser(await refreshAccessToken());
+                        done(user.email);
+                    })
+                    .catch(error => done({ error: error.message }));
+                """);
+
+        assertThat(email).isEqualTo("user@betsphere.com");
     }
 }
