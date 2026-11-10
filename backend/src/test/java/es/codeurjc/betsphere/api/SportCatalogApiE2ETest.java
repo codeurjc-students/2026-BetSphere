@@ -175,4 +175,27 @@ class SportCatalogApiE2ETest {
         }
         assertThat(sports.existsById(saved.getId())).isFalse();
     }
+
+    @Test
+    void competitionServicePersistsSportAndCountryChangesInMysql() {
+        var football = sports.findByName("Football").orElseThrow();
+        var basketball = sports.findByName("Basketball").orElseThrow();
+        var saved = competitionService.save(new Competition("Database League QA", "Spain", null, null),
+                football.getId());
+        try {
+            assertThat(competitions.findById(saved.getId()).orElseThrow().getSport().getId())
+                    .isEqualTo(football.getId());
+            competitionService.update(saved.getId(),
+                    new Competition("Updated Database League QA", "France", null, null), basketball.getId());
+
+            var updated = competitions.findById(saved.getId()).orElseThrow();
+            assertThat(updated.getName()).isEqualTo("Updated Database League QA");
+            assertThat(updated.getCountry()).isEqualTo("France");
+            assertThat(updated.getSport().getId()).isEqualTo(basketball.getId());
+        } finally {
+            competitionService.delete(saved.getId());
+        }
+        assertThat(competitions.existsById(saved.getId())).isFalse();
+    }
+
 }

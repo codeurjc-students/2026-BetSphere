@@ -642,4 +642,68 @@ class FrontendSystemTest {
         assertThat(result).isEqualTo(java.util.Map.of(
                 "created", "Client sport QA", "updated", "Updated client sport QA", "deleted", true));
     }
+
+    @Test
+    void administratorCanCreateEditAndDeleteCompetition(ChromeDriver driver) {
+        String baseUrl = "http://127.0.0.1:" + FRONTEND_PORT;
+        driver.get(baseUrl + "/admin");
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email"))).sendKeys("admin@betsphere.com");
+        driver.findElement(By.id("password")).sendKeys("admin123");
+        driver.findElement(By.cssSelector("form button[type='submit']")).sendKeys(Keys.ENTER);
+        wait.until(ExpectedConditions.urlToBe(baseUrl + "/admin"));
+        wait.until(ExpectedConditions.elementToBeClickable(
+                By.xpath("//button[@role='tab' and starts-with(normalize-space(), 'Competitions')]"))).sendKeys(Keys.ENTER);
+        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='New record']")))
+                .sendKeys(Keys.ENTER);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("admin-name"))).sendKeys("Browser League QA");
+        driver.findElement(By.id("admin-country")).sendKeys("Spain");
+        new org.openqa.selenium.support.ui.Select(driver.findElement(By.id("admin-sportId")))
+                .selectByVisibleText("Football");
+        By submit = By.cssSelector("[aria-label='Competitions form'] button[type='submit']");
+        wait.until(ExpectedConditions.elementToBeClickable(submit)).sendKeys(Keys.ENTER);
+
+        By created = By.xpath("//tbody/tr[td[normalize-space()='Browser League QA']]");
+        wait.until(ExpectedConditions.visibilityOfElementLocated(created))
+                .findElement(By.xpath(".//button[normalize-space()='Edit']")).sendKeys(Keys.ENTER);
+        var name = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("admin-name")));
+        name.clear();
+        name.sendKeys("Updated Browser League QA");
+        wait.until(ExpectedConditions.elementToBeClickable(submit)).sendKeys(Keys.ENTER);
+
+        By updated = By.xpath("//tbody/tr[td[normalize-space()='Updated Browser League QA']]");
+        wait.until(ExpectedConditions.visibilityOfElementLocated(updated))
+                .findElement(By.xpath(".//button[normalize-space()='Delete']")).sendKeys(Keys.ENTER);
+        wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("[role='dialog'] button[type='submit']")))
+                .sendKeys(Keys.ENTER);
+        wait.until(ExpectedConditions.numberOfElementsToBe(updated, 0));
+    }
+
+    @Test
+    void frontendCompetitionServiceManagesCompetitionThroughRealApi(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/");
+        Object result = driver.executeAsyncScript("""
+                const done = arguments[0];
+                (async () => {
+                    const { login, getCurrentUser } = await import('/app/services/auth-service.ts');
+                    const { restoreSession, useAuthStore } = await import('/app/stores/auth-store.ts');
+                    const { getSports } = await import('/app/services/sport-service.ts');
+                    const { addCompetition, updateCompetition, deleteCompetition, getCompetitions } =
+                        await import('/app/services/competition-service.ts');
+                    await restoreSession();
+                    const session = await login({ email: 'admin@betsphere.com', password: 'admin123' });
+                    useAuthStore.getState().setSession(session.accessToken, await getCurrentUser(session.accessToken));
+                    const sportId = (await getSports()).find(sport => sport.name === 'Football').id;
+                    const created = await addCompetition({ name: 'Client League QA', country: 'Spain', sportId });
+                    const updated = await updateCompetition(created.id, { name: created.name, country: 'France', sportId });
+                    await deleteCompetition(created.id);
+                    const competitions = await getCompetitions();
+                    done({ sport: created.sport.name, country: updated.country,
+                        deleted: !competitions.some(competition => competition.id === created.id) });
+                })().catch(error => done({ error: error.message }));
+                """);
+
+        assertThat(result).isEqualTo(java.util.Map.of("sport", "Football", "country", "France", "deleted", true));
+    }
+
 }

@@ -18,4 +18,17 @@ class CompetitionServiceTest {
 
         assertThatThrownBy(() -> service.findById(99L)).isInstanceOf(NoSuchElementException.class);
     }
+
+    @Test
+    void rejectsDuplicateCompetitionNameBeforeWriting() {
+        var competitions = mock(CompetitionRepository.class);
+        org.mockito.Mockito.when(competitions.existsByNameIgnoreCase("La Liga")).thenReturn(true);
+        var service = new CompetitionService(competitions, mock(SportService.class),
+                mock(TeamRepository.class), mock(MatchRepository.class));
+        var duplicate = new es.codeurjc.betsphere.model.Competition(" La Liga ", "Spain", null, null);
+
+        assertThatThrownBy(() -> service.save(duplicate, 1L)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("A competition with this name already exists.");
+        org.mockito.Mockito.verify(competitions, org.mockito.Mockito.never()).save(duplicate);
+    }
 }

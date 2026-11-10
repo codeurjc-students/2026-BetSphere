@@ -188,4 +188,26 @@ class LoginApiE2ETest {
                 .delete("/api/v1/sports/{id}", id).then().statusCode(204);
         given().port(port).get("/api/v1/sports/{id}", id).then().statusCode(404);
     }
+
+    @Test
+    void administratorManagesCompetitionsThroughHttp() {
+        int sportId = given().port(port).get("/api/v1/sports/")
+                .then().statusCode(200).extract().path("content.find { it.name == 'Football' }.id");
+        String endpoint = "/api/v1/competitions/";
+        var payload = java.util.Map.of("name", "REST League QA", "country", "Spain", "sportId", sportId);
+        given().port(port).auth().oauth2(tokenFor(EMAIL, PASSWORD)).contentType(ContentType.JSON)
+                .body(payload).post(endpoint).then().statusCode(403);
+
+        String token = tokenFor("admin@betsphere.com", "admin123");
+        int id = given().port(port).auth().oauth2(token).contentType(ContentType.JSON)
+                .body(payload).post(endpoint).then().statusCode(201)
+                .body("sport.id", equalTo(sportId)).extract().path("id");
+
+        given().port(port).auth().oauth2(token).contentType(ContentType.JSON)
+                .body(java.util.Map.of("name", "Updated REST League QA", "country", "France", "sportId", sportId))
+                .put(endpoint + id).then().statusCode(200).body("country", equalTo("France"));
+        given().port(port).auth().oauth2(token).delete(endpoint + id).then().statusCode(204);
+        given().port(port).get(endpoint + id).then().statusCode(404);
+    }
+
 }
