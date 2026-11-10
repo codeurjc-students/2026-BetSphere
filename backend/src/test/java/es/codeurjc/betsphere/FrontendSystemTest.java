@@ -144,6 +144,28 @@ class FrontendSystemTest {
     }
 
     @Test
+    void loadMoreAppendsFinalPageOfMatches(ChromeDriver driver) {
+        for (int i = 1; i <= 10; i++) {
+            matchRepository.save(new Match("Home " + i, "Away " + i,
+                    LocalDateTime.now().plusDays(i), 2.10, 3.40, 3.20, "SCHEDULED"));
+        }
+
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/matches");
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        By matchRows = By.cssSelector("a.match-row");
+        By loadMore = By.xpath("//button[normalize-space()='Load more']");
+        var firstPage = wait.until(ExpectedConditions.numberOfElementsToBe(matchRows, 10))
+                .stream().map(row -> row.getAttribute("href")).toList();
+
+        wait.until(ExpectedConditions.elementToBeClickable(loadMore)).sendKeys(Keys.ENTER);
+
+        var allMatches = wait.until(ExpectedConditions.numberOfElementsToBe(matchRows, 11))
+                .stream().map(row -> row.getAttribute("href")).toList();
+        assertThat(allMatches).startsWith(firstPage.toArray(String[]::new)).doesNotHaveDuplicates();
+        wait.until(ExpectedConditions.numberOfElementsToBe(loadMore, 0));
+    }
+
+    @Test
     void userCanSignInThroughLoginForm(ChromeDriver driver) {
         signInThroughForm(driver);
     }
