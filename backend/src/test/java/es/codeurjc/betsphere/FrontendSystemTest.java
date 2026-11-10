@@ -6,6 +6,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -139,5 +141,172 @@ class FrontendSystemTest {
         } finally {
             driver.quit();
         }
+    }
+
+    @Test
+    void userCanSignInThroughLoginForm(ChromeDriver driver) {
+        signInThroughForm(driver);
+    }
+
+    private void signInThroughForm(ChromeDriver driver) {
+        driver.manage().window().setSize(new Dimension(1280, 900));
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/login");
+
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email")))
+                .sendKeys("user@betsphere.com");
+        driver.findElement(By.id("password")).sendKeys("user123");
+        driver.findElement(By.cssSelector("form button[type='submit']")).click();
+        wait.until(ExpectedConditions.urlToBe("http://127.0.0.1:" + FRONTEND_PORT + "/"));
+
+        wait.until(ExpectedConditions.visibilityOfElementLocated(
+                By.cssSelector("a[aria-label='View profile of user@betsphere.com']")));
+
+    }
+
+    @Test
+    void frontendAuthServiceSignsInAgainstRealApi(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/login");
+        driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(30));
+
+        Object result = driver.executeAsyncScript("""
+                const done = arguments[arguments.length - 1];
+                import('/app/services/auth-service.ts')
+                    .then(async ({ login, getCurrentUser }) => {
+                        const session = await login({
+                            email: 'user@betsphere.com',
+                            password: 'user123'
+                        });
+                        const user = await getCurrentUser(session.accessToken);
+                        done({ status: session.status, email: user.email });
+                    })
+                    .catch(error => done({ error: error.message }));
+                """);
+
+        assertThat(result).isEqualTo(java.util.Map.of("status", "SUCCESS", "email", "user@betsphere.com"));
+    }
+
+    @Test
+    void registrationFormRejectsMinorAndAcceptsAdult(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/register");
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+        String username = newRegistrationUsername();
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("username"))).sendKeys(username);
+        driver.findElement(By.id("email")).sendKeys(username + "@example.test");
+        driver.findElement(By.id("password")).sendKeys("ValidPass1!");
+        setBirthDate(driver, "2015-06-15");
+        driver.findElement(By.cssSelector("form button[type='submit']")).click();
+        wait.until(ExpectedConditions.visibilityOfElementLocated(
+                By.cssSelector("#birthDate.is-invalid + .invalid-feedback")));
+        assertThat(driver.findElement(By.cssSelector("#birthDate + .invalid-feedback")).getText())
+                .contains("18 years old");
+
+        setBirthDate(driver, "1990-06-15");
+        driver.findElement(By.cssSelector("form button[type='submit']")).click();
+        wait.until(ExpectedConditions.urlContains("/login?registered=1"));
+    }
+
+    @Test
+    void frontendRegistrationServiceCreatesAccountThroughRealApi(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/register");
+        driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(30));
+        String username = newRegistrationUsername();
+
+        Object email = driver.executeAsyncScript("""
+                const [username, done] = arguments;
+                import('/app/services/auth-service.ts')
+                    .then(({ register }) => register({
+                        username, email: username + '@example.test',
+                        password: 'ValidPass1!', birthDate: '1990-06-15'
+                    }))
+                    .then(user => done(user.email))
+                    .catch(error => done({ error: error.message }));
+                """, username);
+        assertThat(email).isEqualTo(username + "@example.test");
+    }
+
+    private String newRegistrationUsername() {
+        return "user_" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+    }
+
+    private void setBirthDate(ChromeDriver driver, String date) {
+        driver.executeScript("arguments[0].value = arguments[1];",
+                driver.findElement(By.id("birthDate")), date);
+    }
+
+    @Test
+    void reloadRestoresSessionAndInvalidCookieRedirectsToLogin(ChromeDriver driver) {
+        signInThroughForm(driver);
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+        wait.until(ExpectedConditions.elementToBeClickable(
+                By.cssSelector("a[aria-label='View profile of user@betsphere.com']"))).sendKeys(Keys.ENTER);
+        wait.until(ExpectedConditions.urlContains("/profile"));
+        driver.navigate().refresh();
+        wait.until(ExpectedConditions.visibilityOfElementLocated(
+                By.cssSelector("a[aria-label='View profile of user@betsphere.com']")));
+        assertThat(driver.getCurrentUrl()).endsWith("/profile");
+
+        driver.manage().deleteCookieNamed("RefreshToken");
+        driver.manage().addCookie(new org.openqa.selenium.Cookie("RefreshToken", "invalid"));
+        driver.navigate().refresh();
+        wait.until(ExpectedConditions.urlContains("/login?returnTo="));
+    }
+
+    @Test
+    void frontendRefreshServiceRenewsSessionThroughRealApi(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/login");
+        driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(30));
+        Object email = driver.executeAsyncScript("""
+                const done = arguments[0];
+                import('/app/services/auth-service.ts')
+                    .then(async ({ login, refreshAccessToken, getCurrentUser }) => {
+                        // Let startup's anonymous refresh finish before creating a session.
+                        const { restoreSession } = await import('/app/stores/auth-store.ts');
+                        await restoreSession();
+                        await login({ email: 'user@betsphere.com', password: 'user123' });
+                        const user = await getCurrentUser(await refreshAccessToken());
+                        done(user.email);
+                    })
+                    .catch(error => done({ error: error.message }));
+                """);
+
+        assertThat(email).isEqualTo("user@betsphere.com");
+    }
+
+    @Test
+    void logoutFromHeaderPreventsAccessToProfile(ChromeDriver driver) {
+        signInThroughForm(driver);
+
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+        By logoutButton = By.cssSelector("button.header-logout");
+        wait.until(ExpectedConditions.elementToBeClickable(logoutButton)).sendKeys(Keys.ENTER);
+        wait.until(ExpectedConditions.numberOfElementsToBe(logoutButton, 0));
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/profile");
+        wait.until(ExpectedConditions.urlContains("/login?returnTo="));
+    }
+
+    @Test
+    void frontendLogoutServiceRemovesRefreshCookieThroughRealApi(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/login");
+        driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(30));
+        Object status = driver.executeAsyncScript("""
+                const done = arguments[0];
+                import('/app/services/auth-service.ts')
+                    .then(async ({ login, logout, refreshAccessToken }) => {
+                        // Let startup's anonymous refresh finish before creating a session.
+                        const { restoreSession } = await import('/app/stores/auth-store.ts');
+                        await restoreSession();
+                        await login({ email: 'user@betsphere.com', password: 'user123' });
+                        await refreshAccessToken();
+                        await logout();
+                        await refreshAccessToken().then(
+                            () => done('Session still active'),
+                            error => done(error.status)
+                        );
+                    })
+                    .catch(error => done({ error: error.message }));
+                """);
+
+        assertThat(status).isEqualTo(400L);
     }
 }
