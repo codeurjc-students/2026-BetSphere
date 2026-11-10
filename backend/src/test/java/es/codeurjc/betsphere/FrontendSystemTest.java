@@ -140,4 +140,41 @@ class FrontendSystemTest {
             driver.quit();
         }
     }
+
+    @Test
+    void userCanSignInThroughLoginForm(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/login");
+
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email")))
+                .sendKeys("user@betsphere.com");
+        driver.findElement(By.id("password")).sendKeys("user123");
+        driver.findElement(By.cssSelector("form button[type='submit']")).click();
+
+        wait.until(ExpectedConditions.visibilityOfElementLocated(
+                By.cssSelector("a[aria-label='View profile of user@betsphere.com']")));
+        assertThat(driver.getCurrentUrl()).endsWith(":" + FRONTEND_PORT + "/");
+    }
+
+    @Test
+    void frontendAuthServiceSignsInAgainstRealApi(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/login");
+        driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(30));
+
+        Object result = driver.executeAsyncScript("""
+                const done = arguments[arguments.length - 1];
+                import('/app/services/auth-service.ts')
+                    .then(async ({ login, getCurrentUser }) => {
+                        const session = await login({
+                            email: 'user@betsphere.com',
+                            password: 'user123'
+                        });
+                        const user = await getCurrentUser(session.accessToken);
+                        done({ status: session.status, email: user.email });
+                    })
+                    .catch(error => done({ error: error.message }));
+                """);
+
+        assertThat(result).isEqualTo(java.util.Map.of("status", "SUCCESS", "email", "user@betsphere.com"));
+    }
 }
