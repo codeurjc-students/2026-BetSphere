@@ -1,7 +1,8 @@
 package es.codeurjc.betsphere;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,8 +49,8 @@ class FrontendSystemTest {
     private static Process frontendProcess;
     private static final ByteArrayOutputStream frontendOutput = new ByteArrayOutputStream();
 
-    @BeforeEach
-    void startFrontend() throws IOException, InterruptedException {
+    @BeforeAll
+    static void startFrontend() throws IOException, InterruptedException {
         Path frontendDirectory = findFrontendDirectory();
         List<String> command = System.getProperty("os.name").toLowerCase().contains("win")
                 ? List.of("cmd.exe", "/c", "npm", "run", "dev", "--", "--host", "127.0.0.1",
@@ -62,11 +63,12 @@ class FrontendSystemTest {
         processBuilder.environment().put("API_PROXY_TARGET", "http://localhost:8080");
         processBuilder.redirectErrorStream(true);
         frontendOutput.reset();
-        frontendProcess = processBuilder.start();
+        Process process = processBuilder.start();
+        frontendProcess = process;
 
         Thread outputReader = new Thread(() -> {
             try {
-                frontendProcess.getInputStream().transferTo(frontendOutput);
+                process.getInputStream().transferTo(frontendOutput);
             } catch (IOException ignored) {
                 // The stream closes when Vite exits.
             }
@@ -75,7 +77,7 @@ class FrontendSystemTest {
         outputReader.start();
 
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(60);
-        while (System.nanoTime() < deadline && frontendProcess.isAlive()) {
+        while (System.nanoTime() < deadline && process.isAlive()) {
             try (Socket socket = new Socket()) {
                 socket.connect(new InetSocketAddress("127.0.0.1", FRONTEND_PORT), 500);
                 return;
@@ -89,7 +91,7 @@ class FrontendSystemTest {
                 + frontendOutput.toString(StandardCharsets.UTF_8));
     }
 
-    private Path findFrontendDirectory() {
+    private static Path findFrontendDirectory() {
         Path workingDirectory = Path.of("").toAbsolutePath().normalize();
         for (Path candidate : List.of(workingDirectory.resolve("frontend"),
                 workingDirectory.getParent().resolve("frontend"))) {
@@ -100,8 +102,8 @@ class FrontendSystemTest {
         throw new IllegalStateException("Could not find the frontend directory from " + workingDirectory);
     }
 
-    @AfterEach
-    void stopFrontend() throws InterruptedException {
+    @AfterAll
+    static void stopFrontend() throws InterruptedException {
         if (frontendProcess != null) {
             frontendProcess.toHandle().descendants().forEach(ProcessHandle::destroyForcibly);
             frontendProcess.destroyForcibly();
