@@ -706,4 +706,105 @@ class FrontendSystemTest {
         assertThat(result).isEqualTo(java.util.Map.of("sport", "Football", "country", "France", "deleted", true));
     }
 
+    @Test
+    void administratorCanCreateEditAndDeleteTeam(ChromeDriver driver) {
+        var wait = openAdminTab(driver, "Teams");
+        openNewAdminRecord(wait);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("admin-name"))).sendKeys("Browser Team QA");
+        driver.findElement(By.id("admin-country")).sendKeys("Spain");
+        selectAdminOption(driver, "competitionId", "La Liga");
+        saveAdminRecord(wait, "Teams");
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(By.cssSelector("[aria-label='Teams form']")));
+        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='Load more']")))
+                .sendKeys(Keys.ENTER);
+
+        By created = adminRow("Browser Team QA");
+        openAdminRowAction(wait, created, "Edit");
+        var name = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("admin-name")));
+        name.clear();
+        name.sendKeys("Updated Browser Team QA");
+        saveAdminRecord(wait, "Teams");
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(By.cssSelector("[aria-label='Teams form']")));
+        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='Load more']")))
+                .sendKeys(Keys.ENTER);
+
+        deleteAdminRecord(wait, adminRow("Updated Browser Team QA"));
+    }
+
+    @Test
+    void frontendTeamServicesManageTeamThroughRealApi(ChromeDriver driver) {
+        Object result = runAuthenticatedAdminScript(driver, """
+                const { createTeam, getCompetitions, getById } = await import('/app/services/competition-service.ts');
+                const { updateTeam, deleteTeam, getTeams } = await import('/app/services/team-service.ts');
+                const competition = (await getCompetitions()).find(item => item.name === 'La Liga');
+                const created = await createTeam(competition.id, { name: 'Client Team QA', country: 'Spain', logoUrl: null });
+                const linked = (await getById(competition.id)).teams.some(team => team.id === created.id);
+                const updated = await updateTeam(created.id, { name: created.name, country: 'France', logoUrl: null });
+                await deleteTeam(created.id);
+                return { linked, country: updated.country, deleted: !(await getTeams()).some(team => team.id === created.id) };
+                """);
+
+        assertThat(result).isEqualTo(java.util.Map.of("linked", true, "country", "France", "deleted", true));
+    }
+
+    private WebDriverWait openAdminTab(ChromeDriver driver, String tab) {
+        String baseUrl = "http://127.0.0.1:" + FRONTEND_PORT;
+        driver.get(baseUrl + "/admin");
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email"))).sendKeys("admin@betsphere.com");
+        driver.findElement(By.id("password")).sendKeys("admin123");
+        driver.findElement(By.cssSelector("form button[type='submit']")).sendKeys(Keys.ENTER);
+        wait.until(ExpectedConditions.urlToBe(baseUrl + "/admin"));
+        wait.until(ExpectedConditions.elementToBeClickable(By.xpath(
+                "//button[@role='tab' and starts-with(normalize-space(), '" + tab + "')]"))).sendKeys(Keys.ENTER);
+        return wait;
+    }
+
+    private void openNewAdminRecord(WebDriverWait wait) {
+        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[normalize-space()='New record']")))
+                .sendKeys(Keys.ENTER);
+    }
+
+    private void selectAdminOption(ChromeDriver driver, String field, String option) {
+        new org.openqa.selenium.support.ui.Select(driver.findElement(By.id("admin-" + field)))
+                .selectByVisibleText(option);
+    }
+
+    private void saveAdminRecord(WebDriverWait wait, String tab) {
+        wait.until(ExpectedConditions.elementToBeClickable(
+                By.cssSelector("[aria-label='" + tab + " form'] button[type='submit']"))).sendKeys(Keys.ENTER);
+    }
+
+    private By adminRow(String label) {
+        return By.xpath("//tbody/tr[td[normalize-space()='" + label + "']]");
+    }
+
+    private void openAdminRowAction(WebDriverWait wait, By row, String action) {
+        wait.until(ExpectedConditions.visibilityOfElementLocated(row))
+                .findElement(By.xpath(".//button[normalize-space()='" + action + "']")).sendKeys(Keys.ENTER);
+    }
+
+    private void deleteAdminRecord(WebDriverWait wait, By row) {
+        openAdminRowAction(wait, row, "Delete");
+        wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("[role='dialog'] button[type='submit']")))
+                .sendKeys(Keys.ENTER);
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(By.cssSelector("[role='dialog']")));
+        wait.until(ExpectedConditions.numberOfElementsToBe(row, 0));
+    }
+
+    private Object runAuthenticatedAdminScript(ChromeDriver driver, String script) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/");
+        return driver.executeAsyncScript("""
+                const done = arguments[0];
+                (async () => {
+                    const { login, getCurrentUser } = await import('/app/services/auth-service.ts');
+                    const { restoreSession, useAuthStore } = await import('/app/stores/auth-store.ts');
+                    await restoreSession();
+                    const session = await login({ email: 'admin@betsphere.com', password: 'admin123' });
+                    useAuthStore.getState().setSession(session.accessToken, await getCurrentUser(session.accessToken));
+                """ + script + """
+                })().then(done).catch(error => done({ error: error.message }));
+                """);
+    }
+
 }

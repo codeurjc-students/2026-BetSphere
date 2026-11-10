@@ -198,4 +198,23 @@ class SportCatalogApiE2ETest {
         assertThat(competitions.existsById(saved.getId())).isFalse();
     }
 
+    @Test
+    void teamServicesPersistCompetitionMembershipAndProfileChanges() {
+        long competitionId = laLigaId();
+        var created = competitionService.createAndLinkTeam(competitionId,
+                new es.codeurjc.betsphere.model.Team("Database Team QA", "Spain", null));
+        try {
+            assertThat(competitions.findById(competitionId).orElseThrow().getTeams())
+                    .extracting(es.codeurjc.betsphere.model.Team::getId).contains(created.getId());
+            teamService.update(created.getId(),
+                    new es.codeurjc.betsphere.model.Team("Updated Database Team QA", "France", null));
+            assertThat(teams.findById(created.getId()).orElseThrow().getCountry()).isEqualTo("France");
+        } finally {
+            teamService.delete(created.getId());
+        }
+        assertThat(teams.existsById(created.getId())).isFalse();
+        assertThat(competitions.findById(competitionId).orElseThrow().getTeams())
+                .extracting(es.codeurjc.betsphere.model.Team::getId).doesNotContain(created.getId());
+    }
+
 }

@@ -210,4 +210,26 @@ class LoginApiE2ETest {
         given().port(port).get(endpoint + id).then().statusCode(404);
     }
 
+    @Test
+    void administratorManagesTeamsThroughHttp() {
+        int competitionId = given().port(port).get("/api/v1/competitions/")
+                .then().statusCode(200).extract().path("content.find { it.name == 'La Liga' }.id");
+        String createEndpoint = "/api/v1/competitions/" + competitionId + "/teams";
+        var payload = java.util.Map.of("name", "REST Team QA", "country", "Spain");
+        given().port(port).auth().oauth2(tokenFor(EMAIL, PASSWORD)).contentType(ContentType.JSON)
+                .body(payload).post(createEndpoint).then().statusCode(403);
+
+        String token = tokenFor("admin@betsphere.com", "admin123");
+        int id = given().port(port).auth().oauth2(token).contentType(ContentType.JSON)
+                .body(payload).post(createEndpoint).then().statusCode(201).extract().path("id");
+        given().port(port).get("/api/v1/competitions/{id}", competitionId).then().statusCode(200)
+                .body("teams.id", org.hamcrest.Matchers.hasItem(id));
+
+        given().port(port).auth().oauth2(token).contentType(ContentType.JSON)
+                .body(java.util.Map.of("name", "Updated REST Team QA", "country", "France"))
+                .put("/api/v1/teams/{id}", id).then().statusCode(200).body("country", equalTo("France"));
+        given().port(port).auth().oauth2(token).delete("/api/v1/teams/{id}", id).then().statusCode(204);
+        given().port(port).get("/api/v1/teams/{id}", id).then().statusCode(404);
+    }
+
 }
