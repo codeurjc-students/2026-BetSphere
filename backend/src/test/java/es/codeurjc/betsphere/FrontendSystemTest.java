@@ -177,4 +177,52 @@ class FrontendSystemTest {
 
         assertThat(result).isEqualTo(java.util.Map.of("status", "SUCCESS", "email", "user@betsphere.com"));
     }
+
+    @Test
+    void registrationFormRejectsMinorAndAcceptsAdult(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/register");
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+        String username = newRegistrationUsername();
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("username"))).sendKeys(username);
+        driver.findElement(By.id("email")).sendKeys(username + "@example.test");
+        driver.findElement(By.id("password")).sendKeys("ValidPass1!");
+        setBirthDate(driver, "2015-06-15");
+        driver.findElement(By.cssSelector("form button[type='submit']")).click();
+        wait.until(ExpectedConditions.visibilityOfElementLocated(
+                By.cssSelector("#birthDate.is-invalid + .invalid-feedback")));
+        assertThat(driver.findElement(By.cssSelector("#birthDate + .invalid-feedback")).getText())
+                .contains("18 years old");
+
+        setBirthDate(driver, "1990-06-15");
+        driver.findElement(By.cssSelector("form button[type='submit']")).click();
+        wait.until(ExpectedConditions.urlContains("/login?registered=1"));
+    }
+
+    @Test
+    void frontendRegistrationServiceCreatesAccountThroughRealApi(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/register");
+        driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(30));
+        String username = newRegistrationUsername();
+
+        Object email = driver.executeAsyncScript("""
+                const [username, done] = arguments;
+                import('/app/services/auth-service.ts')
+                    .then(({ register }) => register({
+                        username, email: username + '@example.test',
+                        password: 'ValidPass1!', birthDate: '1990-06-15'
+                    }))
+                    .then(user => done(user.email))
+                    .catch(error => done({ error: error.message }));
+                """, username);
+        assertThat(email).isEqualTo(username + "@example.test");
+    }
+
+    private String newRegistrationUsername() {
+        return "user_" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+    }
+
+    private void setBirthDate(ChromeDriver driver, String date) {
+        driver.executeScript("arguments[0].value = arguments[1];",
+                driver.findElement(By.id("birthDate")), date);
+    }
 }
