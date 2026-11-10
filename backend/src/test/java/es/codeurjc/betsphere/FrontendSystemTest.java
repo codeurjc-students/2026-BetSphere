@@ -265,4 +265,37 @@ class FrontendSystemTest {
 
         assertThat(email).isEqualTo("user@betsphere.com");
     }
+
+    @Test
+    void logoutFromHeaderPreventsAccessToProfile(ChromeDriver driver) {
+        signInThroughForm(driver);
+        driver.findElement(By.cssSelector("button.header-logout")).click();
+
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(By.cssSelector("button.header-logout")));
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/profile");
+        wait.until(ExpectedConditions.urlContains("/login?returnTo="));
+    }
+
+    @Test
+    void frontendLogoutServiceRemovesRefreshCookieThroughRealApi(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/login");
+        driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(30));
+        Object status = driver.executeAsyncScript("""
+                const done = arguments[0];
+                import('/app/services/auth-service.ts')
+                    .then(async ({ login, logout, refreshAccessToken }) => {
+                        await login({ email: 'user@betsphere.com', password: 'user123' });
+                        await refreshAccessToken();
+                        await logout();
+                        await refreshAccessToken().then(
+                            () => done('Session still active'),
+                            error => done(error.status)
+                        );
+                    })
+                    .catch(error => done({ error: error.message }));
+                """);
+
+        assertThat(status).isEqualTo(400L);
+    }
 }

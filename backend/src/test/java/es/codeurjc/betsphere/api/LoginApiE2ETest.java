@@ -120,4 +120,21 @@ class LoginApiE2ETest {
         assertThat(tokenProvider.validateToken(result.getBody().getAccessToken()).getSubject())
                 .isEqualTo(EMAIL);
     }
+
+    @Test
+    void logoutExpiresRefreshCookieAndCookieLessSessionCannotRefresh() {
+        String refreshCookie = given().port(port).contentType(ContentType.JSON)
+                .body(new LoginRequest(EMAIL, PASSWORD))
+                .post("/api/v1/auth/login")
+                .then().statusCode(200).extract().cookie(TokenType.REFRESH_COOKIE_NAME);
+
+        var expiredCookie = given().port(port).cookie(TokenType.REFRESH_COOKIE_NAME, refreshCookie)
+                .post("/api/v1/auth/logout")
+                .then().statusCode(200).body("status", equalTo("SUCCESS"))
+                .extract().detailedCookie(TokenType.REFRESH_COOKIE_NAME);
+
+        assertThat(expiredCookie.getMaxAge()).isZero();
+        assertThat(expiredCookie.getPath()).isEqualTo("/");
+        given().port(port).post("/api/v1/auth/refresh").then().statusCode(400);
+    }
 }
