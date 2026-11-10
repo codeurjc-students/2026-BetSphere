@@ -50,4 +50,24 @@ class SportCatalogApiE2ETest {
         assertThat(sportService.findAll(Pageable.unpaged()).getContent())
                 .extracting(Sport::getId).contains(saved.getId());
     }
+
+    @Test
+    void sportDetailListsOnlyItsCompetitions() {
+        var football = sports.findByName("Football").orElseThrow();
+
+        given().port(port).pathParam("id", football.getId())
+                .get("/api/v1/sports/{id}")
+                .then().statusCode(200)
+                .body("competitions.name", org.hamcrest.Matchers.containsInAnyOrder("Premier League", "La Liga", "Bundesliga"));
+    }
+
+    @Test
+    @org.springframework.transaction.annotation.Transactional
+    void sportServiceLoadsCompetitionRelationshipsFromMysql() {
+        var football = sports.findByName("Football").orElseThrow();
+
+        assertThat(sportService.findById(football.getId()).getCompetitions())
+                .extracting(es.codeurjc.betsphere.model.Competition::getName)
+                .containsExactlyInAnyOrder("Premier League", "La Liga", "Bundesliga");
+    }
 }

@@ -357,4 +357,39 @@ class FrontendSystemTest {
         assertThat(((java.util.List<?>) names).stream().map(Object::toString).toList())
                 .contains("Football", "Basketball", "Tennis");
     }
+
+    @Test
+    void openingSportFromHomeShowsItsCompetitions(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/");
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        wait.until(ExpectedConditions.elementToBeClickable(
+                By.xpath("//a[contains(@class,'sport-card')][h3='Football']"))).sendKeys(Keys.ENTER);
+        wait.until(ExpectedConditions.textToBePresentInElementLocated(By.tagName("h1"), "Football"));
+        var links = wait.until(ExpectedConditions.numberOfElementsToBe(
+                By.cssSelector("a.sport-competition-card"), 3));
+
+        assertThat(links).extracting(link -> link.findElement(By.tagName("strong")).getText())
+                .containsExactlyInAnyOrder("Premier League", "La Liga", "Bundesliga");
+    }
+
+    @Test
+    void frontendSportDetailServiceReadsCompetitionsFromRealApi(ChromeDriver driver) {
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/");
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        String href = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                By.xpath("//a[contains(@class,'sport-card')][h3='Football']"))).getAttribute("href");
+        String id = href.substring(href.lastIndexOf('/') + 1);
+
+        Object competitions = driver.executeAsyncScript("""
+                const [id, done] = arguments;
+                import('/app/services/sport-service.ts')
+                    .then(({ getById }) => getById(Number(id)))
+                    .then(sport => done(sport.competitions.map(competition => competition.name)))
+                    .catch(error => done({ error: error.message }));
+                """, id);
+
+        assertThat(competitions).isInstanceOf(java.util.List.class);
+        assertThat(((java.util.List<?>) competitions).stream().map(Object::toString).toList())
+                .containsExactlyInAnyOrder("Premier League", "La Liga", "Bundesliga");
+    }
 }

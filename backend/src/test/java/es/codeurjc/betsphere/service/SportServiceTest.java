@@ -27,4 +27,14 @@ class SportServiceTest {
         assertThat(page.getNumber()).isEqualTo(1);
         assertThat(page.getTotalElements()).isEqualTo(2);
     }
+
+    @Test
+    void unknownSportProducesNotFoundError() {
+        var repository = mock(SportRepository.class);
+        when(repository.findById(99L)).thenReturn(java.util.Optional.empty());
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> new SportService(repository).findById(99L))
+                .isInstanceOf(java.util.NoSuchElementException.class)
+                .hasMessage("Sport not found.");
+    }
 }
