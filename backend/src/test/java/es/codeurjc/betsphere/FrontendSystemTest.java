@@ -6,6 +6,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -144,10 +146,10 @@ class FrontendSystemTest {
     @Test
     void userCanSignInThroughLoginForm(ChromeDriver driver) {
         signInThroughForm(driver);
-        assertThat(driver.getCurrentUrl()).endsWith(":" + FRONTEND_PORT + "/");
     }
 
     private void signInThroughForm(ChromeDriver driver) {
+        driver.manage().window().setSize(new Dimension(1280, 900));
         driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/login");
 
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(60));
@@ -155,6 +157,7 @@ class FrontendSystemTest {
                 .sendKeys("user@betsphere.com");
         driver.findElement(By.id("password")).sendKeys("user123");
         driver.findElement(By.cssSelector("form button[type='submit']")).click();
+        wait.until(ExpectedConditions.urlToBe("http://127.0.0.1:" + FRONTEND_PORT + "/"));
 
         wait.until(ExpectedConditions.visibilityOfElementLocated(
                 By.cssSelector("a[aria-label='View profile of user@betsphere.com']")));
@@ -234,8 +237,9 @@ class FrontendSystemTest {
     @Test
     void reloadRestoresSessionAndInvalidCookieRedirectsToLogin(ChromeDriver driver) {
         signInThroughForm(driver);
-        driver.findElement(By.cssSelector("a[aria-label='View profile of user@betsphere.com']")).click();
         var wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+        wait.until(ExpectedConditions.elementToBeClickable(
+                By.cssSelector("a[aria-label='View profile of user@betsphere.com']"))).sendKeys(Keys.ENTER);
         wait.until(ExpectedConditions.urlContains("/profile"));
         driver.navigate().refresh();
         wait.until(ExpectedConditions.visibilityOfElementLocated(
@@ -269,10 +273,11 @@ class FrontendSystemTest {
     @Test
     void logoutFromHeaderPreventsAccessToProfile(ChromeDriver driver) {
         signInThroughForm(driver);
-        driver.findElement(By.cssSelector("button.header-logout")).click();
 
         var wait = new WebDriverWait(driver, Duration.ofSeconds(30));
-        wait.until(ExpectedConditions.invisibilityOfElementLocated(By.cssSelector("button.header-logout")));
+        By logoutButton = By.cssSelector("button.header-logout");
+        wait.until(ExpectedConditions.elementToBeClickable(logoutButton)).sendKeys(Keys.ENTER);
+        wait.until(ExpectedConditions.numberOfElementsToBe(logoutButton, 0));
         driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/profile");
         wait.until(ExpectedConditions.urlContains("/login?returnTo="));
     }
