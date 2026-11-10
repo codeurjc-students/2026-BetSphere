@@ -217,4 +217,25 @@ class SportCatalogApiE2ETest {
                 .extracting(es.codeurjc.betsphere.model.Team::getId).doesNotContain(created.getId());
     }
 
+    @Test
+    void matchServicePersistsScheduleAndStatusChangesInMysql() {
+        var fixture = matchService.getMatch(madridBarcelonaId());
+        var match = new Match("Real Madrid", "Barcelona", java.time.LocalDateTime.of(2030, 6, 1, 18, 0),
+                2.0, 3.0, 4.0, "SCHEDULED");
+        match.setCompetition(fixture.getCompetition());
+        match.setHomeTeamRef(fixture.getHomeTeamRef());
+        match.setAwayTeamRef(fixture.getAwayTeamRef());
+
+        var saved = matchService.create(match);
+        try {
+            assertThat(matchService.getMatch(saved.getId()).getGameStatus()).isEqualTo("SCHEDULED");
+            match.setGameStatus("FINISHED");
+            matchService.update(saved.getId(), match);
+            assertThat(matchService.getMatch(saved.getId()).getGameStatus()).isEqualTo("FINISHED");
+        } finally {
+            matchService.delete(saved.getId());
+        }
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> matchService.getMatch(saved.getId()))
+                .isInstanceOf(java.util.NoSuchElementException.class);
+    }
 }

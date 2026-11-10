@@ -232,4 +232,31 @@ class LoginApiE2ETest {
         given().port(port).get("/api/v1/teams/{id}", id).then().statusCode(404);
     }
 
+    @Test
+    void administratorManagesMatchesThroughHttp() {
+        var competition = given().port(port).get("/api/v1/competitions/")
+                .then().statusCode(200).extract()
+                .<java.util.Map<String, Object>>path("content.find { it.name == 'La Liga' }");
+        int competitionId = ((Number) competition.get("id")).intValue();
+        var teams = (java.util.List<?>) competition.get("teams");
+        int homeId = ((Number) ((java.util.Map<?, ?>) teams.get(0)).get("id")).intValue();
+        int awayId = ((Number) ((java.util.Map<?, ?>) teams.get(1)).get("id")).intValue();
+        var payload = new java.util.HashMap<String, Object>(java.util.Map.of(
+                "homeTeamId", homeId, "awayTeamId", awayId, "competitionId", competitionId,
+                "matchDate", "2030-06-01T18:00:00", "gameStatus", "SCHEDULED"));
+
+        given().port(port).auth().oauth2(tokenFor(EMAIL, PASSWORD)).contentType(ContentType.JSON)
+                .body(payload).post("/api/v1/matches/").then().statusCode(403);
+
+        String token = tokenFor("admin@betsphere.com", "admin123");
+        int id = given().port(port).auth().oauth2(token).contentType(ContentType.JSON)
+                .body(payload).post("/api/v1/matches/").then().statusCode(201)
+                .body("competitionId", equalTo(competitionId)).extract().path("id");
+        payload.put("gameStatus", "FINISHED");
+        given().port(port).auth().oauth2(token).contentType(ContentType.JSON)
+                .body(payload).put("/api/v1/matches/{id}", id).then().statusCode(200)
+                .body("gameStatus", equalTo("FINISHED"));
+        given().port(port).auth().oauth2(token).delete("/api/v1/matches/{id}", id).then().statusCode(204);
+        given().port(port).get("/api/v1/matches/{id}", id).then().statusCode(404);
+    }
 }

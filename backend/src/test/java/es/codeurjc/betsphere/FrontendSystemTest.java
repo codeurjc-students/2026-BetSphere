@@ -807,4 +807,48 @@ class FrontendSystemTest {
                 """);
     }
 
+    @Test
+    void administratorCanCreateEditAndDeleteMatch(ChromeDriver driver) {
+        var wait = openAdminTab(driver, "Matches");
+        openNewAdminRecord(wait);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("admin-matchDate")));
+        selectAdminOption(driver, "competitionId", "La Liga");
+        selectAdminOption(driver, "homeTeamId", "Barcelona");
+        selectAdminOption(driver, "awayTeamId", "Atletico Madrid");
+        selectAdminOption(driver, "gameStatus", "Scheduled");
+        driver.executeScript("arguments[0].value = arguments[1]",
+                driver.findElement(By.id("admin-matchDate")), "2030-06-01T18:00");
+        saveAdminRecord(wait, "Matches");
+
+        By created = By.xpath("//tbody/tr[td[normalize-space()='Barcelona vs Atletico Madrid'] and td[contains(.,'SCHEDULED')]]");
+        openAdminRowAction(wait, created, "Edit");
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("admin-gameStatus")));
+        selectAdminOption(driver, "gameStatus", "Finished");
+        saveAdminRecord(wait, "Matches");
+
+        By updated = By.xpath("//tbody/tr[td[normalize-space()='Barcelona vs Atletico Madrid'] and td[contains(.,'FINISHED')]]");
+        deleteAdminRecord(wait, updated);
+    }
+
+    @Test
+    void frontendMatchServiceManagesMatchThroughRealApi(ChromeDriver driver) {
+        Object result = runAuthenticatedAdminScript(driver, """
+                const { getCompetitions } = await import('/app/services/competition-service.ts');
+                const { addMatch, updateMatch, deleteMatch, getMatches } = await import('/app/services/match-service.ts');
+                const competition = (await getCompetitions()).find(item => item.name === 'La Liga');
+                const [home, away] = competition.teams;
+                const payload = {
+                    homeTeam: home.name, awayTeam: away.name, homeTeamId: home.id, awayTeamId: away.id,
+                    competitionId: competition.id, matchDate: '2030-06-01T18:00:00',
+                    homeOdds: null, drawOdds: null, awayOdds: null, gameStatus: 'SCHEDULED'
+                };
+                const created = await addMatch(payload);
+                const updated = await updateMatch(created.id, { ...payload, gameStatus: 'FINISHED' });
+                await deleteMatch(created.id);
+                return { created: created.gameStatus, updated: updated.gameStatus,
+                    deleted: !(await getMatches()).some(match => match.id === created.id) };
+                """);
+
+        assertThat(result).isEqualTo(java.util.Map.of("created", "SCHEDULED", "updated", "FINISHED", "deleted", true));
+    }
 }
