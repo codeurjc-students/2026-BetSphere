@@ -260,6 +260,9 @@ class FrontendSystemTest {
                 const done = arguments[0];
                 import('/app/services/auth-service.ts')
                     .then(async ({ login, refreshAccessToken, getCurrentUser }) => {
+                        // Let startup's anonymous refresh finish before creating a session.
+                        const { restoreSession } = await import('/app/stores/auth-store.ts');
+                        await restoreSession();
                         await login({ email: 'user@betsphere.com', password: 'user123' });
                         const user = await getCurrentUser(await refreshAccessToken());
                         done(user.email);
@@ -290,6 +293,9 @@ class FrontendSystemTest {
                 const done = arguments[0];
                 import('/app/services/auth-service.ts')
                     .then(async ({ login, logout, refreshAccessToken }) => {
+                        // Let startup's anonymous refresh finish before creating a session.
+                        const { restoreSession } = await import('/app/stores/auth-store.ts');
+                        await restoreSession();
                         await login({ email: 'user@betsphere.com', password: 'user123' });
                         await refreshAccessToken();
                         await logout();
