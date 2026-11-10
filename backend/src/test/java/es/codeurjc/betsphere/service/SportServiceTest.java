@@ -37,4 +37,16 @@ class SportServiceTest {
                 .isInstanceOf(java.util.NoSuchElementException.class)
                 .hasMessage("Sport not found.");
     }
+
+    @Test
+    void rejectsDeletionWhenSportHasCompetitions() {
+        var repository = mock(SportRepository.class);
+        var sport = new Sport("Football", null);
+        sport.getCompetitions().add(new es.codeurjc.betsphere.model.Competition());
+        when(repository.findById(12L)).thenReturn(java.util.Optional.of(sport));
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> new SportService(repository).delete(12L))
+                .isInstanceOf(IllegalStateException.class);
+        org.mockito.Mockito.verify(repository, org.mockito.Mockito.never()).delete(sport);
+    }
 }

@@ -22,4 +22,18 @@ class TeamServiceTest {
                 .isInstanceOf(NoSuchElementException.class)
                 .hasMessage("Team not found.");
     }
+
+    @Test
+    void rejectsDeletionOfTeamThatPlaysMatches() {
+        var teams = mock(TeamRepository.class);
+        var matches = mock(MatchRepository.class);
+        var team = new es.codeurjc.betsphere.model.Team("Football QA", "Spain", null);
+        when(teams.findById(12L)).thenReturn(Optional.of(team));
+        when(matches.existsByHomeTeamRef_IdOrAwayTeamRef_Id(12L, 12L)).thenReturn(true);
+
+        assertThatThrownBy(() -> new TeamService(teams, matches).delete(12L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Cannot delete a team that participates in matches.");
+        org.mockito.Mockito.verify(teams, org.mockito.Mockito.never()).delete(team);
+    }
 }

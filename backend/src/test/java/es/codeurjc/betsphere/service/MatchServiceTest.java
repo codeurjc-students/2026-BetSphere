@@ -73,4 +73,14 @@ public class MatchServiceTest {
                 .isInstanceOf(java.util.NoSuchElementException.class)
                 .hasMessage("Match not found");
     }
+
+    @Test
+    void rejectsMatchWithMissingRelationshipIds() {
+        var match = new Match("Real Madrid", "Barcelona", LocalDateTime.now(), 2.0, 3.0, 4.0, "SCHEDULED");
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> matchService.create(match))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Home team, away team and competition IDs are required.");
+        verify(matchRepository, org.mockito.Mockito.never()).save(match);
+    }
 }

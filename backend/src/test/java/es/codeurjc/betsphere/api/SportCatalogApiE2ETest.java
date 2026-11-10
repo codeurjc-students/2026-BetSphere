@@ -161,4 +161,81 @@ class SportCatalogApiE2ETest {
         assertThat(profile.getName()).isEqualTo("Valencia QA");
         assertThat(profile.getCountry()).isEqualTo("Spain");
     }
+
+    @Test
+    void sportServicePersistsChangesAndDeletesFromMysql() {
+        var saved = sportService.save(new Sport("Database sport QA", null));
+        try {
+            assertThat(sports.findById(saved.getId())).isPresent();
+            sportService.update(saved.getId(), new Sport("Updated database sport QA", null));
+            assertThat(sports.findById(saved.getId()).orElseThrow().getName())
+                    .isEqualTo("Updated database sport QA");
+        } finally {
+            sportService.delete(saved.getId());
+        }
+        assertThat(sports.existsById(saved.getId())).isFalse();
+    }
+
+    @Test
+    void competitionServicePersistsSportAndCountryChangesInMysql() {
+        var football = sports.findByName("Football").orElseThrow();
+        var basketball = sports.findByName("Basketball").orElseThrow();
+        var saved = competitionService.save(new Competition("Database League QA", "Spain", null, null),
+                football.getId());
+        try {
+            assertThat(competitions.findById(saved.getId()).orElseThrow().getSport().getId())
+                    .isEqualTo(football.getId());
+            competitionService.update(saved.getId(),
+                    new Competition("Updated Database League QA", "France", null, null), basketball.getId());
+
+            var updated = competitions.findById(saved.getId()).orElseThrow();
+            assertThat(updated.getName()).isEqualTo("Updated Database League QA");
+            assertThat(updated.getCountry()).isEqualTo("France");
+            assertThat(updated.getSport().getId()).isEqualTo(basketball.getId());
+        } finally {
+            competitionService.delete(saved.getId());
+        }
+        assertThat(competitions.existsById(saved.getId())).isFalse();
+    }
+
+    @Test
+    void teamServicesPersistCompetitionMembershipAndProfileChanges() {
+        long competitionId = laLigaId();
+        var created = competitionService.createAndLinkTeam(competitionId,
+                new es.codeurjc.betsphere.model.Team("Database Team QA", "Spain", null));
+        try {
+            assertThat(competitions.findById(competitionId).orElseThrow().getTeams())
+                    .extracting(es.codeurjc.betsphere.model.Team::getId).contains(created.getId());
+            teamService.update(created.getId(),
+                    new es.codeurjc.betsphere.model.Team("Updated Database Team QA", "France", null));
+            assertThat(teams.findById(created.getId()).orElseThrow().getCountry()).isEqualTo("France");
+        } finally {
+            teamService.delete(created.getId());
+        }
+        assertThat(teams.existsById(created.getId())).isFalse();
+        assertThat(competitions.findById(competitionId).orElseThrow().getTeams())
+                .extracting(es.codeurjc.betsphere.model.Team::getId).doesNotContain(created.getId());
+    }
+
+    @Test
+    void matchServicePersistsScheduleAndStatusChangesInMysql() {
+        var fixture = matchService.getMatch(madridBarcelonaId());
+        var match = new Match("Real Madrid", "Barcelona", java.time.LocalDateTime.of(2030, 6, 1, 18, 0),
+                2.0, 3.0, 4.0, "SCHEDULED");
+        match.setCompetition(fixture.getCompetition());
+        match.setHomeTeamRef(fixture.getHomeTeamRef());
+        match.setAwayTeamRef(fixture.getAwayTeamRef());
+
+        var saved = matchService.create(match);
+        try {
+            assertThat(matchService.getMatch(saved.getId()).getGameStatus()).isEqualTo("SCHEDULED");
+            match.setGameStatus("FINISHED");
+            matchService.update(saved.getId(), match);
+            assertThat(matchService.getMatch(saved.getId()).getGameStatus()).isEqualTo("FINISHED");
+        } finally {
+            matchService.delete(saved.getId());
+        }
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> matchService.getMatch(saved.getId()))
+                .isInstanceOf(java.util.NoSuchElementException.class);
+    }
 }
