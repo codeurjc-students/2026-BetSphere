@@ -851,4 +851,29 @@ class FrontendSystemTest {
 
         assertThat(result).isEqualTo(java.util.Map.of("created", "SCHEDULED", "updated", "FINISHED", "deleted", true));
     }
+
+    @Test
+    void profileAndHistoryRequireSignIn(ChromeDriver driver) {
+        String baseUrl = "http://127.0.0.1:" + FRONTEND_PORT;
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        for (String route : java.util.List.of("/profile", "/history")) {
+            driver.get(baseUrl + route);
+            wait.until(ExpectedConditions.urlToBe(baseUrl + "/login?returnTo=%2F" + route.substring(1)));
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+        }
+    }
+
+    @Test
+    void signedInUserCanOpenProfileAndViewEmptyHistory(ChromeDriver driver) {
+        signInThroughForm(driver);
+        String baseUrl = "http://127.0.0.1:" + FRONTEND_PORT;
+        driver.get(baseUrl + "/profile");
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        wait.until(ExpectedConditions.textToBePresentInElementLocated(By.tagName("h1"), "My Profile"));
+        assertThat(driver.findElement(By.tagName("main")).getText()).contains("user@betsphere.com", "€0.00");
+
+        wait.until(ExpectedConditions.elementToBeClickable(By.linkText("View my history"))).sendKeys(Keys.ENTER);
+        wait.until(ExpectedConditions.textToBePresentInElementLocated(By.tagName("h1"), "History"));
+        assertThat(driver.findElement(By.tagName("main")).getText()).contains("€0.00", "No activity to display yet");
+    }
 }
