@@ -122,6 +122,18 @@ class FrontendSystemTest {
     @Autowired
     private MatchRepository matchRepository;
 
+    @Container
+    static final org.testcontainers.containers.GenericContainer<?> minio =
+            es.codeurjc.betsphere.MinioTestStorage.container();
+
+    @org.springframework.test.context.DynamicPropertySource
+    static void storageProperties(org.springframework.test.context.DynamicPropertyRegistry registry) {
+        es.codeurjc.betsphere.MinioTestStorage.configure(registry, minio);
+    }
+
+    @Autowired
+    private es.codeurjc.betsphere.repository.UserRepository accountUsers;
+
     @Autowired
     private es.codeurjc.betsphere.repository.CompetitionRepository competitions;
 
@@ -850,5 +862,98 @@ class FrontendSystemTest {
                 """);
 
         assertThat(result).isEqualTo(java.util.Map.of("created", "SCHEDULED", "updated", "FINISHED", "deleted", true));
+    }
+
+    @Test
+    void profileAndHistoryRequireSignIn(ChromeDriver driver) {
+        String baseUrl = "http://127.0.0.1:" + FRONTEND_PORT;
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        for (String route : java.util.List.of("/profile", "/history")) {
+            driver.get(baseUrl + route);
+            wait.until(ExpectedConditions.urlToBe(baseUrl + "/login?returnTo=%2F" + route.substring(1)));
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+        }
+    }
+
+    @Test
+    void signedInUserCanOpenProfileAndViewEmptyHistory(ChromeDriver driver) {
+        signInThroughForm(driver);
+        String baseUrl = "http://127.0.0.1:" + FRONTEND_PORT;
+        driver.get(baseUrl + "/profile");
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        wait.until(ExpectedConditions.textToBePresentInElementLocated(By.tagName("h1"), "My Profile"));
+        assertThat(driver.findElement(By.tagName("main")).getText()).contains("user@betsphere.com", "€0.00");
+
+        wait.until(ExpectedConditions.elementToBeClickable(By.linkText("View my history"))).sendKeys(Keys.ENTER);
+        wait.until(ExpectedConditions.textToBePresentInElementLocated(By.tagName("h1"), "History"));
+        assertThat(driver.findElement(By.tagName("main")).getText()).contains("€0.00", "No activity to display yet");
+    }
+
+    @Test
+    void profilePhotoSurvivesReload(ChromeDriver driver) throws Exception {
+        Path photo = Files.createTempFile("betsphere-avatar-", ".png");
+        try {
+            javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(1, 1,
+                    java.awt.image.BufferedImage.TYPE_INT_RGB), "png", photo.toFile());
+            signInThroughForm(driver);
+            driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/profile");
+            var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+            wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("input[type='file']")))
+                    .sendKeys(photo.toString());
+            wait.until(ExpectedConditions.textToBePresentInElementLocated(
+                    By.cssSelector("[role='status']"), "Profile photo updated."));
+            String source = driver.findElement(By.cssSelector(".profile-avatar img")).getAttribute("src");
+            driver.navigate().refresh();
+            var avatar = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".profile-avatar img")));
+            wait.until(webDriver -> Boolean.TRUE.equals(driver.executeScript(
+                    "return arguments[0].complete && arguments[0].naturalWidth > 0", avatar)));
+            assertThat(avatar.getAttribute("src")).isEqualTo(source).contains("/api/v1/images/");
+        } finally {
+            Files.deleteIfExists(photo);
+            var user = accountUsers.findByEmail("user@betsphere.com").orElseThrow();
+            user.setAvatarUrl(null);
+            accountUsers.save(user);
+        }
+    }
+
+    @Test
+    void frontendLoadsPersistedAccountThroughRealApi(ChromeDriver driver) {
+        signInThroughForm(driver);
+        Object account = driver.executeAsyncScript("""
+                const done = arguments[0];
+                (async () => {
+                    const { useAuthStore } = await import('/app/stores/auth-store.ts');
+                    const { getCurrentUser } = await import('/app/services/auth-service.ts');
+                    const user = await getCurrentUser(useAuthStore.getState().accessToken);
+                    done([user.username, user.email]);
+                })().catch(error => done({ error: error.message }));
+                """);
+
+        assertThat(account).isEqualTo(java.util.List.of("user", "user@betsphere.com"));
+    }
+
+    @Test
+    void profileClientUploadsAvatarThroughRealApi(ChromeDriver driver) throws Exception {
+        try {
+            signInThroughForm(driver);
+            Object avatar = driver.executeAsyncScript("""
+                    const done = arguments[0];
+                    (async () => {
+                        const { clientAction } = await import('/app/routes/profile.tsx');
+                        const body = new FormData();
+                        body.append('avatar', new File([new Uint8Array([1, 2, 3])], 'avatar.png', { type: 'image/png' }));
+                        const request = new Request(location.origin + '/profile', { method: 'POST', body });
+                        const { avatarUrl } = await clientAction({ request });
+                        const response = await fetch(avatarUrl);
+                        return { status: response.status, bytes: Array.from(new Uint8Array(await response.arrayBuffer())) };
+                    })().then(done).catch(error => done({ error: error.message }));
+                    """);
+
+            assertThat(avatar).isEqualTo(java.util.Map.of("status", 200L, "bytes", List.of(1L, 2L, 3L)));
+        } finally {
+            var user = accountUsers.findByEmail("user@betsphere.com").orElseThrow();
+            user.setAvatarUrl(null);
+            accountUsers.save(user);
+        }
     }
 }
