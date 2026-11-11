@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider, useLoaderData } from "react-router";
 import { afterEach, expect, it, vi } from "vitest";
-import ProfilePage from "../../app/routes/profile";
+import ProfilePage, { clientAction } from "../../app/routes/profile";
 import HistoryPage from "../../app/routes/history";
 import { useAuthStore } from "../../app/stores/auth-store";
 import type { UserDTO } from "../../app/dtos/UserDTO";
@@ -75,4 +75,22 @@ it("shows an upload error and keeps the existing avatar", async () => {
 
   expect(await screen.findByRole("alert")).toHaveTextContent("Invalid image");
   expect(useAuthStore.getState().user?.avatarUrl).toBeUndefined();
+});
+
+it("sends the avatar as a multipart file to the authenticated API", async () => {
+  useAuthStore.getState().setSession("test-token", user);
+  const data = new FormData();
+  data.append("avatar", new File(["image"], "avatar.png", { type: "image/png" }));
+  const request = new Request("http://localhost/profile", { method: "POST" });
+  vi.spyOn(request, "formData").mockResolvedValue(data);
+  const avatarUrl = "/api/v1/images/new-avatar";
+  const fetchMock = vi.fn().mockResolvedValue(Response.json({ url: avatarUrl }));
+  vi.stubGlobal("fetch", fetchMock);
+
+  await expect(clientAction({ request } as Parameters<typeof clientAction>[0])).resolves.toEqual({ avatarUrl });
+  const [url, init] = fetchMock.mock.calls[0];
+  expect(url).toBe("/api/v1/images");
+  expect(init.method).toBe("POST");
+  expect(init.headers.get("Authorization")).toBe("Bearer test-token");
+  expect(init.body.get("file").name).toBe("avatar.png");
 });

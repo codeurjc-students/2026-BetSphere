@@ -49,6 +49,15 @@ class LoginApiE2ETest {
     @Autowired
     private UserRepository userRepository;
 
+    @Container
+    static final org.testcontainers.containers.GenericContainer<?> minio =
+            es.codeurjc.betsphere.MinioTestStorage.container();
+
+    @org.springframework.test.context.DynamicPropertySource
+    static void storageProperties(org.springframework.test.context.DynamicPropertyRegistry registry) {
+        es.codeurjc.betsphere.MinioTestStorage.configure(registry, minio);
+    }
+
     @Autowired
     private JwtTokenProvider tokenProvider;
 
@@ -258,5 +267,35 @@ class LoginApiE2ETest {
                 .body("gameStatus", equalTo("FINISHED"));
         given().port(port).auth().oauth2(token).delete("/api/v1/matches/{id}", id).then().statusCode(204);
         given().port(port).get("/api/v1/matches/{id}", id).then().statusCode(404);
+    }
+
+    @Test
+    void avatarUploadIsAuthenticatedAndPersistsInMysql() throws Exception {
+        byte[] bytes = {1, 2, 3};
+        String token = tokenFor(EMAIL, PASSWORD);
+
+        given().port(port).multiPart("file", "avatar.png", bytes, "image/png")
+                .post("/api/v1/images").then().statusCode(org.hamcrest.Matchers.isOneOf(401, 403));
+        assertThat(userRepository.findByEmail(EMAIL).orElseThrow().getAvatarUrl()).isNull();
+
+        String url = given().port(port).auth().oauth2(token).multiPart("file", "avatar.png", bytes, "image/png")
+                .post("/api/v1/images").then().statusCode(201).extract().path("url");
+
+        try {
+            byte[] downloaded = given().port(port).get(url).then().statusCode(200)
+                    .contentType("image/png").extract().asByteArray();
+            assertThat(downloaded).containsExactly(bytes);
+            assertThat(userRepository.findByEmail(EMAIL).orElseThrow().getAvatarUrl()).isEqualTo(url);
+            given().port(port).auth().oauth2(token).get("/api/v1/users/me")
+                    .then().statusCode(200).body("avatarUrl", equalTo(url));
+
+            given().port(port).auth().oauth2(token).multiPart("file", "avatar.txt", bytes, "text/plain")
+                    .post("/api/v1/images").then().statusCode(400);
+            assertThat(userRepository.findByEmail(EMAIL).orElseThrow().getAvatarUrl()).isEqualTo(url);
+        } finally {
+            var user = userRepository.findByEmail(EMAIL).orElseThrow();
+            user.setAvatarUrl(null);
+            userRepository.save(user);
+        }
     }
 }
