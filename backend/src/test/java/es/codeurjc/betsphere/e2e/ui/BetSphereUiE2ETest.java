@@ -12,7 +12,11 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+
+import java.awt.image.BufferedImage;
+
+import javax.imageio.ImageIO;
+
 import es.codeurjc.betsphere.support.BrowserTestSupport;
 
 class BetSphereUiE2ETest extends BrowserTestSupport {
@@ -319,6 +323,74 @@ class BetSphereUiE2ETest extends BrowserTestSupport {
     }
 
     @Test
+    void catalogImagesUploadedFromAdminAreVisibleAfterReload(ChromeDriver driver) throws Exception {
+        Path image = Files.createTempFile("betsphere-catalog-logo-", ".png");
+        String baseUrl = "http://127.0.0.1:" + FRONTEND_PORT;
+        try {
+            ImageIO.write(new BufferedImage(1, 1,
+                    BufferedImage.TYPE_INT_RGB), "png", image.toFile());
+            var wait = openAdminTab(driver, "Sports");
+            uploadAndOpenCatalogImage(driver, wait, image, "Sports", "Football", "sport", ".sport-hero-logo");
+
+            driver.get(baseUrl + "/admin");
+            selectAdminTab(wait, "Competitions");
+            uploadAndOpenCatalogImage(driver, wait, image, "Competitions", "La Liga",
+                    "competition", "img[alt='La Liga logo']");
+
+            driver.get(baseUrl + "/admin");
+            selectAdminTab(wait, "Teams");
+            uploadAndOpenCatalogImage(driver, wait, image, "Teams", "Barcelona",
+                    "team", "img[alt='Barcelona logo']");
+        } finally {
+            Files.deleteIfExists(image);
+        }
+    }
+
+    @Test
+    void adminSeesWarningWhenTheSportIsSavedButItsImageIsRejected(ChromeDriver driver) throws Exception {
+        Path file = Files.createTempFile("betsphere-invalid-logo-", ".txt");
+        try {
+            Files.writeString(file, "This file is not an image.");
+            var wait = openAdminTab(driver, "Sports");
+            openNewAdminRecord(wait);
+            String sportName = "Image warning QA";
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("admin-name"))).sendKeys(sportName);
+            driver.findElement(By.id("admin-image")).sendKeys(file.toString());
+            saveAdminRecord(wait, "Sports");
+
+            var notice = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".alert-warning[role='status']")));
+            assertThat(notice.getText()).contains("Data was saved, but the image could not be uploaded");
+            wait.until(ExpectedConditions.visibilityOfElementLocated(adminRow(sportName)));
+            deleteAdminRecord(wait, adminRow(sportName));
+        } finally {
+            Files.deleteIfExists(file);
+        }
+    }
+
+    private void uploadAndOpenCatalogImage(ChromeDriver driver, WebDriverWait wait, Path image,
+            String tab, String name, String route, String selector) {
+        By row = adminRow(name);
+        String id = wait.until(ExpectedConditions.visibilityOfElementLocated(row))
+                .findElement(By.tagName("td")).getText();
+        openAdminRowAction(wait, row, "Edit");
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.id("admin-image"))).sendKeys(image.toString());
+        saveAdminRecord(wait, tab);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".alert-success[role='status']")));
+
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/" + route + "/" + id);
+        String source = loadedImageSource(driver, wait, selector);
+        driver.navigate().refresh();
+        assertThat(loadedImageSource(driver, wait, selector)).isEqualTo(source).contains("/api/v1/images/");
+    }
+
+    private String loadedImageSource(ChromeDriver driver, WebDriverWait wait, String selector) {
+        var image = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(selector)));
+        wait.until(webDriver -> Boolean.TRUE.equals(driver.executeScript(
+                "return arguments[0].complete && arguments[0].naturalWidth > 0", image)));
+        return image.getDomAttribute("src");
+    }
+
+    @Test
     void profileAndHistoryRequireSignIn(ChromeDriver driver) {
         String baseUrl = "http://127.0.0.1:" + FRONTEND_PORT;
         var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
@@ -347,7 +419,7 @@ class BetSphereUiE2ETest extends BrowserTestSupport {
     void profilePhotoSurvivesReload(ChromeDriver driver) throws Exception {
         Path photo = Files.createTempFile("betsphere-avatar-", ".png");
         try {
-            javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(1, 1,
+            ImageIO.write(new BufferedImage(1, 1,
                     java.awt.image.BufferedImage.TYPE_INT_RGB), "png", photo.toFile());
             signInThroughForm(driver);
             driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/profile");
@@ -388,9 +460,13 @@ class BetSphereUiE2ETest extends BrowserTestSupport {
         driver.findElement(By.id("password")).sendKeys("admin123");
         driver.findElement(By.cssSelector("form button[type='submit']")).sendKeys(Keys.ENTER);
         wait.until(ExpectedConditions.urlToBe(baseUrl + "/admin"));
+        selectAdminTab(wait, tab);
+        return wait;
+    }
+
+    private void selectAdminTab(WebDriverWait wait, String tab) {
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath(
                 "//button[@role='tab' and starts-with(normalize-space(), '" + tab + "')]"))).sendKeys(Keys.ENTER);
-        return wait;
     }
 
     private void openNewAdminRecord(WebDriverWait wait) {
