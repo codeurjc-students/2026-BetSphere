@@ -26,6 +26,6 @@ jobs:
         working-directory: ./backend
         run: ./mvnw clean compile test-compile
 
-      - name: Run unit tests
+      - name: Run backend tests without browser suites
         working-directory: ./backend
-        run: ./mvnw test -Dtest="!FrontendSystemTest"
+        run: ./mvnw test -Dtest="!**/e2e/ui/**,!**/integration/clientapi/**"
