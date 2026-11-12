@@ -10,6 +10,8 @@ import es.codeurjc.betsphere.model.Match;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+
 import es.codeurjc.betsphere.support.BrowserTestSupport;
 
 class BrowserClientApiIntegrationTest extends BrowserTestSupport {
@@ -33,7 +35,7 @@ class BrowserClientApiIntegrationTest extends BrowserTestSupport {
                     .catch(error => done({ error: error.message }));
                 """);
 
-        assertThat(result).isEqualTo(java.util.Map.of("status", "SUCCESS", "email", "user@betsphere.com"));
+        assertThat(result).isEqualTo(Map.of("status", "SUCCESS", "email", "user@betsphere.com"));
     }
 
     @Test
@@ -112,8 +114,8 @@ class BrowserClientApiIntegrationTest extends BrowserTestSupport {
                     .catch(error => done({ error: error.message }));
                 """);
 
-        assertThat(names).isInstanceOf(java.util.List.class);
-        assertThat(((java.util.List<?>) names).stream().map(Object::toString).toList())
+        assertThat(names).isInstanceOf(List.class);
+        assertThat(((List<?>) names).stream().map(Object::toString).toList())
                 .contains("Football", "Basketball", "Tennis");
     }
 
@@ -133,8 +135,8 @@ class BrowserClientApiIntegrationTest extends BrowserTestSupport {
                     .catch(error => done({ error: error.message }));
                 """, id);
 
-        assertThat(competitions).isInstanceOf(java.util.List.class);
-        assertThat(((java.util.List<?>) competitions).stream().map(Object::toString).toList())
+        assertThat(competitions).isInstanceOf(List.class);
+        assertThat(((List<?>) competitions).stream().map(Object::toString).toList())
                 .containsExactlyInAnyOrder("Premier League", "La Liga", "Bundesliga");
     }
 
@@ -159,7 +161,7 @@ class BrowserClientApiIntegrationTest extends BrowserTestSupport {
                     .catch(error => done({ error: error.message }));
                 """);
 
-        assertThat(pages).isEqualTo(java.util.Map.of(
+        assertThat(pages).isEqualTo(Map.of(
                 "differentMatches", true, "page", 1L, "count", 1L, "last", true));
     }
 
@@ -176,7 +178,7 @@ class BrowserClientApiIntegrationTest extends BrowserTestSupport {
                     .catch(error => done({ error: error.message }));
                 """, competition.getId());
 
-        assertThat(result).isEqualTo(java.util.List.of("Valencia"));
+        assertThat(result).isEqualTo(List.of("Valencia"));
     }
 
     @Test
@@ -192,7 +194,7 @@ class BrowserClientApiIntegrationTest extends BrowserTestSupport {
                     .catch(error => done({ error: error.message }));
                 """, match.getId());
 
-        assertThat(result).isEqualTo(java.util.List.of("Real Madrid", "Barcelona", "La Liga"));
+        assertThat(result).isEqualTo(List.of("Real Madrid", "Barcelona", "La Liga"));
     }
 
     @Test
@@ -208,7 +210,7 @@ class BrowserClientApiIntegrationTest extends BrowserTestSupport {
                     .catch(error => done({ error: error.message }));
                 """, team.getId());
 
-        assertThat(result).isEqualTo(java.util.List.of("Real Madrid", "Spain", (long) team.getTotalMatches()));
+        assertThat(result).isEqualTo(List.of("Real Madrid", "Spain", (long) team.getTotalMatches()));
     }
 
     @Test
@@ -228,7 +230,7 @@ class BrowserClientApiIntegrationTest extends BrowserTestSupport {
                 })().catch(error => done({ error: error.message }));
                 """);
 
-        assertThat(result).isEqualTo(java.util.Map.of("count", 1L, "page", 0L, "hasMore", true));
+        assertThat(result).isEqualTo(Map.of("count", 1L, "page", 0L, "hasMore", true));
     }
 
     @Test
@@ -251,7 +253,7 @@ class BrowserClientApiIntegrationTest extends BrowserTestSupport {
                 })().catch(error => done({ error: error.message }));
                 """);
 
-        assertThat(result).isEqualTo(java.util.Map.of(
+        assertThat(result).isEqualTo(Map.of(
                 "created", "Client sport QA", "updated", "Updated client sport QA", "deleted", true));
     }
 
@@ -279,7 +281,7 @@ class BrowserClientApiIntegrationTest extends BrowserTestSupport {
                 })().catch(error => done({ error: error.message }));
                 """);
 
-        assertThat(result).isEqualTo(java.util.Map.of("sport", "Football", "country", "France", "deleted", true));
+        assertThat(result).isEqualTo(Map.of("sport", "Football", "country", "France", "deleted", true));
     }
 
     @Test
@@ -295,7 +297,7 @@ class BrowserClientApiIntegrationTest extends BrowserTestSupport {
                 return { linked, country: updated.country, deleted: !(await getTeams()).some(team => team.id === created.id) };
                 """);
 
-        assertThat(result).isEqualTo(java.util.Map.of("linked", true, "country", "France", "deleted", true));
+        assertThat(result).isEqualTo(Map.of("linked", true, "country", "France", "deleted", true));
     }
 
     @Test
@@ -317,7 +319,7 @@ class BrowserClientApiIntegrationTest extends BrowserTestSupport {
                     deleted: !(await getMatches()).some(match => match.id === created.id) };
                 """);
 
-        assertThat(result).isEqualTo(java.util.Map.of("created", "SCHEDULED", "updated", "FINISHED", "deleted", true));
+        assertThat(result).isEqualTo(Map.of("created", "SCHEDULED", "updated", "FINISHED", "deleted", true));
     }
 
     @Test
@@ -333,7 +335,7 @@ class BrowserClientApiIntegrationTest extends BrowserTestSupport {
                 })().catch(error => done({ error: error.message }));
                 """);
 
-        assertThat(account).isEqualTo(java.util.List.of("user", "user@betsphere.com"));
+        assertThat(account).isEqualTo(List.of("user", "user@betsphere.com"));
     }
 
     @Test
@@ -353,12 +355,54 @@ class BrowserClientApiIntegrationTest extends BrowserTestSupport {
                     })().then(done).catch(error => done({ error: error.message }));
                     """);
 
-            assertThat(avatar).isEqualTo(java.util.Map.of("status", 200L, "bytes", List.of(1L, 2L, 3L)));
+            assertThat(avatar).isEqualTo(Map.of("status", 200L, "bytes", List.of(1L, 2L, 3L)));
         } finally {
             var user = accountUsers.findByEmail("user@betsphere.com").orElseThrow();
             user.setAvatarUrl(null);
             accountUsers.save(user);
         }
+    }
+
+    @Test
+    void adminClientUploadsAndReadsCatalogImagesThroughRealApi(ChromeDriver driver) {
+        Object result = runAuthenticatedAdminScript(driver, """
+                    const { performAdminAction } = await import('/app/services/admin-actions.ts');
+                    const sports = await import('/app/services/sport-service.ts');
+                    const competitions = await import('/app/services/competition-service.ts');
+                    const teams = await import('/app/services/team-service.ts');
+                    const football = (await sports.getSports()).find(sport => sport.name === 'Football');
+                    const laLiga = (await competitions.getCompetitions()).find(league => league.name === 'La Liga');
+                    const barcelona = (await teams.getTeams()).find(team => team.name === 'Barcelona');
+                    const targets = [
+                        { entity: 'sports', row: football, read: sports.getById, imageField: 'iconUrl' },
+                        { entity: 'competitions', row: laLiga, read: competitions.getById, imageField: 'iconUrl' },
+                        { entity: 'teams', row: barcelona, read: teams.getTeam, imageField: 'logoUrl' },
+                    ];
+                    const results = [];
+                    for (const { entity, row, read, imageField } of targets) {
+                        const body = new FormData();
+                        for (const [name, value] of Object.entries({
+                            entity, intent: 'edit', id: row.id, name: row.name,
+                            country: row.country ?? '', sportId: football.id,
+                        })) body.set(name, String(value));
+                        body.set('image', new File([new Uint8Array([1, 2, 3])], 'logo.png', { type: 'image/png' }));
+                        const request = new Request(location.origin + '/admin', { method: 'POST', body });
+                        const action = await performAdminAction(request);
+                        if (!action.ok || action.warning) throw new Error(JSON.stringify(action));
+                        const saved = await read(row.id);
+                        const response = await fetch(saved[imageField]);
+                        results.push({
+                            entity, status: response.status,
+                            bytes: Array.from(new Uint8Array(await response.arrayBuffer())),
+                        });
+                    }
+                    return results;
+                """);
+
+        assertThat(result).isEqualTo(List.of(
+                Map.of("entity", "sports", "status", 200L, "bytes", List.of(1L, 2L, 3L)),
+                Map.of("entity", "competitions", "status", 200L, "bytes", List.of(1L, 2L, 3L)),
+                Map.of("entity", "teams", "status", 200L, "bytes", List.of(1L, 2L, 3L))));
     }
 
     private Object runAuthenticatedAdminScript(ChromeDriver driver, String script) {
