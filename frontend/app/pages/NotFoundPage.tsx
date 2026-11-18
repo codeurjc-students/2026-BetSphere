@@ -14,7 +14,7 @@ export function NotFoundPage() {
             Return home and keep exploring BetSphere.
           </p>
           <Link className="btn btn-brand" to="/">
-            Back to home <span aria-hidden="true">→</span>
+            Back to home
           </Link>
         </div>
         <div className="col-lg-5 error-art" aria-hidden="true">

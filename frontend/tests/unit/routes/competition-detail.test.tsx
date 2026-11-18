@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { expect, it } from "vitest";
 import CompetitionPage from "../../../app/routes/competitions";
@@ -19,5 +19,11 @@ it("lists finished matches only in the full schedule", () => {
   }} /></MemoryRouter>);
 
   expect(screen.getByText("No upcoming matches.")).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Valencia vs Sevilla/ })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Finished" }));
   expect(screen.getByRole("link", { name: /Valencia vs Sevilla/ })).toHaveAttribute("href", "/match/1");
+  fireEvent.change(screen.getByRole("searchbox", { name: "Find a team" }), { target: { value: "Barcelona" } });
+  expect(screen.queryByRole("link", { name: /Valencia vs Sevilla/ })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+  expect(screen.getByRole("link", { name: /Valencia vs Sevilla/ })).toBeInTheDocument();
 });

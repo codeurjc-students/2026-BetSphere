@@ -35,9 +35,21 @@ it.each([
 
 it("loads the sport catalog for the home page", async () => {
   const sports = [{ id: 1, name: "Football" }];
-  vi.stubGlobal("fetch", vi.fn<typeof fetch>().mockResolvedValue(Response.json({ content: sports })));
+  const matches = [{ id: 2, homeTeam: "Barcelona", awayTeam: "Real Madrid" }];
+  vi.stubGlobal("fetch", vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(Response.json({ content: sports }))
+    .mockResolvedValueOnce(Response.json({ content: matches })));
 
-  await expect(loadSportsIndex()).resolves.toEqual(sports);
+  await expect(loadSportsIndex()).resolves.toEqual({ sports, matches });
+});
+
+it("keeps the sports catalog available if the schedule request fails", async () => {
+  const sports = [{ id: 1, name: "Football" }];
+  vi.stubGlobal("fetch", vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(Response.json({ content: sports }))
+    .mockResolvedValueOnce(new Response(null, { status: 503 })));
+
+  await expect(loadSportsIndex()).resolves.toEqual({ sports, matches: null });
 });
 
 it.each([

@@ -14,9 +14,9 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 export default function TeamPage({ loaderData: data }: Route.ComponentProps) {
   const { team, competition } = data;
   return (
-    <main className="container-xl py-5">
-      <Link to={competition ? `/competition/${competition.id}` : "/"} className="back-link">← {competition?.name ?? "Sports"}</Link>
-      <div className="surface-card mt-3">
+    <main className="container-xl arena-page">
+      <Link to={competition ? `/competition/${competition.id}` : "/"} className="back-link">{competition?.name ?? "Sports"}</Link>
+      <div className="arena-hero club-hero mt-3">
         <div className="d-flex align-items-center gap-3">
           {team.logoUrl ? <img className="team-avatar" src={team.logoUrl} alt={`${team.name} logo`} /> : <div className="team-avatar">{team.name.slice(0, 1)}</div>}
           <div>
@@ -29,23 +29,29 @@ export default function TeamPage({ loaderData: data }: Route.ComponentProps) {
       <div className="section-heading">
         <h2 className="section-title">Season performance</h2>
       </div>
-      <div className="row g-3">
+      <section className="season-dashboard">
+        <div className="season-summary">
+          <strong>{team.totalMatches}</strong>
+          <span>Matches played</span>
+          <meter min={0} max={Math.max(team.totalMatches, 1)} value={team.wins} aria-label="Wins this season" />
+        </div>
+        <div className="season-stats">
         {[
-          ["Matches", team.totalMatches],
           ["Wins", team.wins],
           ["Draws", team.draws],
           ["Losses", team.losses],
           ["Goals for", team.goalsFor],
           ["Goals against", team.goalsAgainst],
         ].map(([label, value]) => (
-          <div className="col-6 col-md-4 col-lg-2" key={label}>
+          <div className="season-stat" key={label}>
             <div className="stat-card">
               <strong>{value}</strong>
               <span>{label}</span>
             </div>
           </div>
         ))}
-      </div>
+        </div>
+      </section>
     </main>
   );
 }

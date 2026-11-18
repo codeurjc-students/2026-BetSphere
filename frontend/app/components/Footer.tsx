@@ -10,13 +10,8 @@ export default function Footer() {
               <span className="brand-mark">B</span>
               <span>
                 BETSPHERE<span className="brand-period">.</span>
-                <small>SPORTS · LIVE · ODDS</small>
               </span>
             </Link>
-            <p className="footer-copy mt-3">
-              Every match counts. Follow the game, understand the odds, and
-              enjoy sports.
-            </p>
           </div>
           <div className="col-6 col-md-3">
             <h2 className="footer-title">Explore</h2>

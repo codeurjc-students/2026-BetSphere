@@ -24,7 +24,7 @@ export function GlobalErrorPage() {
           {detail && <p className="error-detail">{detail}</p>}
           <div className="d-flex flex-wrap gap-2">
             <Link className="btn btn-brand" to="/">
-              Back to home <span aria-hidden="true">→</span>
+              Back to home
             </Link>
             <button
               className="btn btn-outline-light error-retry"

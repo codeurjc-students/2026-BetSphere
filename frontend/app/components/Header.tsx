@@ -30,7 +30,6 @@ export default function Header() {
           <span className="brand-mark">B</span>
           <span>
             BETSPHERE<span className="brand-period">.</span>
-            <small>SPORTS · LIVE · ODDS</small>
           </span>
         </Link>
         <button
@@ -38,19 +37,20 @@ export default function Header() {
           type="button"
           aria-label="Toggle navigation"
           aria-expanded={open}
+          aria-controls="site-navigation"
           onClick={() => setOpen(!open)}
         >
           <span className="navbar-toggler-icon" />
         </button>
-        <div className={`collapse navbar-collapse ${open ? "show" : ""}`}>
+        <div id="site-navigation" className={`collapse navbar-collapse ${open ? "show" : ""}`}>
           <div className="navbar-nav mx-auto gap-lg-2">
-            <NavLink className="nav-link" to="/">
+            <NavLink className="nav-link" to="/" onClick={() => setOpen(false)}>
               Sports
             </NavLink>
-            <NavLink className="nav-link" to="/matches">
+            <NavLink className="nav-link" to="/matches" onClick={() => setOpen(false)}>
               Matches
             </NavLink>
-            <NavLink className="nav-link" to="/history">
+            <NavLink className="nav-link" to="/history" onClick={() => setOpen(false)}>
               History
             </NavLink>
             {user?.roles.includes("ROLE_ADMIN") && (

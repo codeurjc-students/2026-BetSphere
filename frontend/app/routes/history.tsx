@@ -1,7 +1,9 @@
-import { Badge, Card, Col, Row } from "react-bootstrap";
+import { useState } from "react";
 import { Link } from "react-router";
 import type { Route } from "./+types/history";
 import { requireUser } from "../services/auth-guards";
+import { formatDateTime } from "../services/format-date";
+import { getRecentMatches } from "../services/recent-matches";
 
 export function clientLoader(args: Route.ClientLoaderArgs) {
   return requireUser(args);
@@ -14,50 +16,58 @@ function formatBalance(value: number) {
   }).format(value);
 }
 
+function RecentlyViewed({ userId }: { userId: number }) {
+  const [matches] = useState(() => getRecentMatches(userId));
+
+  return (
+    <section className="history-views" aria-labelledby="recent-matches-heading">
+      <div className="history-section-top">
+        <div>
+          <h2 id="recent-matches-heading">Recently viewed matches</h2>
+          <p>Matches you opened on this browser while signed in.</p>
+        </div>
+        <Link className="text-link" to="/matches">Explore matches</Link>
+      </div>
+      {matches.length ? (
+        <ul className="history-matches">
+          {matches.map((match) => (
+            <li key={match.id}>
+              <Link to={`/match/${match.id}`}>
+                <span><strong>{match.name}</strong><small>{match.competition}</small></span>
+                <time dateTime={match.viewedAt}>{formatDateTime(match.viewedAt)}</time>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="history-empty">Open a match to add it here.</p>}
+    </section>
+  );
+}
+
 export default function HistoryPage({ loaderData: user }: Route.ComponentProps) {
   return (
-    <main className="container-xl py-5 page-enter">
-      <div className="eyebrow">Your activity</div>
-      <h1 className="page-title">History</h1>
-      <p className="muted">Account activity for {user.username}</p>
-
-      <Row className="g-3 mt-2">
-        <Col md={6}>
-          <Card className="stats-card h-100">
-            <Card.Body>
-              <div className="eyebrow mb-2">Current virtual balance</div>
-              <strong className="profile-stat">{formatBalance(user.virtualBalance)}</strong>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={6}>
-          <Card className="stats-card h-100">
-            <Card.Body>
-              <div className="eyebrow mb-2">Placed bets</div>
-              <strong className="profile-stat">—</strong>
-              <p className="muted mt-2 mb-0">Betting history is not yet available.</p>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-
-      <Card className="stats-card mt-4">
-        <Card.Body className="p-4">
-          <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div>
-              <h2 className="h5 fw-bold mb-1">Recent activity</h2>
-              <p className="muted mb-0">Your bets will appear here once this feature is available.</p>
-            </div>
-            <Badge bg="secondary">No activity</Badge>
+    <main className="container-xl arena-page account-page history-page">
+      <header className="arena-hero account-hero history-heading">
+        <div>
+          <h1 className="page-title">History</h1>
+          <p>Account activity for {user.username}</p>
+        </div>
+        <Link to="/profile" className="text-link">My Profile</Link>
+      </header>
+      <div className="history-layout">
+        <section className="balance-panel">
+          <h2>Current virtual balance</h2>
+          <strong>{formatBalance(user.virtualBalance)}</strong>
+        </section>
+        <section className="history-ledger" aria-labelledby="ledger-heading">
+          <h2 id="ledger-heading">Betting activity</h2>
+          <div className="history-empty">
+            <strong>No activity to display yet</strong>
+            <p>Virtual bets and their results will appear here when betting is available.</p>
           </div>
-          <div className="history-empty-state mt-4">
-            <div className="history-empty-icon" aria-hidden="true">↗</div>
-            <p className="fw-semibold mb-1">No activity to display yet</p>
-            <p className="muted mb-3">Explore matches and check back once betting is enabled.</p>
-            <Link className="btn btn-brand" to="/matches">Explore matches</Link>
-          </div>
-        </Card.Body>
-      </Card>
+        </section>
+        <RecentlyViewed key={user.id} userId={user.id} />
+      </div>
     </main>
   );
 }

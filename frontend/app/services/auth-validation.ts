@@ -2,7 +2,12 @@ export type AuthFieldErrors = Record<string, string>;
 
 const EMAIL_PATTERN = /^[A-Za-z0-9+_.-]+@(.+)$/;
 const USERNAME_PATTERN = /^[a-zA-Z0-9_]+$/;
-const PASSWORD_PATTERN = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&#_\-]).{8,64}$/;
+export const passwordRules = [
+  { label: "8–64 characters", test: (value: string) => value.length >= 8 && value.length <= 64 },
+  { label: "Uppercase and lowercase", test: (value: string) => /[A-Z]/.test(value) && /[a-z]/.test(value) },
+  { label: "A number and a symbol", test: (value: string) => /\d/.test(value) && /[@$!%*?&#_-]/.test(value) },
+  { label: "No spaces", test: (value: string) => value.length > 0 && !/\s/.test(value) },
+];
 
 export function validateLogin(email: string, password: string): AuthFieldErrors {
   const errors: AuthFieldErrors = {};
@@ -45,9 +50,9 @@ export function validateRegistration(values: {
     errors.email = "Enter a valid email address.";
   }
 
-  if (values.password.length < 8 || values.password.length > 64) {
+  if (!passwordRules[0].test(values.password)) {
     errors.password = "Password must be between 8 and 64 characters.";
-  } else if (/\s/.test(values.password) || !PASSWORD_PATTERN.test(values.password)) {
+  } else if (!passwordRules.every((rule) => rule.test(values.password))) {
     errors.password = "Include uppercase, lowercase, number, and symbol; do not use spaces.";
   }
 
