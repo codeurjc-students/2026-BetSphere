@@ -160,6 +160,7 @@ public abstract class BrowserTestSupport {
         driver.findElement(By.id("password")).sendKeys("user123");
         driver.findElement(By.cssSelector("form button[type='submit']")).click();
         wait.until(ExpectedConditions.urlToBe("http://127.0.0.1:" + FRONTEND_PORT + "/"));
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("home-title")));
 
         wait.until(ExpectedConditions.visibilityOfElementLocated(
                 By.cssSelector("a[aria-label='View profile of user@betsphere.com']")));

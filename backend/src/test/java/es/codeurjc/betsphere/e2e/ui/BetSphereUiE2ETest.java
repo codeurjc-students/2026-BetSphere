@@ -90,8 +90,9 @@ class BetSphereUiE2ETest extends BrowserTestSupport {
         signInThroughForm(driver);
         var wait = new WebDriverWait(driver, Duration.ofSeconds(30));
         wait.until(ExpectedConditions.elementToBeClickable(
-                By.cssSelector("a[aria-label='View profile of user@betsphere.com']"))).sendKeys(Keys.ENTER);
+                By.cssSelector("a[aria-label='View profile of user@betsphere.com']"))).click();
         wait.until(ExpectedConditions.urlContains("/profile"));
+        wait.until(ExpectedConditions.textToBePresentInElementLocated(By.tagName("h1"), "My Profile"));
         driver.navigate().refresh();
         wait.until(ExpectedConditions.visibilityOfElementLocated(
                 By.cssSelector("a[aria-label='View profile of user@betsphere.com']")));
@@ -109,8 +110,9 @@ class BetSphereUiE2ETest extends BrowserTestSupport {
 
         var wait = new WebDriverWait(driver, Duration.ofSeconds(30));
         By logoutButton = By.cssSelector("button.header-logout");
-        wait.until(ExpectedConditions.elementToBeClickable(logoutButton)).sendKeys(Keys.ENTER);
+        wait.until(ExpectedConditions.elementToBeClickable(logoutButton)).click();
         wait.until(ExpectedConditions.numberOfElementsToBe(logoutButton, 0));
+        wait.until(webDriver -> webDriver.manage().getCookieNamed("RefreshToken") == null);
         driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/profile");
         wait.until(ExpectedConditions.urlContains("/login?returnTo="));
     }
