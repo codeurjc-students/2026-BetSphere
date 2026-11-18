@@ -43,6 +43,23 @@ jobs:
         working-directory: ./backend
         run: chmod +x mvnw
 
+      - name: Prepare Maven distribution
+        working-directory: ./backend
+        env:
+          MVNW_VERBOSE: 'true'
+        run: |
+          for attempt in 1 2 3; do
+            if ./mvnw --version; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Maven download failed on attempt $attempt. Retrying in 5 seconds."
+              sleep 5
+            fi
+          done
+          echo "::error::Maven Wrapper could not start after 3 attempts."
+          exit 1
+
       - name: Run ALL backend tests (Unit, Integration, System)
         working-directory: ./backend
         run: xvfb-run ./mvnw test
