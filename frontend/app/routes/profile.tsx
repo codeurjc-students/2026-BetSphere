@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { Badge, Card, Col, Row } from "react-bootstrap";
 import { Link, useFetcher } from "react-router";
 import type { Route } from "./+types/profile";
 import { requireUser } from "../services/auth-guards";
@@ -43,71 +42,47 @@ export default function ProfilePage({ loaderData: user }: Route.ComponentProps) 
   const initials = user.username.slice(0, 1).toLocaleUpperCase("en-US");
 
   return (
-    <main className="container-xl py-5 page-enter">
-      <div className="eyebrow">Your space</div>
-      <h1 className="page-title">My Profile</h1>
-      <Row className="g-4 mt-1">
-        <Col lg={4}>
-          <Card className="stats-card h-100">
-            <Card.Body className="p-4">
-              <div className="profile-avatar mb-3" aria-label={`${user.username}'s avatar`}>
-                {avatarUrl ? <img src={avatarUrl} alt={`${user.username}'s photo`} /> : initials}
-              </div>
-              <label className="btn btn-outline-light w-100 mb-2">{busy ? "Uploading…" : "Change photo"}<input className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={busy} onChange={(event) => { const file = event.target.files?.[0]; if (file) { const body = new FormData(); body.append("avatar", file); fetcher.submit(body, { method: "post", encType: "multipart/form-data" }); } event.target.value = ""; }} /></label>
-              {fetcher.data && "error" in fetcher.data && <p role="alert" className="small text-danger">{fetcher.data.error}</p>}
-              {fetcher.data && "avatarUrl" in fetcher.data && <p role="status" className="small muted">Profile photo updated.</p>}
-              <h2 className="h4 fw-bold mb-1">{user.username}</h2>
-              <p className="muted text-break">{user.email}</p>
-              <Badge bg="success" className="mb-3">Registered account</Badge>
-              <hr />
-              <Link to="/history" className="btn btn-outline-light w-100">
-                View my history
-              </Link>
-              {user.roles.includes("ROLE_ADMIN") && (
-                <Link to="/admin" className="btn btn-brand w-100 mt-2">
-                  Go to Admin Panel
-                </Link>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col lg={8}>
-          <Row className="g-3">
-            <Col sm={6}>
-              <Card className="stats-card h-100">
-                <Card.Body>
-                  <div className="eyebrow mb-2">Virtual balance</div>
-                  <strong className="profile-stat">{formatBalance(user.virtualBalance)}</strong>
-                  <p className="muted mt-2 mb-0">Available balance in your account</p>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col sm={6}>
-              <Card className="stats-card h-100">
-                <Card.Body>
-                  <div className="eyebrow mb-2">Role</div>
-                  <strong className="profile-stat">{user.roles.includes("ROLE_ADMIN") ? "Administrator" : "User"}</strong>
-                  <p className="muted mt-2 mb-0">Permissions associated with your account</p>
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
-          <Card className="stats-card mt-3">
-            <Card.Body>
-              <h2 className="h5 fw-bold">Personal details</h2>
-              <dl className="row mb-0 mt-3">
-                <dt className="col-sm-4 muted">Username</dt>
-                <dd className="col-sm-8">{user.username}</dd>
-                <dt className="col-sm-4 muted">Email address</dt>
-                <dd className="col-sm-8 text-break">{user.email}</dd>
-                <dt className="col-sm-4 muted">Birth date</dt>
-                <dd className="col-sm-8">{user.birthDate ? new Date(`${user.birthDate}T00:00:00`).toLocaleDateString("en-US") : "Not available"}</dd>
-              </dl>
-              <p className="small muted mb-0">Profile editing will be available soon.</p>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+    <main className="container-xl arena-page account-page">
+      <header className="arena-hero account-hero">
+        <div className="profile-avatar" aria-label={`${user.username}'s avatar`}>
+          {avatarUrl ? <img src={avatarUrl} alt={`${user.username}'s photo`} /> : initials}
+        </div>
+        <div>
+          <h1 className="page-title">My Profile</h1>
+          <p>{user.username}{user.roles.includes("ROLE_ADMIN") && " · Administrator"}</p>
+          <label className="btn btn-outline-light photo-button">
+            {busy ? "Uploading…" : "Change photo"}
+            <input className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif"
+              disabled={busy} onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) {
+                  const body = new FormData();
+                  body.append("avatar", file);
+                  fetcher.submit(body, { method: "post", encType: "multipart/form-data" });
+                }
+                event.target.value = "";
+              }} />
+          </label>
+          {fetcher.data && "error" in fetcher.data && <p role="alert" className="small text-danger mt-2">{fetcher.data.error}</p>}
+          {fetcher.data && "avatarUrl" in fetcher.data && <p role="status" className="small mt-2">Profile photo updated.</p>}
+        </div>
+      </header>
+      <div className="account-grid">
+        <section className="balance-panel">
+          <h2>Virtual balance</h2>
+          <strong>{formatBalance(user.virtualBalance)}</strong>
+          <Link to="/history" className="btn btn-brand">View my history</Link>
+        </section>
+        <section className="account-details">
+          <h2>Personal details</h2>
+          <dl>
+            <dt>Username</dt><dd>{user.username}</dd>
+            <dt>Email address</dt><dd>{user.email}</dd>
+            <dt>Birth date</dt><dd>{user.birthDate ? new Date(`${user.birthDate}T00:00:00`).toLocaleDateString("en-US") : "Not available"}</dd>
+          </dl>
+          {user.roles.includes("ROLE_ADMIN") && <Link to="/admin" className="btn btn-outline-light">Go to Admin Panel</Link>}
+        </section>
+      </div>
     </main>
   );
 }

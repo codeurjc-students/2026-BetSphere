@@ -1,5 +1,6 @@
 import { Alert, Button, Form } from "react-bootstrap";
-import { Form as RouterForm, Link, redirect, useActionData } from "react-router";
+import { Form as RouterForm, Link, redirect, useActionData, useNavigation, useSearchParams } from "react-router";
+import PasswordField from "../components/PasswordField";
 import type { Route } from "./+types/login";
 import { AuthServiceError, getCurrentUser, login } from "../services/auth-service";
 import { validateLogin } from "../services/auth-validation";
@@ -17,10 +18,13 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     const user = await getCurrentUser(result.accessToken!);
     useAuthStore.getState().setSession(result.accessToken!, user);
     const requestedPath = new URL(request.url).searchParams.get("returnTo");
-    const destination =
-      requestedPath?.startsWith("/") && !requestedPath.startsWith("//")
-        ? requestedPath
-        : "/";
+    const base = new URL(request.url);
+    const target = requestedPath && /^\/(?![/\\])/.test(requestedPath) && URL.canParse(requestedPath, base)
+      ? new URL(requestedPath, base)
+      : null;
+    const destination = target && target.origin === base.origin && !target.pathname.startsWith("//")
+      ? `${target.pathname}${target.search}${target.hash}`
+      : "/";
     return redirect(destination);
   } catch (error) {
     return {
@@ -41,17 +45,21 @@ export async function clientLoader() {
 }
 
 export default function LoginPage() {
+  const submitting = useNavigation().state === "submitting";
+  const [searchParams] = useSearchParams();
   const actionData = useActionData<typeof clientAction>();
   const errors =
     actionData && "errors" in actionData ? (actionData.errors ?? {}) : {};
 
   return (
-    <main className="auth-wrap">
+    <main className="auth-wrap auth-login">
+      <aside className="auth-visual">
+        <p>Back in<br /><em>the stands.</em></p>
+      </aside>
       <section className="auth-card">
-        <span className="brand-mark">B</span>
-        <div className="eyebrow mb-2">Welcome back</div>
         <h1 className="h2 fw-bold">Sign in</h1>
-        <p className="muted mb-4">Return to where sports come alive.</p>
+        <p className="muted">Open your profile and check your virtual balance.</p>
+        {searchParams.get("registered") === "1" && <p role="status" className="auth-confirmation">Account created. You can sign in now.</p>}
         <RouterForm method="post" noValidate>
           {errors.form && <Alert variant="danger">{errors.form}</Alert>}
           <Form.Group className="mb-3" controlId="email">
@@ -71,17 +79,10 @@ export default function LoginPage() {
             <Form.Label className="fw-semibold">
               Password
             </Form.Label>
-            <Form.Control
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="••••••••"
-              isInvalid={Boolean(errors.password)}
-            />
-            <Form.Control.Feedback type="invalid">{errors.password}</Form.Control.Feedback>
+            <PasswordField autoComplete="current-password" placeholder="••••••••" error={errors.password} />
           </Form.Group>
-          <Button className="btn-brand w-100" type="submit">
-            Sign In
+          <Button className="btn-brand w-100" type="submit" disabled={submitting}>
+            {submitting ? "Signing in…" : "Sign In"}
           </Button>
         </RouterForm>
         <p className="text-center muted small mt-4 mb-0">

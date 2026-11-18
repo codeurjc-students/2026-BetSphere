@@ -131,6 +131,7 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
     return () => window.clearTimeout(timeout);
   }, [notice, formError, deleteError]);
 
+  const [recordQuery, setRecordQuery] = useState("");
   const rows: Item[] = active === "users" ? users : active === "sports" ? sports : active === "competitions" ? competitions : active === "teams" ? teams : matches;
   const fields = active === "users" ? [] : active === "teams" && editing
     ? fieldMap.teams.filter((field) => field.name !== "competitionId")
@@ -188,23 +189,31 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
     const row = item as MatchDTO; return [`${row.homeTeam} vs ${row.awayTeam}`, `${formatDateTime(row.matchDate)} · ${row.gameStatus}`];
   }
 
-  return <main className="container-xl py-5">
-    <div className="eyebrow">Platform management</div>
-    <h1 className="page-title">Admin Panel</h1>
-    <p className="muted">Manage sports entities and browse all their records.</p>
+  const search = recordQuery.trim().toLowerCase();
+  const visibleRows = rows.filter((item) => describe(item).join(" ").toLowerCase().includes(search));
+
+  return <main className="container-xl arena-page admin-workspace">
+    <header className="arena-hero admin-hero"><h1 className="page-title">Admin Panel</h1></header>
 
     <div className="admin-tabs d-flex flex-wrap gap-2 mt-4" role="tablist" aria-label="Entities">
-      {(Object.keys(entityNames) as Entity[]).map((entity) => <button key={entity} type="button" role="tab" aria-selected={active === entity} className={`btn ${active === entity ? "btn-brand" : "btn-outline-light"}`} onClick={() => { setActive(entity); setEditing(null); setForm({}); setFormOpen(false); setPendingDelete(null); setFormError(""); setDeleteError(""); setNotice(null); }}>{entityNames[entity]} <span className="admin-count">{pages[entity].totalElements}</span></button>)}
+      {(Object.keys(entityNames) as Entity[]).map((entity) => <button key={entity} type="button" role="tab" aria-selected={active === entity} className={`btn ${active === entity ? "btn-brand" : "btn-outline-light"}`} onClick={() => { setActive(entity); setRecordQuery(""); setEditing(null); setForm({}); setFormOpen(false); setPendingDelete(null); setFormError(""); setDeleteError(""); setNotice(null); }}>{entityNames[entity]} <span className="admin-count">{pages[entity].totalElements}</span></button>)}
     </div>
 
     {notice && <div className={`alert ${notice.warning ? "alert-warning" : "alert-success"} mt-3`} role="status">{notice.message}</div>}
 
     <section className="surface-card mt-3">
       <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div><h2 className="h5 fw-bold mb-1">{entityNames[active]}</h2><p className="muted small mb-0">{rows.length} of {pages[active].totalElements} records</p></div>
+        <div><h2 className="h5 fw-bold mb-1">{entityNames[active]}</h2><p className="muted small mb-0">{visibleRows.length} shown · {rows.length} loaded · {pages[active].totalElements} total</p></div>
         {active !== "users" && <button className="btn btn-brand" type="button" onClick={startCreate}>New record</button>}
       </div>
-      {rows.length === 0 ? <p className="muted mt-4 mb-0">No records found yet.</p> : <><div className="table-responsive mt-3"><table className="table align-middle"><thead><tr><th>ID</th><th>{active === "users" ? "User" : "Name / match"}</th><th>{active === "users" ? "Email" : "Details"}</th>{active === "users" && <th>Role</th>}{active !== "users" && <th className="text-end">Actions</th>}</tr></thead><tbody>{rows.map((item) => { const [name, details] = describe(item); const userRow = active === "users" ? item as UserDTO : null; return <tr key={(item as { id: number }).id}><td>{(item as { id: number }).id}</td><td className="fw-semibold">{name}</td><td className="muted">{details}</td>{userRow ? <td><span className="admin-role">{userRow.roles.join(", ") || "No role"}</span></td> : <td className="text-end text-nowrap"><button type="button" className="btn btn-sm btn-outline-light me-2" onClick={() => startEdit(item)}>Edit</button><button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setPendingDelete(item)}>Delete</button></td>}</tr>; })}</tbody></table></div>{pages[active].page + 1 < pages[active].totalPages && <LoadMore loading={fetcher.state !== "idle"} onClick={() => fetcher.load(`/admin?entity=${active}&page=${pages[active].page + 1}&size=${PAGE_SIZE}`)} />}</>}
+      <label className="search-field admin-search">
+        <span aria-hidden="true">⌕</span>
+        <span className="visually-hidden">Search loaded records</span>
+        <input type="search" placeholder="Search loaded records" value={recordQuery}
+          onChange={(event) => setRecordQuery(event.target.value)} />
+      </label>
+      {visibleRows.length === 0 ? <p className="muted mt-4 mb-0">{search ? "No loaded records match this search." : "No records found yet."}</p> : <><div className="table-responsive mt-3"><table className="table align-middle"><thead><tr><th>ID</th><th>{active === "users" ? "User" : "Name / match"}</th><th>{active === "users" ? "Email" : "Details"}</th>{active === "users" && <th>Role</th>}{active !== "users" && <th className="text-end">Actions</th>}</tr></thead><tbody>{visibleRows.map((item) => { const [name, details] = describe(item); const userRow = active === "users" ? item as UserDTO : null; return <tr key={(item as { id: number }).id}><td>{(item as { id: number }).id}</td><td className="fw-semibold">{name}</td><td className="muted">{details}</td>{userRow ? <td><span className="admin-role">{userRow.roles.join(", ") || "No role"}</span></td> : <td className="text-end text-nowrap"><button type="button" className="btn btn-sm btn-outline-light me-2" onClick={() => startEdit(item)}>Edit</button><button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setPendingDelete(item)}>Delete</button></td>}</tr>; })}</tbody></table></div></>}
+      {pages[active].page + 1 < pages[active].totalPages && <LoadMore loading={fetcher.state !== "idle"} onClick={() => fetcher.load(`/admin?entity=${active}&page=${pages[active].page + 1}&size=${PAGE_SIZE}`)} />}
     </section>
 
     {formOpen && <section key={`${active}-${(editing as { id: number } | null)?.id ?? "new"}`} className="surface-card mt-3" aria-label={`${entityNames[active]} form`}>

@@ -139,6 +139,26 @@ class BetSphereUiE2ETest extends BrowserTestSupport {
     }
 
     @Test
+    void sportsRailScrollsInANarrowViewport(ChromeDriver driver) {
+        driver.manage().window().setSize(new org.openqa.selenium.Dimension(540, 900));
+        driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/");
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        var rail = wait.until(ExpectedConditions.presenceOfElementLocated(By.id("sport-rail")));
+        var next = By.cssSelector("button[aria-label='Next sport']");
+        var previous = By.cssSelector("button[aria-label='Previous sport']");
+
+        wait.until(ExpectedConditions.elementToBeClickable(next)).sendKeys(Keys.ENTER);
+        wait.until(webDriver -> !webDriver.findElement(next).isEnabled());
+        assertThat((Number) driver.executeScript("return arguments[0].scrollLeft", rail))
+                .satisfies(offset -> assertThat(offset.doubleValue()).isPositive());
+        assertThat(driver.executeScript("return document.documentElement.scrollWidth <= window.innerWidth"))
+                .isEqualTo(true);
+
+        wait.until(ExpectedConditions.elementToBeClickable(previous)).sendKeys(Keys.ENTER);
+        wait.until(webDriver -> !webDriver.findElement(previous).isEnabled());
+    }
+
+    @Test
     void openingCompetitionShowsItsScheduledMatch(ChromeDriver driver) {
         var competition = addCompetitionMatch();
         driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/sport/" + competition.getSport().getId());
@@ -147,7 +167,7 @@ class BetSphereUiE2ETest extends BrowserTestSupport {
                 By.cssSelector("a[href='/competition/" + competition.getId() + "']"))).sendKeys(Keys.ENTER);
         wait.until(ExpectedConditions.textToBePresentInElementLocated(By.tagName("h1"), "La Liga"));
 
-        var matches = wait.until(ExpectedConditions.numberOfElementsToBe(By.cssSelector("a.match-row"), 2));
+        var matches = wait.until(ExpectedConditions.numberOfElementsToBe(By.cssSelector("a.match-row"), 1));
         assertThat(matches).allSatisfy(match -> assertThat(match.getText()).contains("Valencia", "Sevilla"));
     }
 

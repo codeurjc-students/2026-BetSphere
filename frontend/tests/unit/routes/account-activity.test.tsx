@@ -43,7 +43,7 @@ function renderAccount(action?: () => { avatarUrl: string } | { error: string })
 it("shows profile details and opens the user's activity screen", async () => {
   renderAccount();
   expect(await screen.findByRole("heading", { name: "My Profile" })).toBeInTheDocument();
-  expect(screen.getAllByText(user.email)).toHaveLength(2);
+  expect(screen.getByText(user.email)).toBeInTheDocument();
   expect(screen.getByText("€42.50")).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("link", { name: "View my history" }));

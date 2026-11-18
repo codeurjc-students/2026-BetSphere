@@ -1,5 +1,6 @@
 import { Alert, Button, Form } from "react-bootstrap";
-import { Form as RouterForm, Link, redirect, useActionData } from "react-router";
+import { Form as RouterForm, Link, redirect, useActionData, useNavigation } from "react-router";
+import PasswordField from "../components/PasswordField";
 import type { Route } from "./+types/register";
 import { AuthServiceError, register } from "../services/auth-service";
 import { validateRegistration } from "../services/auth-validation";
@@ -31,17 +32,19 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 }
 
 export default function RegisterPage() {
+  const submitting = useNavigation().state === "submitting";
   const actionData = useActionData<typeof clientAction>();
   const errors =
     actionData && "errors" in actionData ? (actionData.errors ?? {}) : {};
 
   return (
-    <main className="auth-wrap">
+    <main className="auth-wrap auth-register">
+      <aside className="auth-visual">
+        <p>Your seat<br /><em>is waiting.</em></p>
+      </aside>
       <section className="auth-card">
-        <span className="brand-mark">B</span>
-        <div className="eyebrow mb-2">Start your journey</div>
         <h1 className="h2 fw-bold">Create your account</h1>
-        <p className="muted mb-4">Join a community that lives for sports.</p>
+        <p className="muted">Set up your BetSphere profile. Registration is for adults 18+.</p>
         <RouterForm method="post" noValidate>
           {errors.form && <Alert variant="danger">{errors.form}</Alert>}
           <Form.Group className="mb-3" controlId="username">
@@ -73,17 +76,7 @@ export default function RegisterPage() {
             <Form.Label className="fw-semibold">
               Password
             </Form.Label>
-            <Form.Control
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              placeholder="Create a password"
-              isInvalid={Boolean(errors.password)}
-            />
-            <Form.Control.Feedback type="invalid">{errors.password}</Form.Control.Feedback>
-            <Form.Text className="muted">
-              8–64 characters, with uppercase, lowercase, number, and symbol.
-            </Form.Text>
+            <PasswordField autoComplete="new-password" placeholder="Create a password" error={errors.password} showRequirements />
           </Form.Group>
           <Form.Group className="mb-3" controlId="birthDate">
             <Form.Label className="fw-semibold">Birth date</Form.Label>
@@ -95,8 +88,8 @@ export default function RegisterPage() {
             />
             <Form.Control.Feedback type="invalid">{errors.birthDate}</Form.Control.Feedback>
           </Form.Group>
-          <Button className="btn-brand w-100" type="submit">
-            Create account
+          <Button className="btn-brand w-100" type="submit" disabled={submitting}>
+            {submitting ? "Creating account…" : "Create account"}
           </Button>
         </RouterForm>
         <p className="text-center muted small mt-4 mb-0">

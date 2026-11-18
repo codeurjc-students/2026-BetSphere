@@ -47,6 +47,17 @@ function fillCredentials() {
   fireEvent.change(screen.getByLabelText("Password"), { target: { value: "ValidPass1!" } });
 }
 
+it("reveals and hides the password without submitting the form", async () => {
+  renderAuth("/login");
+  const password = await screen.findByLabelText("Password", { selector: "input" });
+  fireEvent.change(password, { target: { value: "ValidPass1!" } });
+  fireEvent.click(screen.getByRole("button", { name: "Show password" }));
+  expect(password).toHaveAttribute("type", "text");
+  expect(password).toHaveValue("ValidPass1!");
+  fireEvent.click(screen.getByRole("button", { name: "Hide password" }));
+  expect(password).toHaveAttribute("type", "password");
+});
+
 it("displays validation errors for an empty login without sending a request", async () => {
   const fetchMock = vi.fn();
   vi.stubGlobal("fetch", fetchMock);
