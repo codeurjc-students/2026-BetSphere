@@ -7,9 +7,7 @@ import { getCompetitionOptions, getCompetitionsPage } from "../services/competit
 import { getMatches, getMatchesPage } from "../services/match-service";
 import { getTeams, getTeamsPage } from "../services/team-service";
 import type { SportDTO } from "../dtos/SportDTO";
-import type { SportSummaryDTO } from "../dtos/SportSummaryDTO";
 import type { CompetitionDTO } from "../dtos/CompetitionDTO";
-import type { CompetitionSummaryDTO } from "../dtos/CompetitionSummaryDTO";
 import type { TeamDTO } from "../dtos/TeamDTO";
 import type { MatchDTO } from "../dtos/MatchDTO";
 import type { UserDTO } from "../dtos/UserDTO";
@@ -49,6 +47,11 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
 type Entity = AdminEntity;
 type Item = UserDTO | SportDTO | CompetitionDTO | TeamDTO | MatchDTO;
+type AdditionalPages = Partial<Record<Entity, PageDTO<Item>[]>>;
+type AdminResponse =
+  | { ok: true; intent: string; entity: Entity; warning?: string }
+  | { ok: false; intent: string; entity?: Entity; error: string }
+  | { kind: "page"; entity: Entity; page: PageDTO<Item> };
 type Field = { name: string; label: string; type?: string; options?: { value: string; label: string }[] };
 const entityNames: Record<Entity, string> = { users: "Users", sports: "Sports", competitions: "Competitions", teams: "Teams", matches: "Matches" };
 
@@ -68,15 +71,6 @@ const fieldMap: Record<Entity, Field[]> = {
 
 export default function AdminPage({ loaderData }: Route.ComponentProps) {
   const [active, setActive] = useState<Entity>("sports");
-  const [sports, setSports] = useState<SportDTO[]>(loaderData.kind === "initial" ? loaderData.pages.sports.content : []);
-  const [competitions, setCompetitions] = useState<CompetitionDTO[]>(loaderData.kind === "initial" ? loaderData.pages.competitions.content : []);
-  const [teams, setTeams] = useState<TeamDTO[]>(loaderData.kind === "initial" ? loaderData.pages.teams.content : []);
-  const [sportOptions, setSportOptions] = useState<SportSummaryDTO[]>(loaderData.kind === "initial" ? loaderData.options.sports : []);
-  const [competitionOptions, setCompetitionOptions] = useState<CompetitionSummaryDTO[]>(loaderData.kind === "initial" ? loaderData.options.competitions : []);
-  const [teamOptions, setTeamOptions] = useState<TeamDTO[]>(loaderData.kind === "initial" ? loaderData.options.teams : []);
-  const [matchDependencies, setMatchDependencies] = useState<MatchDTO[]>(loaderData.kind === "initial" ? loaderData.options.matchDependencies : []);
-  const [matches, setMatches] = useState<MatchDTO[]>(loaderData.kind === "initial" ? loaderData.pages.matches.content : []);
-  const [users, setUsers] = useState<UserDTO[]>(loaderData.kind === "initial" ? loaderData.pages.users.content : []);
   const [formError, setFormError] = useState("");
   const [deleteError, setDeleteError] = useState("");
   const [notice, setNotice] = useState<{ message: string; warning?: boolean } | null>(null);
@@ -84,46 +78,37 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
   const [form, setForm] = useState<Record<string, string>>({});
   const [formOpen, setFormOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Item | null>(null);
-  const [pages, setPages] = useState<Record<Entity, { page: number; totalPages: number; totalElements: number }>>(loaderData.kind === "initial" ? {
-    users: { page: loaderData.pages.users.number, totalPages: loaderData.pages.users.totalPages, totalElements: loaderData.pages.users.totalElements }, sports: { page: loaderData.pages.sports.number, totalPages: loaderData.pages.sports.totalPages, totalElements: loaderData.pages.sports.totalElements }, competitions: { page: loaderData.pages.competitions.number, totalPages: loaderData.pages.competitions.totalPages, totalElements: loaderData.pages.competitions.totalElements }, teams: { page: loaderData.pages.teams.number, totalPages: loaderData.pages.teams.totalPages, totalElements: loaderData.pages.teams.totalElements }, matches: { page: loaderData.pages.matches.number, totalPages: loaderData.pages.matches.totalPages, totalElements: loaderData.pages.matches.totalElements },
-  } : {
-    users: { page: 0, totalPages: 0, totalElements: 0 }, sports: { page: 0, totalPages: 0, totalElements: 0 }, competitions: { page: 0, totalPages: 0, totalElements: 0 }, teams: { page: 0, totalPages: 0, totalElements: 0 }, matches: { page: 0, totalPages: 0, totalElements: 0 },
-  });
-  const fetcher = useFetcher<{ ok?: boolean; intent?: string; entity?: Entity; error?: string; warning?: string; page?: PageDTO<Item> }>();
+  const fetcher = useFetcher<AdminResponse>();
+  const [lastResponse, setLastResponse] = useState(fetcher.data);
+  const [pagination, setPagination] = useState({ loaderData, pages: {} as AdditionalPages });
+  const additionalPages = pagination.loaderData === loaderData ? pagination.pages : {};
+  const initial = loaderData.kind === "initial" ? loaderData : undefined;
+  const { sports: sportOptions = [], competitions: competitionOptions = [], teams: teamOptions = [], matchDependencies = [] } = initial?.options ?? {};
+  const latestPage = (entity: Entity) => additionalPages[entity]?.at(-1) ?? initial?.pages[entity];
+  const activePage = latestPage(active);
 
-  useEffect(() => {
-    if (loaderData.kind !== "initial") return;
-    const { users: userPage, sports: sportPage, competitions: competitionPage, teams: teamPage, matches: matchPage } = loaderData.pages;
-    setUsers(userPage.content); setSports(sportPage.content); setCompetitions(competitionPage.content); setTeams(teamPage.content); setMatches(matchPage.content);
-    setSportOptions(loaderData.options.sports); setCompetitionOptions(loaderData.options.competitions); setTeamOptions(loaderData.options.teams); setMatchDependencies(loaderData.options.matchDependencies);
-    setPages({ users: { page: userPage.number, totalPages: userPage.totalPages, totalElements: userPage.totalElements }, sports: { page: sportPage.number, totalPages: sportPage.totalPages, totalElements: sportPage.totalElements }, competitions: { page: competitionPage.number, totalPages: competitionPage.totalPages, totalElements: competitionPage.totalElements }, teams: { page: teamPage.number, totalPages: teamPage.totalPages, totalElements: teamPage.totalElements }, matches: { page: matchPage.number, totalPages: matchPage.totalPages, totalElements: matchPage.totalElements } });
-  }, [loaderData]);
-
-  useEffect(() => {
-    const result = fetcher.data;
-    if (!result) return;
-    if ("ok" in result) {
-      if (!result.ok) {
-        if (result.intent === "delete") setDeleteError(result.error ?? "Could not delete record.");
-        else setFormError(result.error ?? "Could not save record.");
-        return;
+  const result = fetcher.data;
+  if (result !== lastResponse) {
+    setLastResponse(result);
+    if (result && "page" in result) {
+      const { entity, page } = result;
+      const previous = latestPage(entity);
+      if (previous && page.number === previous.number + 1) {
+        setPagination({ loaderData, pages: { ...additionalPages, [entity]: [...(additionalPages[entity] ?? []), page] } });
       }
-      setFormError(""); setDeleteError(""); setPendingDelete(null); setFormOpen(false); setEditing(null);
-      const actionWord = result.intent === "delete" ? "deleted" : result.intent === "edit" ? "updated" : "created";
-      const message = `${entityNames[result.entity ?? active]} successfully ${actionWord}.`;
-      setNotice({ message: result.warning ? `${message} ${result.warning}` : message, warning: Boolean(result.warning) });
-      return;
+    } else if (result && (!result.entity || result.entity === active)) {
+      if (result.ok) {
+        setFormError(""); setDeleteError(""); setPendingDelete(null); setFormOpen(false); setEditing(null);
+        const actionWord = result.intent === "delete" ? "deleted" : result.intent === "edit" ? "updated" : "created";
+        const message = `${entityNames[result.entity]} successfully ${actionWord}.`;
+        setNotice({ message: result.warning ? `${message} ${result.warning}` : message, warning: Boolean(result.warning) });
+      } else if (result.intent === "delete") {
+        setDeleteError(result.error);
+      } else {
+        setFormError(result.error);
+      }
     }
-    if (!("entity" in result) || !result.page) return;
-    const { entity, page } = result as { entity: Entity; page: PageDTO<Item> };
-    const append = <T,>(current: T[], incoming: T[]) => [...current, ...incoming];
-    if (entity === "users") setUsers((current) => append(current, page.content as UserDTO[]));
-    else if (entity === "sports") setSports((current) => append(current, page.content as SportDTO[]));
-    else if (entity === "competitions") setCompetitions((current) => append(current, page.content as CompetitionDTO[]));
-    else if (entity === "teams") setTeams((current) => append(current, page.content as TeamDTO[]));
-    else setMatches((current) => append(current, page.content as MatchDTO[]));
-    setPages((current) => ({ ...current, [entity]: { page: page.number, totalPages: page.totalPages, totalElements: page.totalElements } }));
-  }, [fetcher.data]);
+  }
 
   useEffect(() => {
     if (!notice && !formError && !deleteError) return;
@@ -132,7 +117,7 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
   }, [notice, formError, deleteError]);
 
   const [recordQuery, setRecordQuery] = useState("");
-  const rows: Item[] = active === "users" ? users : active === "sports" ? sports : active === "competitions" ? competitions : active === "teams" ? teams : matches;
+  const rows: Item[] = [...(initial?.pages[active].content ?? []), ...(additionalPages[active] ?? []).flatMap((page) => page.content)];
   const fields = active === "users" ? [] : active === "teams" && editing
     ? fieldMap.teams.filter((field) => field.name !== "competitionId")
     : fieldMap[active];
@@ -196,14 +181,14 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
     <header className="arena-hero admin-hero"><h1 className="page-title">Admin Panel</h1></header>
 
     <div className="admin-tabs d-flex flex-wrap gap-2 mt-4" role="tablist" aria-label="Entities">
-      {(Object.keys(entityNames) as Entity[]).map((entity) => <button key={entity} type="button" role="tab" aria-selected={active === entity} className={`btn ${active === entity ? "btn-brand" : "btn-outline-light"}`} onClick={() => { setActive(entity); setRecordQuery(""); setEditing(null); setForm({}); setFormOpen(false); setPendingDelete(null); setFormError(""); setDeleteError(""); setNotice(null); }}>{entityNames[entity]} <span className="admin-count">{pages[entity].totalElements}</span></button>)}
+      {(Object.keys(entityNames) as Entity[]).map((entity) => <button key={entity} type="button" role="tab" aria-selected={active === entity} className={`btn ${active === entity ? "btn-brand" : "btn-outline-light"}`} onClick={() => { setActive(entity); setRecordQuery(""); setEditing(null); setForm({}); setFormOpen(false); setPendingDelete(null); setFormError(""); setDeleteError(""); setNotice(null); }}>{entityNames[entity]} <span className="admin-count">{latestPage(entity)?.totalElements ?? 0}</span></button>)}
     </div>
 
     {notice && <div className={`alert ${notice.warning ? "alert-warning" : "alert-success"} mt-3`} role="status">{notice.message}</div>}
 
     <section className="surface-card mt-3">
       <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div><h2 className="h5 fw-bold mb-1">{entityNames[active]}</h2><p className="muted small mb-0">{visibleRows.length} shown · {rows.length} loaded · {pages[active].totalElements} total</p></div>
+        <div><h2 className="h5 fw-bold mb-1">{entityNames[active]}</h2><p className="muted small mb-0">{visibleRows.length} shown · {rows.length} loaded · {activePage?.totalElements ?? 0} total</p></div>
         {active !== "users" && <button className="btn btn-brand" type="button" onClick={startCreate}>New record</button>}
       </div>
       <label className="search-field admin-search">
@@ -213,7 +198,7 @@ export default function AdminPage({ loaderData }: Route.ComponentProps) {
           onChange={(event) => setRecordQuery(event.target.value)} />
       </label>
       {visibleRows.length === 0 ? <p className="muted mt-4 mb-0">{search ? "No loaded records match this search." : "No records found yet."}</p> : <><div className="table-responsive mt-3"><table className="table align-middle"><thead><tr><th>ID</th><th>{active === "users" ? "User" : "Name / match"}</th><th>{active === "users" ? "Email" : "Details"}</th>{active === "users" && <th>Role</th>}{active !== "users" && <th className="text-end">Actions</th>}</tr></thead><tbody>{visibleRows.map((item) => { const [name, details] = describe(item); const userRow = active === "users" ? item as UserDTO : null; return <tr key={(item as { id: number }).id}><td>{(item as { id: number }).id}</td><td className="fw-semibold">{name}</td><td className="muted">{details}</td>{userRow ? <td><span className="admin-role">{userRow.roles.join(", ") || "No role"}</span></td> : <td className="text-end text-nowrap"><button type="button" className="btn btn-sm btn-outline-light me-2" onClick={() => startEdit(item)}>Edit</button><button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setPendingDelete(item)}>Delete</button></td>}</tr>; })}</tbody></table></div></>}
-      {pages[active].page + 1 < pages[active].totalPages && <LoadMore loading={fetcher.state !== "idle"} onClick={() => fetcher.load(`/admin?entity=${active}&page=${pages[active].page + 1}&size=${PAGE_SIZE}`)} />}
+      {activePage && !activePage.last && <LoadMore loading={fetcher.state !== "idle"} onClick={() => fetcher.load(`/admin?entity=${active}&page=${activePage.number + 1}&size=${PAGE_SIZE}`)} />}
     </section>
 
     {formOpen && <section key={`${active}-${(editing as { id: number } | null)?.id ?? "new"}`} className="surface-card mt-3" aria-label={`${entityNames[active]} form`}>

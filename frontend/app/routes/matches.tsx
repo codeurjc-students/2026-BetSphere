@@ -1,10 +1,9 @@
 import type { Route } from "./+types/matches";
 import { useFetcher } from "react-router";
 import FixtureExplorer from "../components/FixtureExplorer";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import LoadMore from "../components/LoadMore";
 import { getMatchesPage } from "../services/match-service";
-import type { PageDTO } from "../dtos/PageDTO";
 
 const PAGE_SIZE = 10;
 
@@ -15,15 +14,21 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
 }
 
 export default function MatchList({ loaderData }: Route.ComponentProps) {
-  const [matches, setMatches] = useState(loaderData.content);
-  const [page, setPage] = useState(loaderData);
   const fetcher = useFetcher<typeof clientLoader>();
-  useEffect(() => {
-    if (!fetcher.data || !("content" in fetcher.data)) return;
-    const next = fetcher.data as PageDTO<(typeof matches)[number]>;
-    setMatches((current) => [...current, ...next.content]);
-    setPage(next);
-  }, [fetcher.data]);
+  const [list, setList] = useState({ loaderData, response: fetcher.data, matches: loaderData.content, page: loaderData });
+  if (loaderData !== list.loaderData) {
+    setList({ loaderData, response: fetcher.data, matches: loaderData.content, page: loaderData });
+  } else if (fetcher.data && fetcher.data !== list.response) {
+    const next = fetcher.data;
+    if (next.number === list.page.number + 1) {
+      const loadedIds = new Set(list.matches.map((match) => match.id));
+      const matches = [...list.matches, ...next.content.filter((match) => !loadedIds.has(match.id))];
+      setList({ loaderData, response: next, matches, page: next });
+    } else {
+      setList({ ...list, response: next });
+    }
+  }
+  const { matches, page } = list;
   return (
     <main className="container-xl arena-page">
       <header className="arena-hero schedule-hero">

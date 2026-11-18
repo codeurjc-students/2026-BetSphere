@@ -7,8 +7,6 @@ import { formatDateTime } from "../services/format-date";
 import { getMatchesPage } from "../services/match-service";
 import { getSports } from "../services/sport-service";
 
-// React Router discovers this loader through the route module's exports.
-// eslint-disable-next-line react-refresh/only-export-components
 export async function clientLoader() {
   const [sports, matches] = await Promise.all([
     getSports(),
