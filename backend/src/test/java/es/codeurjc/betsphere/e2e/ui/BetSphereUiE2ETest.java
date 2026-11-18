@@ -21,6 +21,8 @@ import es.codeurjc.betsphere.support.BrowserTestSupport;
 
 class BetSphereUiE2ETest extends BrowserTestSupport {
 
+    private static final By MATCH_LINKS = By.cssSelector("main a[href^='/match/']");
+
     @Test
     void mainPageShowsMatches(ChromeDriver driver) {
         try {
@@ -46,14 +48,13 @@ class BetSphereUiE2ETest extends BrowserTestSupport {
 
         driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/matches");
         var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
-        By matchRows = By.cssSelector("a.match-row");
         By loadMore = By.xpath("//button[normalize-space()='Load more']");
-        var firstPage = wait.until(ExpectedConditions.numberOfElementsToBe(matchRows, 10))
+        var firstPage = wait.until(ExpectedConditions.numberOfElementsToBe(MATCH_LINKS, 10))
                 .stream().map(row -> row.getAttribute("href")).toList();
 
         wait.until(ExpectedConditions.elementToBeClickable(loadMore)).sendKeys(Keys.ENTER);
 
-        var allMatches = wait.until(ExpectedConditions.numberOfElementsToBe(matchRows, 11))
+        var allMatches = wait.until(ExpectedConditions.numberOfElementsToBe(MATCH_LINKS, 11))
                 .stream().map(row -> row.getAttribute("href")).toList();
         assertThat(allMatches).startsWith(firstPage.toArray(String[]::new)).doesNotHaveDuplicates();
         wait.until(ExpectedConditions.numberOfElementsToBe(loadMore, 0));
@@ -167,7 +168,7 @@ class BetSphereUiE2ETest extends BrowserTestSupport {
                 By.cssSelector("a[href='/competition/" + competition.getId() + "']"))).sendKeys(Keys.ENTER);
         wait.until(ExpectedConditions.textToBePresentInElementLocated(By.tagName("h1"), "La Liga"));
 
-        var matches = wait.until(ExpectedConditions.numberOfElementsToBe(By.cssSelector("a.match-row"), 1));
+        var matches = wait.until(ExpectedConditions.numberOfElementsToBe(MATCH_LINKS, 1));
         assertThat(matches).allSatisfy(match -> assertThat(match.getText()).contains("Valencia", "Sevilla"));
     }
 
@@ -177,9 +178,9 @@ class BetSphereUiE2ETest extends BrowserTestSupport {
         driver.get("http://127.0.0.1:" + FRONTEND_PORT + "/matches");
         var wait = new WebDriverWait(driver, Duration.ofSeconds(60));
         wait.until(ExpectedConditions.elementToBeClickable(
-                By.cssSelector("a.match-row[href='/match/" + match.getId() + "']"))).sendKeys(Keys.ENTER);
+                By.cssSelector("main a[href='/match/" + match.getId() + "']"))).sendKeys(Keys.ENTER);
 
-        var titles = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.cssSelector("h1.match-team-title")));
+        var titles = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.cssSelector(".match-team-title")));
         assertThat(titles).extracting(org.openqa.selenium.WebElement::getText)
                 .containsExactly("Real Madrid", "Barcelona");
         assertThat(driver.findElement(By.cssSelector("button[aria-label='Odds 1 disabled']")).getText())
@@ -355,7 +356,7 @@ class BetSphereUiE2ETest extends BrowserTestSupport {
             driver.get(baseUrl + "/admin");
             selectAdminTab(wait, "Competitions");
             uploadAndOpenCatalogImage(driver, wait, image, "Competitions", "La Liga",
-                    "competition", "img[alt='La Liga logo']");
+                    "competition", "img.competition-emblem");
 
             driver.get(baseUrl + "/admin");
             selectAdminTab(wait, "Teams");
