@@ -51,6 +51,9 @@ public class SecurityConfig {
             
             .authorizeHttpRequests(auth -> auth
                 //PUBLIC
+                .requestMatchers(HttpMethod.GET, "/", "/index.html", "/assets/**",
+                        "/favicon.svg", "/matchday-pitch.jpg", "/matches", "/match/*", "/team/*",
+                        "/sport/*", "/competition/*", "/login", "/register", "/profile", "/history", "/admin").permitAll()
                 .requestMatchers("/docs/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/matches/**").permitAll()

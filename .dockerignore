@@ -1,0 +1,12 @@
+.git
+.codex
+.agents
+**/node_modules
+**/target
+**/build
+**/dist
+**/coverage
+**/.react-router
+**/.env
+**/.env.*
+**/*.log
