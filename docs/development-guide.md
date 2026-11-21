@@ -159,5 +159,63 @@ Para lanzar la suite de tests completos que exige la Integración Continua, pued
     npm run test
     ```
 
-### Creación de una release
-El desarrollo se encuentra actualmente en la Fase 2 del ciclo académico. La aplicación está en desarrollo activo y la infraestructura técnica inicial ya se ha implementado, sin embargo, la aplicación completa todavía no es funcional. El proceso de empaquetado para distribución y creación de *releases* etiquetadas en GitHub se definirá y documentará en las fases posteriores del proyecto.
+### Entrega continua
+
+Cada push a `main` ejecuta `continuous-delivery.yml`, que llama al workflow
+reutilizable `publish-artifacts.yml` con el SHA del cambio y el tag `dev`.
+Este publica la imagen `huugoocm/betsphere:dev` y el artefacto OCI
+`huugoocm/betsphere-compose:dev`. El resumen de Actions registra el SHA,
+el digest de la imagen y las referencias publicadas. Las publicaciones de
+desarrollo se ejecutan de una en una mediante el grupo `publish-dev`.
+
+En GitHub, configura los secretos de Actions `DOCKERHUB_USERNAME` y
+`DOCKERHUB_TOKEN`. La cuenta debe tener permiso de escritura en los repositorios
+Docker Hub `huugoocm/betsphere` y `huugoocm/betsphere-compose`.
+
+Para preparar esa configuración, sigue estos pasos
+
+1. Inicia sesión en Docker Hub con la cuenta `huugoocm` y crea los repositorios
+   `betsphere` y `betsphere-compose` si todavía no existen.
+2. Crea un token de acceso personal de Docker con permisos de lectura y escritura
+   en repositorios. Ese token permite que Actions publique usando tu cuenta.
+3. En el repositorio GitHub, abre Settings → Secrets and variables → Actions →
+   New repository secret. Guarda `DOCKERHUB_USERNAME` con el usuario `huugoocm`
+   y `DOCKERHUB_TOKEN` con el token creado en Docker.
+4. Integra el workflow en `main` mediante una PR y revisa la ejecución
+   Continuous Delivery que provoca el merge.
+
+Las instrucciones oficiales detallan la gestión del token y de los secretos.
+[Docker](https://docs.docker.com/security/access-tokens/),
+[GitHub Actions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets).
+
+El workflow genera una copia temporal de `docker/docker-compose.yml` con el tag
+de la publicación. Las variables de configuración se conservan para el despliegue.
+Las builds manuales y las releases utilizarán este publicador en los issues #76
+y #77. La automatización de versiones corresponde al #78.
+
+Para construir la imagen desde la raíz del repositorio, ejecuta
+
+```bash
+docker build -f docker/dockerfile -t betsphere:local .
+```
+
+El frontend se compila como SPA y Spring sirve sus archivos estáticos y las
+rutas de navegación. Las rutas privadas de la API mantienen sus controles de acceso.
+
+Para desplegar los artefactos publicados, prepara un archivo `.env` local con
+`DB_NAME`, `DB_USER`, `DB_PASSWORD`, `KEYSTORE_PASSWORD` y `KEYSTORE_SECRET`.
+Para el MySQL incluido, usa `DB_USER=root`, ya que Compose configura esa cuenta.
+Los valores HTTPS deben corresponder al almacén `backend/src/main/resources/keystore.jks`.
+También puedes definir `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `S3_REGION` y
+`S3_BUCKET`.
+
+Con Docker Compose 5.6.1, ejecuta desde la carpeta del archivo `.env`
+
+```bash
+docker compose --env-file .env -f oci://docker.io/huugoocm/betsphere-compose:dev up -d
+```
+
+Abre `https://localhost/` y comprueba también el acceso directo a `/matches` y
+`/login`. El certificado del almacén local puede requerir que el navegador confirme
+su confianza. Los datos de MySQL y del almacenamiento de imágenes se guardan en
+volúmenes Docker.
