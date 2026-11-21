@@ -190,8 +190,8 @@ Las instrucciones oficiales detallan la gestión del token y de los secretos.
 
 El workflow genera una copia temporal de `docker/docker-compose.yml` con el tag
 de la publicación. Las variables de configuración se conservan para el despliegue.
-Las builds manuales y las releases utilizarán este publicador en los issues #76
-y #77. La automatización de versiones corresponde al #78.
+Las builds manuales utilizan el mismo publicador. Las releases utilizarán este
+workflow en el issue #77. La automatización de versiones corresponde al #78.
 
 Para construir la imagen desde la raíz del repositorio, ejecuta
 
@@ -219,3 +219,42 @@ Abre `https://localhost/` y comprueba también el acceso directo a `/matches` y
 `/login`. El certificado del almacén local puede requerir que el navegador confirme
 su confianza. Los datos de MySQL y del almacenamiento de imágenes se guardan en
 volúmenes Docker.
+
+### Publicación de una build manual
+
+Una vez integrado `manual-build.yml` en `main`, abre Actions → Manual Build →
+Run workflow. En el selector de la definición del workflow, utiliza `main`.
+Los campos del formulario eligen el código que se va a publicar
+
+- `branch` indica la rama de origen, por ejemplo `main` o `feature/chat`.
+- `commit` permite indicar un SHA completo o abreviado de entre 7 y 40 caracteres.
+  Si se deja vacío, se utiliza el último commit de la rama seleccionada al hacer
+  el checkout. El commit indicado debe formar parte del historial de esa rama.
+
+El workflow resuelve primero el SHA completo y después llama al publicador con
+ese commit. El resumen de la ejecución registra la rama, el SHA y el tag generado.
+Una build de `feature/chat` tendrá un tag con este formato
+
+```text
+feature-chat-20261121-203000-a1b2c3d4e5f6
+```
+
+La fecha y la hora se calculan en UTC. El nombre de rama se convierte a minúsculas,
+sus caracteres incompatibles con Docker se sustituyen por guiones y se limita a
+80 caracteres. El SHA abreviado tiene 12 caracteres.
+
+Se publican `huugoocm/betsphere:<tag>` y `huugoocm/betsphere-compose:<tag>`.
+El Compose apunta a la imagen con ese mismo tag. Los tags `dev` y `latest`
+se conservan durante las publicaciones manuales.
+
+Para ejecutar una build publicada, sustituye `<tag>` por el valor que muestra
+Actions y utiliza tu archivo `.env` de despliegue
+
+```bash
+docker compose --env-file .env -f oci://docker.io/huugoocm/betsphere-compose:<tag> up -d
+```
+
+Una rama inexistente, un SHA inválido o un commit ajeno al historial de la rama
+detienen la preparación antes de autenticar y publicar en Docker Hub. Una build
+de un commit anterior utiliza el Dockerfile y el Compose de ese commit, que deben
+ser compatibles con el empaquetado de la aplicación en esa versión.

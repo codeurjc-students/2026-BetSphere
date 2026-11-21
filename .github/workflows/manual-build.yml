@@ -1,0 +1,94 @@
+name: Manual Build
+run-name: Manual build from ${{ inputs.branch }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Source branch to build
+        required: true
+        default: main
+        type: string
+      commit:
+        description: Optional commit SHA from that branch (empty uses its latest commit)
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      source-sha: ${{ steps.metadata.outputs.source-sha }}
+      artifact-tag: ${{ steps.metadata.outputs.artifact-tag }}
+    steps:
+      - name: Validate source inputs
+        shell: bash
+        env:
+          SOURCE_BRANCH: ${{ inputs.branch }}
+          SOURCE_COMMIT: ${{ inputs.commit }}
+        run: |
+          if ! git check-ref-format "refs/heads/$SOURCE_BRANCH"; then
+            echo "::error::Enter a valid source branch name."
+            exit 1
+          fi
+          if [[ -n "$SOURCE_COMMIT" && ! "$SOURCE_COMMIT" =~ ^[a-fA-F0-9]{7,40}$ ]]; then
+            echo "::error::Enter a commit SHA of 7 to 40 hexadecimal characters, or leave it empty."
+            exit 1
+          fi
+
+      - name: Checkout source branch and history
+        uses: actions/checkout@v4
+        with:
+          ref: refs/heads/${{ inputs.branch }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve source commit and publication tag
+        id: metadata
+        shell: bash
+        env:
+          SOURCE_BRANCH: ${{ inputs.branch }}
+          SOURCE_COMMIT: ${{ inputs.commit }}
+        run: |
+          if [[ -z "$SOURCE_COMMIT" ]]; then
+            source_sha=$(git rev-parse HEAD)
+          else
+            if ! source_sha=$(git rev-parse --verify "$SOURCE_COMMIT^{commit}"); then
+              echo "::error::The commit could not be resolved in the repository history."
+              exit 1
+            fi
+            if ! git merge-base --is-ancestor "$source_sha" HEAD; then
+              echo "::error::The commit must belong to the selected source branch's history."
+              exit 1
+            fi
+          fi
+
+          branch_slug=$(printf '%s' "$SOURCE_BRANCH" | LC_ALL=C tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9_.-]+/-/g; s/^[^a-z0-9_]+//; s/[-.]+$//' | cut -c1-80)
+          branch_slug=${branch_slug:-branch}
+          timestamp=$(date -u +%Y%m%d-%H%M%S)
+          short_sha=${source_sha:0:12}
+          artifact_tag="$branch_slug-$timestamp-$short_sha"
+
+          echo "source-sha=$source_sha" >> "$GITHUB_OUTPUT"
+          echo "artifact-tag=$artifact_tag" >> "$GITHUB_OUTPUT"
+          {
+            echo "Source branch $SOURCE_BRANCH"
+            echo ""
+            echo "Source commit $source_sha"
+            echo ""
+            echo "Publication tag $artifact_tag (UTC)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  publish:
+    needs: prepare
+    uses: ./.github/workflows/publish-artifacts.yml
+    with:
+      source-ref: ${{ needs.prepare.outputs.source-sha }}
+      artifact-tag: ${{ needs.prepare.outputs.artifact-tag }}
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
