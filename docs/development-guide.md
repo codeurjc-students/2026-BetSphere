@@ -258,3 +258,51 @@ Una rama inexistente, un SHA inválido o un commit ajeno al historial de la rama
 detienen la preparación antes de autenticar y publicar en Docker Hub. Una build
 de un commit anterior utiliza el Dockerfile y el Compose de ese commit, que deben
 ser compatibles con el empaquetado de la aplicación en esa versión.
+
+### Preparación de versiones
+
+Actions → Prepare Version → Run workflow permite preparar los cambios de versión
+mediante una PR a `main`. Selecciona `main` en el selector del workflow y completa
+`operation` (`release` o `development`) y `version` (dos o tres componentes
+numéricos, sin `v` ni `SNAPSHOT`).
+
+| Operación | Entrada | Backend | Frontend y lockfile | Tag de imagen en Compose |
+| --- | --- | --- | --- | --- |
+| `release` | `0.1` | `0.1.0` | `0.1.0` | `0.1` |
+| `release` | `0.0.1` | `0.0.1` | `0.0.1` | `0.0.1` |
+| `development` | `0.2` | `0.2.0-SNAPSHOT` | `0.2.0` | `0.2` |
+
+El script actualiza la versión propia del backend, la del cliente, las dos
+referencias del paquete raíz en `package-lock.json` y la imagen de la aplicación
+en `docker/docker-compose.yml`. Conserva las versiones de las dependencias y de
+los otros servicios. Valida todos los archivos antes de escribir los cambios.
+
+Cada combinación de operación y versión utiliza una rama estable, por ejemplo
+`chore/prepare-release-0.1.0`. Repetirla actualiza la PR existente; las entradas
+`0.1` y `0.1.0` producen los mismos cambios y la misma rama. Si `main` ya tiene
+esas versiones, no se abre otra PR. El resumen de Actions muestra el resultado.
+
+Antes de usarlo, habilita Settings → Actions → General → Workflow permissions →
+**Allow GitHub Actions to create and approve pull requests**. Si la organización
+restringe esta opción, debe habilitarla un administrador. El workflow solicita
+permisos de escritura sobre contenido y PRs y utiliza el `GITHUB_TOKEN` que GitHub
+proporciona automáticamente; no utiliza el token de Docker Hub.
+
+Con el token predeterminado, GitHub puede solicitar **Approve workflows to run**
+en la PR generada. Aprueba las comprobaciones y espera a que Full CI termine antes
+del merge. Para iniciar los controles automáticamente, se puede configurar el
+secreto opcional `VERSION_BUMP_TOKEN` con un token de GitHub con permisos de
+escritura en Contents y Pull requests de este repositorio. Consulta las
+[reglas de activación de GitHub Actions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow)
+y los [permisos del creador de PRs](https://github.com/peter-evans/create-pull-request#workflow-permissions).
+
+El orden de trabajo es preparar y fusionar la PR `release`, crear la release de
+GitHub desde ese commit de `main`, y después preparar y fusionar la PR
+`development`. Este workflow también admite `workflow_call` con los mismos
+campos, para que el publicador de releases del #77 pueda solicitar la siguiente
+versión después de publicar correctamente. El llamador debe conceder los mismos
+permisos y pasar `VERSION_BUMP_TOKEN` si lo utiliza. Preparar versiones por sí solo
+no crea tags, releases ni publicaciones en Docker Hub.
+
+Las pruebas de esta operación se ejecutan en Full CI y pueden lanzarse localmente
+con `node --test .github/scripts/set-versions.test.mjs` desde la raíz.
