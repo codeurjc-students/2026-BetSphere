@@ -1,0 +1,101 @@
+name: Prepare Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Prepare a release or the next development version
+        type: choice
+        options: [release, development]
+        required: true
+      version:
+        description: 'Target version, for example 0.1 or 0.0.1 (without v or SNAPSHOT)'
+        type: string
+        required: true
+  workflow_call:
+    inputs:
+      operation:
+        type: string
+        required: true
+      version:
+        type: string
+        required: true
+    secrets:
+      VERSION_BUMP_TOKEN:
+        description: Optional GitHub token for automatically triggering PR checks
+        required: false
+    outputs:
+      pull-request-url:
+        description: Created or updated version PR
+        value: ${{ jobs.prepare.outputs.pull-request-url }}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: prepare-version
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      pull-request-url: ${{ steps.pr.outputs.pull-request-url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Update version files
+        id: versions
+        env:
+          OPERATION: ${{ inputs.operation }}
+          VERSION: ${{ inputs.version }}
+        run: node .github/scripts/set-versions.mjs "$OPERATION" "$VERSION"
+      - name: Create or update version PR
+        id: pr
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.VERSION_BUMP_TOKEN || github.token }}
+          base: main
+          branch: ${{ steps.versions.outputs.branch }}
+          add-paths: |
+            backend/pom.xml
+            frontend/package.json
+            frontend/package-lock.json
+            docker/docker-compose.yml
+          commit-message: 'chore: prepare ${{ inputs.operation }} ${{ steps.versions.outputs.project-version }}'
+          title: 'chore: prepare ${{ inputs.operation }} ${{ steps.versions.outputs.project-version }}'
+          body: |
+            Prepare the ${{ inputs.operation }} version through a reviewed change to main.
+
+            - Backend: `${{ steps.versions.outputs.backend-version }}`.
+            - Frontend and lockfile: `${{ steps.versions.outputs.project-version }}`.
+            - Compose app image: `huugoocm/betsphere:${{ steps.versions.outputs.compose-tag }}`.
+
+            Review the diff and wait for CI before merging. With the default GITHUB_TOKEN,
+            approve the PR workflows if GitHub requests it. This PR does not publish a release.
+
+            Related to #78.
+      - name: Summarize preparation
+        env:
+          PR_URL: ${{ steps.pr.outputs.pull-request-url }}
+          BACKEND_VERSION: ${{ steps.versions.outputs.backend-version }}
+          PROJECT_VERSION: ${{ steps.versions.outputs.project-version }}
+          COMPOSE_TAG: ${{ steps.versions.outputs.compose-tag }}
+        run: |
+          {
+            echo '### Version preparation'
+            echo "Backend: $BACKEND_VERSION"
+            echo "Frontend: $PROJECT_VERSION"
+            echo "Compose image tag: $COMPOSE_TAG"
+            if [ -n "$PR_URL" ]; then
+              echo "Review PR: $PR_URL"
+            else
+              echo 'No pending version changes: main already has these versions.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

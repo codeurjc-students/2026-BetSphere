@@ -26,6 +26,9 @@ jobs:
           cache: 'maven'
 
       # --- 2. FRONTEND (Unit & Build) ---
+      - name: Test version preparation
+        run: node --test .github/scripts/set-versions.test.mjs
+
       - name: Install frontend dependencies
         working-directory: ./frontend
         run: npm install
