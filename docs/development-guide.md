@@ -190,8 +190,8 @@ Las instrucciones oficiales detallan la gestión del token y de los secretos.
 
 El workflow genera una copia temporal de `docker/docker-compose.yml` con el tag
 de la publicación. Las variables de configuración se conservan para el despliegue.
-Las builds manuales utilizan el mismo publicador. Las releases utilizarán este
-workflow en el issue #77. La automatización de versiones corresponde al #78.
+Las builds manuales y las releases utilizan el mismo publicador. La preparación
+de versiones se realiza con Prepare Version.
 
 Para construir la imagen desde la raíz del repositorio, ejecuta
 
@@ -306,3 +306,61 @@ no crea tags, releases ni publicaciones en Docker Hub.
 
 Las pruebas de esta operación se ejecutan en Full CI y pueden lanzarse localmente
 con `node --test .github/scripts/set-versions.test.mjs` desde la raíz.
+
+### Publicación de una release de GitHub
+
+El workflow **GitHub Release** se ejecuta únicamente al publicar una release
+(`release: published`). Integrar su PR en `main` deja preparada la automatización;
+no crea tags ni releases. Guardar un borrador tampoco publica artefactos. El evento
+`published` incluye las releases marcadas como prerelease: usa una versión numérica
+como `0.0.1` para un ensayo y ten en cuenta que también actualizará `latest`.
+Consulta los [eventos de GitHub Actions](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#release).
+
+Cuando la fase esté terminada y se decida publicar:
+
+1. Ejecuta Prepare Version con `operation=release` y la versión elegida.
+   Revisa, comprueba la CI y fusiona su PR a `main`.
+2. En GitHub → Releases → Draft a new release, crea el tag sobre el commit de
+   `main` que contiene esas versiones. Para la entrega, el tag es `0.1`; para un
+   ensayo previo se puede utilizar `0.0.1`. Publica la release cuando corresponda.
+3. Revisa la ejecución GitHub Release y su resumen de publicación. Después del
+   éxito se prepara mediante el #78 una PR con la siguiente versión de desarrollo;
+   espera a que pasen sus controles antes de fusionarla.
+
+La validación resuelve el tag a un SHA y comprueba que coincide con el commit del
+evento y pertenece al historial de `main`. Lee las versiones desde ese commit,
+incluido `package-lock.json`, y rechaza valores inconsistentes o `SNAPSHOT`.
+El publicador recibe el SHA exacto, por lo que los cambios posteriores en `main`
+no entran en la imagen de esa release.
+
+| Tag de GitHub | Backend y frontend en el tag | Imagen en el Compose del tag | Tags publicados en ambos repositorios Docker Hub |
+| --- | --- | --- | --- |
+| `0.0.1` | `0.0.1` | `0.0.1` | `0.0.1`, `latest` |
+| `0.1` o `0.1.0` | `0.1.0` | `0.1` | `0.1`, `0.1.0`, `latest` |
+
+Los aliases de la imagen comparten una única construcción y digest. Los aliases
+del artefacto OCI contienen el mismo Compose, que referencia la imagen versionada
+y conserva las variables del despliegue. El publicador común admite aliases
+opcionales; Continuous Delivery y Manual Build siguen pasando un único tag.
+La publicación del Compose utiliza el
+[soporte OCI de Docker Compose](https://docs.docker.com/compose/how-tos/oci-artifact/).
+
+Después de publicar `0.1` se propone `0.2.0-SNAPSHOT` en el backend, `0.2.0` en
+el frontend y `0.2` en Compose. Las releases con patch distinto de cero avanzan
+ese patch: el ensayo `0.0.1` propone `0.0.2-SNAPSHOT` / `0.0.2`. Se pueden ajustar
+estas versiones en una PR posterior cuando cambie el objetivo de desarrollo.
+Si al validar la release `main` ya está en esa siguiente versión o una superior,
+se omite la preparación para evitar retroceder. Repetir la publicación reutiliza
+la misma rama de preparación mientras su PR siga abierta. La preparación no se
+ejecuta si falla la validación o la publicación.
+
+Se utilizan los secretos Docker Hub ya configurados y los permisos de creación
+de PR descritos en el apartado anterior. Si falla únicamente la preparación de
+desarrollo, los artefactos publicados permanecen disponibles: corrige los permisos
+y vuelve a ejecutar los jobs fallidos, o utiliza Prepare Version manualmente.
+
+Para verificar el workflow antes de publicar, ejecuta
+`node --test .github/scripts/*.test.mjs`. Las pruebas crean repositorios locales
+temporales para simular tags, cambios posteriores en `main` y metadatos inválidos;
+no publican releases ni se conectan a Docker Hub. La comprobación completa de
+publicación y despliegue queda pendiente de la release de ensayo autorizada.

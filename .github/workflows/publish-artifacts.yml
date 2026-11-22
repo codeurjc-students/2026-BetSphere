@@ -11,6 +11,11 @@ on:
         description: Docker tag for both the application and Compose artifact
         required: true
         type: string
+      additional-tags:
+        description: Optional newline-separated aliases for the same artifacts
+        required: false
+        default: ''
+        type: string
     secrets:
       DOCKERHUB_USERNAME:
         required: true
@@ -27,6 +32,7 @@ jobs:
       IMAGE_REPOSITORY: huugoocm/betsphere
       COMPOSE_REPOSITORY: huugoocm/betsphere-compose
       ARTIFACT_TAG: ${{ inputs.artifact-tag }}
+      ADDITIONAL_TAGS: ${{ inputs.additional-tags }}
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -49,6 +55,14 @@ jobs:
           import re
 
           source = pathlib.Path("docker/docker-compose.yml").read_text()
+          tags = list(dict.fromkeys([os.environ['ARTIFACT_TAG']] + os.environ['ADDITIONAL_TAGS'].splitlines()))
+          if any(not re.fullmatch(r"[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,127}", tag) for tag in tags):
+              raise SystemExit("Invalid Docker tag alias.")
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write("image-tags<<publication_tags\n")
+              output.write("\n".join(f"{os.environ['IMAGE_REPOSITORY']}:{tag}" for tag in tags))
+              output.write("\npublication_tags\n")
+              output.write("artifact-tags<<publication_tags\n" + "\n".join(tags) + "\npublication_tags\n")
           image = f"{os.environ['IMAGE_REPOSITORY']}:{os.environ['ARTIFACT_TAG']}"
           compose, count = re.subn(
               r"(?m)^(    image: )huugoocm/betsphere:[^\s]+$",
@@ -81,7 +95,7 @@ jobs:
           context: .
           file: docker/dockerfile
           push: true
-          tags: ${{ env.IMAGE_REPOSITORY }}:${{ env.ARTIFACT_TAG }}
+          tags: ${{ steps.publication.outputs.image-tags }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ steps.publication.outputs.sha }}
@@ -89,19 +103,26 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Publish Compose OCI artifact
-        run: docker compose -f docker/docker-compose.publish.yml publish --yes "$COMPOSE_REPOSITORY:$ARTIFACT_TAG"
+        env:
+          ARTIFACT_TAGS: ${{ steps.publication.outputs.artifact-tags }}
+        run: |
+          while IFS= read -r tag; do
+            docker compose -f docker/docker-compose.publish.yml publish --yes "$COMPOSE_REPOSITORY:$tag"
+          done <<< "$ARTIFACT_TAGS"
 
       - name: Record published artifacts
         env:
           SOURCE_SHA: ${{ steps.publication.outputs.sha }}
           IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
+          ARTIFACT_TAGS: ${{ steps.publication.outputs.artifact-tags }}
         run: |
           {
             echo "Source commit $SOURCE_SHA"
             echo ""
-            echo "Application image $IMAGE_REPOSITORY:$ARTIFACT_TAG"
-            echo ""
             echo "Image digest $IMAGE_DIGEST"
             echo ""
-            echo "Compose artifact oci://docker.io/$COMPOSE_REPOSITORY:$ARTIFACT_TAG"
+            while IFS= read -r tag; do
+              echo "Application image $IMAGE_REPOSITORY:$tag"
+              echo "Compose artifact oci://docker.io/$COMPOSE_REPOSITORY:$tag"
+            done <<< "$ARTIFACT_TAGS"
           } >> "$GITHUB_STEP_SUMMARY"
