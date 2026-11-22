@@ -1,0 +1,62 @@
+name: GitHub Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+# Serialize releases because they all update latest.
+concurrency:
+  group: publish-release
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      source-sha: ${{ steps.release.outputs.source-sha }}
+      artifact-tag: ${{ steps.release.outputs.artifact-tag }}
+      additional-tags: ${{ steps.release.outputs.additional-tags }}
+      next-version: ${{ steps.release.outputs.next-version }}
+      prepare-development: ${{ steps.release.outputs.prepare-development }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate tagged source and versions
+        id: release
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_SHA: ${{ github.sha }}
+        run: node .github/scripts/prepare-release.mjs "$RELEASE_TAG" "$RELEASE_SHA"
+
+  publish:
+    needs: validate
+    uses: ./.github/workflows/publish-artifacts.yml
+    with:
+      source-ref: ${{ needs.validate.outputs.source-sha }}
+      artifact-tag: ${{ needs.validate.outputs.artifact-tag }}
+      additional-tags: ${{ needs.validate.outputs.additional-tags }}
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  prepare-development:
+    needs: [validate, publish]
+    if: needs.validate.outputs.prepare-development == 'true'
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: ./.github/workflows/prepare-version.yml
+    with:
+      operation: development
+      version: ${{ needs.validate.outputs.next-version }}
+    secrets:
+      VERSION_BUMP_TOKEN: ${{ secrets.VERSION_BUMP_TOKEN }}
