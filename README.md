@@ -1,60 +1,47 @@
-# BetSphere: una aplicación web de apuestas deportivas en tiempo real con apuestas combinadas, salas de chat interactivo por partido y resúmenes de encuentros asistidos por IA.
+# BetSphere: una aplicación web para seguir eventos deportivos y simular apuestas
 
-![Logo BetSphere](docs/images/BetSphereLogo.png)
+![Logo de BetSphere](docs/images/BetSphereLogo.png)
 
-BetSphere es una plataforma web orientada al análisis, seguimiento y simulación de apuestas deportivas en tiempo real. Concebida como un entorno digital integrado, la aplicación permite a los usuarios explorar múltiples deportes y competiciones, consultar estadísticas de equipos y seguir la evolución de las cuotas para formalizar pronósticos mediante apuestas simples o combinadas.
+La versión 0.1 de BetSphere permite explorar deportes y competiciones, buscar partidos y comparar las estadísticas de los equipos. Los usuarios registrados pueden iniciar sesión, cambiar su avatar y volver a los últimos partidos que visitaron. El administrador puede consultar las cuentas y gestionar el catálogo deportivo y sus partidos. Las cuotas se muestran como referencia durante esta fase.
 
-A la experiencia de pronósticos se suma un componente social y de análisis, ya que el sistema incorpora salas de chat interactivo asociadas a cada evento en directo para fomentar la participación comunitaria, junto con un módulo de Inteligencia Artificial enfocado en la generación de resúmenes y lecturas analíticas de los encuentros. Todo el ecosistema opera bajo un modelo de gestión de saldo virtual y controles de juego responsable (+18), ofreciendo diferentes niveles de interacción, personalización y moderación adaptados al perfil del usuario (anónimo, registrado y administrador).
+**BetSphere sigue en desarrollo.** La simulación de apuestas se incorporará en próximas versiones. Consulta las [funcionalidades de la 0.1](docs/functionalities.md) para ver qué está disponible por rol.
 
-> **Nota importante:** En la fase actual del proyecto únicamente se han definido los objetivos funcionales y técnicos, así como la arquitectura y el modelo de datos. **La implementación del software no ha comenzado todavía.** Los bocetos presentados a continuación constituyen una representación conceptual preliminar para guiar el desarrollo de la interfaz.
+## Capturas de la versión 0.1
 
+| Catálogo deportivo | Perfil de usuario | Panel de administración |
+| --- | --- | --- |
+| ![Portada con deportes y partidos destacados](docs/images/v0.1/sports-home.png) | ![Perfil con avatar y saldo virtual](docs/images/v0.1/profile.png) | ![Panel de administración del catálogo deportivo](docs/images/v0.1/admin-catalog.png) |
+| Acceso a deportes y partidos destacados. | Consulta de la cuenta y cambio de avatar. | Gestión de deportes, competiciones y equipos. |
 
-## Bocetos de pantallas
+## Vídeo de la versión 0.1
 
+Pendiente de grabación. La demo recorrerá la consulta pública del catálogo, las funciones de la cuenta y el panel de administración.
 
-#### 1. Vista de competición (Competition)
+## Funcionalidades previstas
 
-![Competition](docs/images/Competition.png)  
-*Boceto de la vista de competición (LaLiga) con partidos en vivo, cuotas 1X2 y cupón de apuestas combinadas.*
-
-* **Descripción:** Pantalla dedicada al detalle de una competición específica (ej. LaLiga). Permite explorar los partidos programados o en directo, consultar cuotas principales de resultado (1X2) y gestionar la elaboración de cupones de apuestas simples o combinadas.
-* **Componentes clave:** Encabezado de torneo con opción a favoritos, pestañas de navegación (Partidos, Clasificación, Estadísticas), tarjetas de partidos con indicador "En vivo", cupón lateral interactivo y recordatorio de juego responsable.
-
-#### 2. Evento, Apuestas e Inteligencia Artificial (Bet & Match + IA Summary)
-
-![Match](docs/images/Match.png)  
-*Boceto del detalle de partido con marcadores, cuotas dinámicas, chat interactivo y resumen analítico generado por IA.*
-
-* **Descripción:** Núcleo interactivo de la aplicación. Muestra los detalles de un partido específico junto con las cuotas dinámicas, chat interactivo y el módulo de análisis generado por Inteligencia Artificial.
-* **Componentes clave:** Marcador en directo, cuotas de apuestas, chat interactivo de la comunidad y recuadro de resumen/predicción que generará la IA.
-
-#### 3. Histórico de Apuestas y Saldo Virtual (Historic + User Balance)
-
-![BalancePnL](docs/images/BalancePnL.png)  
-*Boceto del panel de usuario con evolución gráfica de pérdidas/ganancias (PnL), historial de apuestas y saldo virtual.*
-
-* **Descripción:** Panel de control privado del usuario registrado para hacer seguimiento de su actividad financiera simulada y gestionar su cuenta.
-* **Componentes clave:** Gráfico de rendimiento (*PnL* / Pérdidas y Ganancias), desglose de apuestas ganadas/perdidas y módulo para simular recargas de saldo virtual.
-
+Las próximas versiones incorporarán la simulación de apuestas simples y combinadas con saldo virtual, el historial de apuestas, el chat durante los partidos y los resúmenes de encuentros asistidos por IA. Consulta el [estado de las funcionalidades detalladas](docs/detailed-functionalities.md).
 
 ## Documentación
 
-- [Estado de arte](./docs/state-of-art.md)
-- [Objetivos](./docs/objectives.md)
-- [Metodología](./docs/methodology.md)
-- [Funcionalidad de la web](./docs/detailed-functionalities.md)
-- [Requisitos del sistema y características técnicas](./docs/analysis.md)
-- [Seguimiento](./docs/follow-up.md)
-- [Autor](./docs/authors.md)
-- [Guía de desarrollo](./docs/development-guide.md)
-- [Ejecución de la aplicación](./docs/execution.md)
-- [Uso de IA](#uso-de-ia)
-- [Changelog](./CHANGELOG.md)
-
+| Sección | Contenido |
+| --- | --- |
+| [Funcionalidades de la 0.1](docs/functionalities.md) | Funciones disponibles y capturas por rol. |
+| [Funcionalidades detalladas](docs/detailed-functionalities.md) | Alcance y estado de implementación de cada función. |
+| [Ejecución de la aplicación](docs/execution.md) | Requisitos y pasos para ejecutar BetSphere desde Docker Hub. |
+| [Guía de desarrollo](docs/development-guide.md) | Arquitectura, entorno local, despliegue y versionado. |
+| [Estructura de pruebas](docs/testing-structure.md) | Organización de las pruebas del proyecto. |
+| [Estado del arte](docs/state-of-art.md) | Contexto y soluciones relacionadas. |
+| [Objetivos](docs/objectives.md) | Propósito y alcance del TFG. |
+| [Requisitos del sistema y características técnicas](docs/analysis.md) | Análisis del proyecto. |
+| [Metodología](docs/methodology.md) | Organización del desarrollo. |
+| [Seguimiento](docs/follow-up.md) | Planificación y evolución del trabajo. |
+| [Autor](docs/authors.md) | Autoría del proyecto. |
+| [Uso de IA](#uso-de-ia) | Herramientas utilizadas y registro de su uso. |
+| [Historial de cambios](CHANGELOG.md) | Cambios y avances registrados. |
 
 ## Uso de IA
 
-El uso de herramientas basadas en Inteligencia Artificial Generativa se ha articulado bajo principios de transparencia académica y eficiencia técnica. El detalle completo de las interacciones, promps y trazabilidad se encuentra recogido en el archivo [`AI_USAGE.md`](./docs/AI_USAGE.md).
+El uso de herramientas basadas en Inteligencia Artificial Generativa se ha articulado bajo principios de transparencia académica y eficiencia técnica. El detalle completo de las interacciones, prompts y trazabilidad se encuentra recogido en el archivo [`AI_USAGE.md`](./docs/AI_USAGE.md).
 
 - **Google Gemini:** Utilizado como asistente interactivo para la investigación temática del sector, delimitación del alcance y funcionalidades, definición del estado del arte, estructuración de la documentación técnica y refinamiento formal del texto de la memoria.
 - **OpenAI Codex:** Empleado como herramienta de apoyo en el prototipado inicial de las pantallas, maquetación de la interfaz de usuario y estructura base de navegación.
