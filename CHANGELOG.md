@@ -8,10 +8,23 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 
 ## [Unreleased]
 
-### Planificado
-* Inicio de la **Fase 3: Seguridad y Despliegue**.
-* Implementación de autenticación y autorización con Spring Security y JWT.
-* Despliegue en entorno de producción.
+Cambios incorporados para la primera release de la aplicación (`0.1`), pendiente de publicación.
+
+### Añadido
+
+* **Catálogo deportivo:** navegación por deportes y competiciones, fichas de equipos, búsqueda y filtrado de partidos, y detalle de partido con estadísticas y cuotas informativas.
+* **Cuentas y sesión:** registro con comprobación de edad a partir de la fecha declarada, inicio y cierre de sesión, renovación con JWT, perfil con saldo virtual y cambio de avatar, e historial local de partidos visitados.
+* **Administración:** consulta de cuentas y gestión de deportes, competiciones, equipos y partidos desde el panel.
+* **Imágenes y datos de demostración:** subida de avatares, iconos y logos a almacenamiento compatible con S3 y carga inicial configurable del catálogo.
+* **Empaquetado y entrega:** imagen Docker conjunta para cliente y servidor, Compose con MySQL y almacenamiento de imágenes, y distribución del Compose como artefacto OCI. Los workflows automatizan la publicación de la build `dev`, las builds manuales y la preparación y publicación de releases.
+* **Documentación:** descripción de las funciones por rol con capturas, seguimiento de las funcionalidades previstas, guía de ejecución local y despliegue externo, y actualización de la guía de desarrollo con diagramas y procedimiento de versionado.
+
+### Modificado
+
+* **Interfaz:** rediseño de las pantallas del MVP, navegación adaptada a distintos anchos, paginación con carga incremental y páginas de error.
+* **API y seguridad:** ampliación de la API REST del catálogo y las cuentas, normalización de respuestas, HTTPS y autorización de operaciones por rol.
+* **Calidad:** ampliación y reorganización de las pruebas unitarias, de integración y E2E para catálogo, autenticación, perfil, administración e imágenes. Se incorporó análisis estático con ESLint y un umbral del 70 % de cobertura de líneas en el cliente.
+* **README y trazabilidad de IA:** portada actualizada con capturas de la 0.1, índice de documentación, resumen de las funciones previstas y registro de asistencia durante la fase.
 
 ---
 

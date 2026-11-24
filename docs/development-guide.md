@@ -631,9 +631,9 @@ En [GitHub Releases](https://github.com/codeurjc-students/2026-BetSphere/release
 | --- | --- | --- |
 | `0.1.0-fase1` | 2026-09-18, changelog de Fase 1 | Definición del alcance, navegación y arquitectura inicial. |
 | `0.2.0-fase2` | 2026-10-06, changelog de Fase 2 | Primera SPA y API del catálogo de partidos, persistencia inicial y pruebas automatizadas. |
-| Entrega `0.1` | Publicación por confirmar en GitHub Releases | Catálogo deportivo, registro y sesión, perfil con avatar, historial local de partidos visitados y administración. |
+| Entrega `0.1` | Pendiente de publicación | Catálogo deportivo, registro y sesión, perfil con avatar, historial local de partidos visitados y administración. |
 
-Las fechas de las dos primeras filas corresponden a entradas del changelog. El artefacto `dev` se actualiza con los cambios de `main`.
+BetSphere todavía no tiene ninguna release publicada. Las fechas de las dos primeras filas corresponden a hitos del changelog. El tag `dev` identifica una build de desarrollo que se actualiza con los cambios de `main`. Cuando se publique la primera release, se añadirá su fecha y el enlace a sus notas en GitHub.
 
 ## Ejecución y edición del código
 

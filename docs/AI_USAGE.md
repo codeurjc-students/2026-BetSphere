@@ -329,3 +329,298 @@ A medida que avance el desarrollo de BetSphere, se irá detallando en este docum
 * **Complementos a la herramienta:** Análisis de capturas de pantalla de la estructura del explorador de archivos.
 * **Ficheros de contexto:** Archivos `.gitignore` (raíz y frontend) y estructura del árbol de directorios del editor.
 * **Herramientas basadas en ficheros (Spec Driven Development):** No aplica.
+
+> Los registros de la Fase 3 agrupan actividades relacionadas. Las fechas de referencia sitúan cada actividad en el periodo de trabajo y se han contrastado con el historial del proyecto. Los registros describen la asistencia por tema, no el contenido de cada conversación. La asignación de GPT-6.1 Sol se basa en el uso habitual indicado por el autor. Los niveles de razonamiento son estimaciones según la dificultad de cada actividad. GPT-6.2 Sol figura solo en las sesiones recientes en las que consta su uso.
+
+### [Registro 21] - Planificación de la Fase 3 y distribución de issues
+
+* **Fecha:** Desde el 15/10/2026 (fecha de inicio aproximada)
+* **Fase:** 3: Planificación y seguimiento.
+* **Objetivo:** Organizar el trabajo de la fase en tareas revisables y ordenar sus dependencias.
+* **Herramienta:** ChatGPT
+* **Versión concreta:** GPT-6.1 Sol (razonamiento bajo).
+* **Configuración de la herramienta:** Chat conversacional para planificar tareas y redactar borradores de issues.
+* **Cómo ha sido usada:**
+  * Se agrupó el trabajo de la fase en varios bloques, desde las funcionalidades del MVP y las pruebas hasta el empaquetado y la documentación.
+  * La asistencia se utilizó para redactar alcances y criterios de aceptación, y para ajustar el orden de trabajo en GitHub Projects.
+* **Complementos a la herramienta:** GitHub Issues y GitHub Projects como fuentes de planificación.
+* **Ficheros de contexto:** Guía del TFG y listado de issues de la Fase 3.
+* **Herramientas basadas en ficheros (Spec Driven Development):** Los issues y sus criterios se usaron como referencia para delimitar tareas.
+
+### [Registro 22] - Seguridad del backend, JWT y acceso por rol
+
+* **Fecha:** 19/10/2026–21/10/2026 (periodo de trabajo de referencia)
+* **Fase:** 3: Backend y seguridad.
+* **Objetivo:** Proteger los recursos de la API y distinguir los permisos de visitante, usuario registrado y administrador.
+* **Herramienta:** ChatGPT / Codex
+* **Versión concreta:** GPT-6.1 Sol (razonamiento alto).
+* **Configuración de la herramienta:** Asistencia sobre Java y Spring Security.
+* **Cómo ha sido usada:**
+  * Se usó la IA para revisar la configuración de Spring Security, el filtro JWT y el servicio que carga al usuario a partir de su identidad.
+  * Se revisaron el inicio de sesión, la emisión y renovación de tokens, el tratamiento de peticiones sin autenticar y las reglas de acceso por ruta y rol. Se distinguieron la autenticación y la autorización sobre los recursos.
+* **Complementos a la herramienta:** Consulta del repositorio, archivos de configuración o resultados de pruebas según la tarea.
+* **Ficheros de contexto:** `SecurityConfig`, `JwtRequestFilter`, `JwtTokenProvider`, `UserLoginService` y `RepositoryUserDetailsService`.
+* **Herramientas basadas en ficheros (Spec Driven Development):** Se usaron las tareas y los archivos indicados como contexto para orientar la asistencia.
+
+### [Registro 23] - Gestión de usuarios y API de perfil
+
+* **Fecha:** 21/10/2026–26/10/2026 (periodo de trabajo de referencia)
+* **Fase:** 3: Backend y cuentas.
+* **Objetivo:** Crear una API de cuentas con validación, permisos y respuestas que expongan únicamente los datos previstos.
+* **Herramienta:** ChatGPT / Codex
+* **Versión concreta:** GPT-6.1 Sol (razonamiento medio).
+* **Configuración de la herramienta:** Revisión de controladores, servicios y contratos REST.
+* **Cómo ha sido usada:**
+  * La asistencia cubrió las operaciones de registro, listado paginado, consulta y gestión de cuentas y la consulta del usuario autenticado.
+  * Se revisaron los DTO de alta y actualización, el mapeo de datos y las diferencias entre las acciones de un titular y las de un administrador. Se homogeneizó el tratamiento de respuestas y errores.
+* **Complementos a la herramienta:** Consulta del repositorio, archivos de configuración o resultados de pruebas según la tarea.
+* **Ficheros de contexto:** `UserRestController`, `UserService`, `UserRepository`, `User` y DTO y mapeadores de usuario.
+* **Herramientas basadas en ficheros (Spec Driven Development):** Se usaron las tareas y los archivos indicados como contexto para orientar la asistencia.
+
+### [Registro 24] - Modelo persistente y API del catálogo deportivo
+
+* **Fecha:** 22/10/2026–27/10/2026 (periodo de trabajo de referencia)
+* **Fase:** 3: Backend y arquitectura.
+* **Objetivo:** Organizar el catálogo y reflejar su estructura en entidades, repositorios, servicios y controladores.
+* **Herramienta:** ChatGPT / Codex
+* **Versión concreta:** GPT-6.1 Sol (razonamiento alto).
+* **Configuración de la herramienta:** Asistencia de diseño y revisión de código Java, JPA y Spring MVC.
+* **Cómo ha sido usada:**
+  * Se revisó el modelo de deportes, competiciones, equipos y partidos, incluida la pertenencia de competiciones a deportes, la asociación de equipos y los participantes de cada partido.
+  * Se trabajó sobre las rutas REST y sus DTO de listado y detalle, los filtros y la paginación. La asistencia sirvió para revisar qué responsabilidad correspondía al controlador, al servicio, al repositorio o al mapeador.
+  * Se revisaron la carga configurable de datos de ejemplo, el tratamiento de errores y las restricciones de autorización de las operaciones de escritura.
+* **Complementos a la herramienta:** Consulta del repositorio, archivos de configuración o resultados de pruebas según la tarea.
+* **Ficheros de contexto:** Entidades de `backend/src/main/java/`, controladores del catálogo, servicios, repositorios, mapeadores y `DatabaseInitializer`.
+* **Herramientas basadas en ficheros (Spec Driven Development):** Se usaron las tareas y los archivos indicados como contexto para orientar la asistencia.
+
+### [Registro 25] - Migración a HTTPS y ajuste de clientes y pruebas
+
+* **Fecha:** 26/10/2026–03/11/2026 (periodo de trabajo de referencia)
+* **Fase:** 3: Infraestructura y comunicación cliente-servidor.
+* **Objetivo:** Ejecutar Spring Boot con HTTPS y mantener operativas las llamadas al backend durante el desarrollo y las pruebas.
+* **Herramienta:** ChatGPT / Codex
+* **Versión concreta:** GPT-6.1 Sol (razonamiento alto).
+* **Configuración de la herramienta:** Asistencia de configuración y diagnóstico a partir de código y salidas de consola.
+* **Cómo ha sido usada:**
+  * Se revisaron las propiedades TLS, el papel del `keystore.jks` y las diferencias entre las credenciales del almacén y de la clave. Se revisó cómo se transmiten las variables sin incorporar sus valores privados a la documentación.
+  * Se adaptaron la URL del backend, el proxy de Vite y las configuraciones y puertos de las pruebas que todavía apuntaban a HTTP.
+* **Complementos a la herramienta:** Consulta del repositorio, archivos de configuración o resultados de pruebas según la tarea.
+* **Ficheros de contexto:** `application.properties`, `frontend/vite.config.ts`, configuración de HTTPS y pruebas de navegador e integración.
+* **Herramientas basadas en ficheros (Spec Driven Development):** Se usaron las tareas y los archivos indicados como contexto para orientar la asistencia.
+
+### [Registro 26] - Imagen Docker y entornos de Compose
+
+* **Fecha:** 26/10/2026 (periodo de trabajo de referencia)
+* **Fase:** 3: Empaquetado e infraestructura.
+* **Objetivo:** Construir y ejecutar el MVP con la SPA y el servidor en una imagen, acompañados de la base de datos y el almacenamiento de objetos.
+* **Herramienta:** ChatGPT / Codex
+* **Versión concreta:** GPT-6.1 Sol (razonamiento medio).
+* **Configuración de la herramienta:** Asistencia sobre Dockerfile, Compose y configuración de entornos.
+* **Cómo ha sido usada:**
+  * Se revisó el empaquetado por etapas, la incorporación de la salida del frontend al backend y el arranque del JAR resultante.
+  * Se trabajó sobre la configuración de Compose de desarrollo y de distribución, las variables de entorno, los puertos, los volúmenes y las dependencias de arranque.
+* **Complementos a la herramienta:** Consulta del repositorio, archivos de configuración o resultados de pruebas según la tarea.
+* **Ficheros de contexto:** `docker/dockerfile`, `docker/docker-compose.yml` y `docker/docker-compose-dev.yml`.
+* **Herramientas basadas en ficheros (Spec Driven Development):** Se usaron las tareas y los archivos indicados como contexto para orientar la asistencia.
+
+### [Registro 27] - Almacenamiento de imágenes con MinIO y API compatible con S3
+
+* **Fecha:** 26/10/2026–05/11/2026 (periodo de trabajo de referencia)
+* **Fase:** 3: Backend, almacenamiento e integración web.
+* **Objetivo:** Guardar y recuperar avatares, iconos y logos desde un servicio de objetos.
+* **Herramienta:** ChatGPT / Codex
+* **Versión concreta:** GPT-6.1 Sol (razonamiento alto).
+* **Configuración de la herramienta:** Asistencia de integración entre Spring Boot, almacenamiento S3 y formularios del cliente.
+* **Cómo ha sido usada:**
+  * Se revisaron la configuración del cliente S3 y del bucket, el servicio de almacenamiento y la separación entre la referencia persistida y el archivo almacenado.
+  * Se trabajó en las rutas de carga y consulta, el uso de `multipart/form-data`, la validación de archivos y los permisos para modificar imágenes del catálogo o el avatar propio.
+  * Se revisaron la selección, el envío y la visualización de imágenes en el panel de administración y el perfil.
+* **Complementos a la herramienta:** Consulta del repositorio, archivos de configuración o resultados de pruebas según la tarea.
+* **Ficheros de contexto:** `S3StorageConfig`, `ImageStorageService`, `ImageRestController`, controladores del catálogo y rutas `admin.tsx` y `profile.tsx`.
+* **Herramientas basadas en ficheros (Spec Driven Development):** Se usaron las tareas y los archivos indicados como contexto para orientar la asistencia.
+
+### [Registro 28] - Servicios del frontend, rutas y clientLoader
+
+* **Fecha:** 27/10/2026–06/11/2026 (periodo de trabajo de referencia)
+* **Fase:** 3: Frontend y consumo de la API.
+* **Objetivo:** Conectar las pantallas del catálogo con el backend y ordenar la carga de datos.
+* **Herramienta:** ChatGPT / Codex
+* **Versión concreta:** GPT-6.1 Sol (razonamiento medio).
+* **Configuración de la herramienta:** Asistencia sobre React, TypeScript y React Router.
+* **Cómo ha sido usada:**
+  * Se revisaron los servicios de deportes, competiciones, partidos y equipos y su correspondencia con los DTO del backend.
+  * Se trabajó con `clientLoader` para resolver parámetros de ruta, cargar datos de listado o detalle y trasladarlos a las vistas. Se revisaron la navegación entre entidades, la presentación de fechas, la carga incremental y las páginas de error.
+* **Complementos a la herramienta:** Consulta del repositorio, archivos de configuración o resultados de pruebas según la tarea.
+* **Ficheros de contexto:** `frontend/app/routes/`, `frontend/app/services/`, `frontend/app/dtos/`, `LoadMore.tsx` y componentes de error.
+* **Herramientas basadas en ficheros (Spec Driven Development):** Se usaron las tareas y los archivos indicados como contexto para orientar la asistencia.
+
+### [Registro 29] - Sesión del cliente, cliente HTTP y operaciones de administración
+
+* **Fecha:** 04/11/2026–08/11/2026 (periodo de trabajo de referencia)
+* **Fase:** 3: Frontend, integración y administración.
+* **Objetivo:** Unificar las llamadas al backend y coordinar el estado de sesión con las operaciones protegidas de la interfaz.
+* **Herramienta:** ChatGPT / Codex
+* **Versión concreta:** GPT-6.1 Sol (razonamiento alto).
+* **Configuración de la herramienta:** Asistencia sobre servicios TypeScript, estado de sesión y acciones de React Router.
+* **Cómo ha sido usada:**
+  * Se revisaron el registro, el inicio y cierre de sesión, el estado compartido con Zustand, la restauración de la sesión y el acceso a las rutas privadas y de administrador.
+  * Se centralizó la gestión de peticiones, errores y renovación del token en el cliente HTTP. Se revisaron las respuestas ante sesión caducada y la repetición de llamadas tras la renovación.
+  * Se trabajó en los formularios del panel de administración, su uso de `clientAction` y `useFetcher`, la recarga de datos tras guardar y la integración de las subidas del perfil. También se revisó el tratamiento de nombres duplicados.
+* **Complementos a la herramienta:** Consulta del repositorio, archivos de configuración o resultados de pruebas según la tarea.
+* **Ficheros de contexto:** `api-client.ts`, `auth-service.ts`, `auth-token.ts`, `auth-store.ts`, `auth-guards.ts`, `admin-actions.ts`, `admin.tsx` y `profile.tsx`.
+* **Herramientas basadas en ficheros (Spec Driven Development):** Se usaron las tareas y los archivos indicados como contexto para orientar la asistencia.
+
+### [Registro 30] - Pruebas de autenticación, registro y cuenta
+
+* **Fecha:** 10/11/2026–11/11/2026 (periodo de trabajo de referencia)
+* **Fase:** 3: Pruebas automatizadas.
+* **Objetivo:** Comprobar el ciclo de sesión y el acceso al perfil desde la API y el navegador.
+* **Herramienta:** ChatGPT / Codex
+* **Versión concreta:** GPT-6.1 Sol (razonamiento medio).
+* **Configuración de la herramienta:** Asistencia de diseño de casos y depuración de pruebas.
+* **Cómo ha sido usada:**
+  * Se cubrieron el registro y el límite de edad, el inicio de sesión, la restauración automática, la renovación del token y el cierre de sesión.
+  * Se revisaron las comprobaciones de expiración de la cookie y la sincronización de las pruebas de navegador con el refresco inicial. Se añadieron casos de formularios, perfil, actividad y subida de avatar usando almacenamiento compatible con S3.
+* **Complementos a la herramienta:** Consulta del repositorio, archivos de configuración o resultados de pruebas según la tarea.
+* **Ficheros de contexto:** Issue #67, `LoginApiE2ETest`, `RegistrationApiE2ETest`, `AccountDatabaseIntegrationTest`, `AvatarApiE2ETest` y suites de Vitest.
+* **Herramientas basadas en ficheros (Spec Driven Development):** Se usaron las tareas y los archivos indicados como contexto para orientar la asistencia.
+
+### [Registro 31] - Pruebas del catálogo, administración y almacenamiento
+
+* **Fecha:** 10/11/2026–12/11/2026 (periodo de trabajo de referencia)
+* **Fase:** 3: Pruebas unitarias, integración y E2E.
+* **Objetivo:** Verificar los recorridos del catálogo y las operaciones de administración en las capas que los ejecutan.
+* **Herramienta:** ChatGPT / Codex
+* **Versión concreta:** GPT-6.1 Sol (razonamiento alto).
+* **Configuración de la herramienta:** Asistencia sobre JUnit, REST Assured, Selenium, Testcontainers y Vitest.
+* **Cómo ha sido usada:**
+  * Se trabajó en casos de navegación por deportes, calendario de competiciones, fichas de equipos y partidos, cuotas de referencia y paginación comprobada en varias capas.
+  * Se revisaron casos de acceso y listado de usuarios en administración, formularios CRUD del catálogo y validación de subidas de imágenes. Se utilizó un almacenamiento compatible con S3 en las pruebas que requerían persistir archivos.
+  * Se revisó la reutilización del servidor Vite entre pruebas de navegador y el arranque de los servicios de prueba.
+* **Complementos a la herramienta:** Consulta del repositorio, archivos de configuración o resultados de pruebas según la tarea.
+* **Ficheros de contexto:** Issues #68 y #69, `AdminOperationsApiE2ETest`, `AdminImageApiE2ETest`, `CatalogDatabaseIntegrationTest`, `BrowserClientApiIntegrationTest` y suites del cliente.
+* **Herramientas basadas en ficheros (Spec Driven Development):** Se usaron las tareas y los archivos indicados como contexto para orientar la asistencia.
+
+### [Registro 32] - Reorganización de pruebas, cobertura e integración continua
+
+* **Fecha:** 12/11/2026–18/11/2026 (periodo de trabajo de referencia)
+* **Fase:** 3: Calidad e integración continua.
+* **Objetivo:** Ordenar las suites, ampliar la cobertura del cliente y asegurar que Basic CI y Full CI ejecuten las comprobaciones previstas.
+* **Herramienta:** ChatGPT / Codex
+* **Versión concreta:** GPT-6.1 Sol (razonamiento alto).
+* **Configuración de la herramienta:** Asistencia sobre configuración de pruebas, análisis estático y workflows de GitHub Actions.
+* **Cómo ha sido usada:**
+  * Se reorganizaron las suites por nivel, se ampliaron las pruebas de rutas y se revisaron los umbrales de Vitest y la generación de informes.
+  * Se revisaron los fallos de compilación y de aserciones tras el cambio de textos de interfaz, ajustes de Selenium y la integración de ESLint en los workflows.
+  * Se contrastó qué ejecuta cada workflow para distinguir las comprobaciones rápidas de las suites completas.
+* **Complementos a la herramienta:** Consulta del repositorio, archivos de configuración o resultados de pruebas según la tarea.
+* **Ficheros de contexto:** `docs/testing-structure.md`, `frontend/vitest.config.ts`, configuración de ESLint y `.github/workflows/basic-backend.yml`, `basic-frontend.yml` y `full-ci.yml`.
+* **Herramientas basadas en ficheros (Spec Driven Development):** Se usaron las tareas y los archivos indicados como contexto para orientar la asistencia.
+
+### [Registro 33] - Revisión del diseño de la interfaz
+
+* **Fecha:** 16/11/2026–19/11/2026 (periodo aproximado)
+* **Fase:** 3: Frontend del MVP.
+* **Objetivo:** Definir cambios de interfaz aplicables a la portada, el catálogo y las pantallas de cuenta.
+* **Herramienta:** ChatGPT / Codex
+* **Versión concreta:** GPT-6.1 Sol (razonamiento medio).
+* **Configuración de la herramienta:** Consulta y asistencia de diseño a partir de la interfaz existente y de las indicaciones del autor.
+* **Cómo ha sido usada:**
+  * Se solicitó ayuda para mejorar la jerarquía visual, variar las composiciones de pantalla y dar más presencia a los logos del catálogo.
+  * Se revisaron ideas para añadir interacción al inicio de sesión y al registro, y para aprovechar mejor el espacio en las portadas de las vistas.
+* **Complementos a la herramienta:** Taste Skill (`Leonxlnx/taste-skill`) como referencia de diseño solicitada.
+* **Ficheros de contexto:** Interfaz de BetSphere y requisitos visuales compartidos en la conversación.
+* **Herramientas basadas en ficheros (Spec Driven Development):** Los requisitos visuales del autor guiaron la revisión de las pantallas.
+
+### [Registro 34] - Entrega continua y generación manual de builds
+
+* **Fecha:** 21/11/2026 (periodo de trabajo de referencia)
+* **Fase:** 3: Entrega y publicación de artefactos.
+* **Objetivo:** Publicar una build de desarrollo a partir de main y generar builds manuales con una referencia trazable.
+* **Herramienta:** ChatGPT / Codex
+* **Versión concreta:** GPT-6.1 Sol (razonamiento alto).
+* **Configuración de la herramienta:** Asistencia sobre GitHub Actions, Docker Hub y publicación de Compose OCI.
+* **Cómo ha sido usada:**
+  * Se trabajó sobre el workflow reutilizable de publicación para construir la imagen y publicar el Compose OCI con etiquetas correspondientes. Se revisó cómo identificar la build por SHA y cómo utilizar los secretos de GitHub Actions.
+  * Se revisaron el flujo automático que publica `dev` desde `main` y el despacho manual por rama y commit opcional, con la referencia del artefacto en la salida del workflow.
+* **Complementos a la herramienta:** Consulta del repositorio, archivos de configuración o resultados de pruebas según la tarea.
+* **Ficheros de contexto:** Issues #75 y #76, `continuous-delivery.yml`, `manual-build.yml` y `publish-artifacts.yml`.
+* **Herramientas basadas en ficheros (Spec Driven Development):** Se usaron las tareas y los archivos indicados como contexto para orientar la asistencia.
+
+### [Registro 35] - Preparación de versiones y flujo de GitHub Releases
+
+* **Fecha:** 22/11/2026 (periodo de trabajo de referencia)
+* **Fase:** 3: Versionado y entrega continua.
+* **Objetivo:** Preparar el proceso que sincroniza las versiones y publica una release cuando se lanza desde GitHub.
+* **Herramienta:** ChatGPT / Codex
+* **Versión concreta:** GPT-6.1 Sol (razonamiento alto).
+* **Configuración de la herramienta:** Asistencia sobre workflows y scripts de validación en Node.js.
+* **Cómo ha sido usada:**
+  * Se revisaron los cambios coordinados de versión en Maven, npm, el lockfile y Docker Compose, y la generación de PR para preparar la versión de release o la siguiente de desarrollo.
+  * Se trabajó en validar el commit etiquetado y publicar las etiquetas de versión y `latest` para la imagen y el artefacto OCI. También se revisaron las pruebas de los scripts que validan las versiones.
+  * La configuración del flujo quedó registrada como trabajo de la fase. La publicación efectiva de la primera release 0.1 siguió pendiente.
+* **Complementos a la herramienta:** Consulta del repositorio, archivos de configuración o resultados de pruebas según la tarea.
+* **Ficheros de contexto:** Issues #77 y #78, `github-release.yml`, `prepare-version.yml`, `.github/scripts/prepare-release.mjs` y `.github/scripts/set-versions.mjs`.
+* **Herramientas basadas en ficheros (Spec Driven Development):** Se usaron las tareas y los archivos indicados como contexto para orientar la asistencia.
+
+### [Registro 36] - Descripción funcional y selección de capturas de la 0.1
+
+* **Fecha:** 23/11/2026–24/11/2026
+* **Fase:** 3: Documentación de funcionalidades.
+* **Objetivo:** Describir las funciones disponibles por rol y actualizar el estado de las funcionalidades previstas.
+* **Herramienta:** ChatGPT / Codex
+* **Versión concreta:** GPT-6.1 Sol (razonamiento bajo).
+* **Configuración de la herramienta:** Asistencia sobre el repositorio con revisión de Markdown, código y capturas.
+* **Cómo ha sido usada:**
+  * Se agruparon las capturas por flujo y se utilizaron para explicar el catálogo, el acceso a la cuenta, el perfil y el panel de administración.
+  * Se contrastó la descripción con el comportamiento de la aplicación para distinguir entre funciones implementadas, parciales y pendientes.
+* **Complementos a la herramienta:** Lectura de capturas y revisión de archivos del repositorio.
+* **Ficheros de contexto:** `docs/functionalities.md`, `docs/detailed-functionalities.md` y `docs/images/v0.1/`.
+* **Herramientas basadas en ficheros (Spec Driven Development):** Los criterios del issue #81 guiaron la revisión de contenidos.
+
+### [Registro 37] - Guía de ejecución, Docker Compose OCI y verificación manual
+
+* **Fecha:** 24/11/2026
+* **Fase:** 3: Ejecución y despliegue.
+* **Objetivo:** Documentar cómo ejecutar la imagen y el Compose OCI y cómo reutilizar una base de datos existente.
+* **Herramienta:** ChatGPT / Codex
+* **Versión concreta:** GPT-6.1 Sol (razonamiento medio).
+* **Configuración de la herramienta:** Asistencia de documentación y diagnóstico a partir de los archivos Docker y de la salida de PowerShell.
+* **Cómo ha sido usada:**
+  * Se identificaron los servicios, las variables requeridas y el uso de los tags `dev`, `latest` y de versión. Se documentó una configuración de demostración con marcadores para el keystore.
+  * La IA guio el diagnóstico de Docker Desktop y la prueba de reanudación sin cargar ejemplos. El autor ejecutó el artefacto `dev` y confirmó que la aplicación abría y que se conservaba un deporte creado para la prueba.
+  * Se revisó la documentación para evitar copiar datos privados del `.env`. La configuración pública del keystore y la verificación de una release quedaron pendientes.
+* **Complementos a la herramienta:** Terminal, Docker Desktop y Docker Compose utilizados por el autor durante las comprobaciones.
+* **Ficheros de contexto:** `docs/execution.md`, `docker/docker-compose.yml`, `docker/dockerfile` y salidas de PowerShell.
+* **Herramientas basadas en ficheros (Spec Driven Development):** Los criterios del issue #82 guiaron el procedimiento de instalación y comprobación.
+
+### [Registro 38] - Guía de desarrollo, diagramas y proceso de publicación
+
+* **Fecha:** 24/11/2026
+* **Fase:** 3: Documentación técnica y entrega continua.
+* **Objetivo:** Actualizar la guía de desarrollo para reflejar la arquitectura del MVP y el procedimiento de publicación.
+* **Herramienta:** ChatGPT / Codex
+* **Versión concreta:** GPT-6.2 Sol en la sesión de actualización de la guía y los diagramas.
+* **Configuración de la herramienta:** Asistencia sobre el repositorio con lectura de código y edición de Markdown y Mermaid.
+* **Cómo ha sido usada:**
+  * Se derivó el modelo de dominio de las entidades Java y se revisaron las rutas y permisos de la API REST.
+  * Se representaron las dependencias del servidor y del cliente en vistas temáticas. Se comprobó el origen de las flechas del servidor en Java y la correspondencia de los imports internos del cliente en TypeScript.
+  * Se documentó la publicación de builds de desarrollo y el proceso de preparación de una release a partir de los workflows existentes. La publicación de la primera release quedó pendiente.
+* **Complementos a la herramienta:** Terminal para consultar el repositorio y verificar enlaces y dependencias.
+* **Ficheros de contexto:** `docs/development-guide.md`, código Java y TypeScript y workflows de `.github/workflows/`.
+* **Herramientas basadas en ficheros (Spec Driven Development):** Los criterios del issue #83 se usaron para revisar el contenido de la guía.
+
+### [Registro 39] - Actualización del README y cierre de la documentación de la 0.1
+
+* **Fecha:** 24/11/2026
+* **Fase:** 3: Documentación del MVP.
+* **Objetivo:** Actualizar la portada del repositorio y recoger los cambios del MVP y su trazabilidad de IA.
+* **Herramienta:** ChatGPT / Codex
+* **Versión concreta:** GPT-6.2 Sol en la sesión de actualización del README y de este registro.
+* **Configuración de la herramienta:** Agente de edición sobre el repositorio con acceso a Markdown, capturas e historial de Git.
+* **Cómo ha sido usada:**
+  * Se redactó la presentación de la 0.1, se incorporaron capturas del catálogo, perfil y administración, y se revisaron los enlaces del índice. El vídeo se dejó pendiente de grabación.
+  * Se resumieron los cambios de la Fase 3 en el changelog como cambios sin publicar y se agruparon las actividades de IA por objetivo y periodo.
+* **Complementos a la herramienta:** Terminal y Git para contrastar cambios y comprobar enlaces.
+* **Ficheros de contexto:** `README.md`, `CHANGELOG.md`, `docs/AI_USAGE.md`, la documentación de la Fase 3 y `docs/images/v0.1/`.
+* **Herramientas basadas en ficheros (Spec Driven Development):** El issue #80 y la guía del TFG sirvieron de referencia para revisar la portada.
