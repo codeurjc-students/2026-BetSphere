@@ -47,6 +47,7 @@ A la experiencia de pronósticos se suma un componente social y de análisis, ya
 - [Seguimiento](./docs/follow-up.md)
 - [Autor](./docs/authors.md)
 - [Guía de desarrollo](./docs/development-guide.md)
+- [Ejecución de la aplicación](./docs/execution.md)
 - [Uso de IA](#uso-de-ia)
 - [Changelog](./CHANGELOG.md)
 
