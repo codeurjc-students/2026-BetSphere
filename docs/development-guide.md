@@ -1,7 +1,5 @@
 # Guía de desarrollo
 
-Esta guía describe el estado técnico de BetSphere durante la Fase 2. La aplicación completa definida en la documentación funcional todavía no es funcional: la versión actual permite ejecutar la infraestructura base y consultar un conjunto mínimo de datos de ejemplo de la entidad principal, persistidos en la base de datos. Los comandos se ejecutan desde la raíz del repositorio salvo que se indique lo contrario.
-
 ## Índice
 
 - [Introducción](#introducción)
@@ -9,358 +7,705 @@ Esta guía describe el estado técnico de BetSphere durante la Fase 2. La aplica
 - [Herramientas](#herramientas)
 - [Arquitectura](#arquitectura)
 - [Control de calidad](#control-de-calidad)
+- [Despliegue](#despliegue)
 - [Proceso de desarrollo](#proceso-de-desarrollo)
 - [Ejecución y edición del código](#ejecución-y-edición-del-código)
 
----
-
 ## Introducción
 
-BetSphere se desarrolla como una aplicación web **SPA (Single Page Application)**. En este modelo, el navegador web carga el cliente de React una única vez y actualiza dinámicamente las vistas mediante el enrutador sin necesidad de solicitar una página HTML nueva al servidor en cada navegación. El cliente solicita y envía datos a través de peticiones HTTP a una API REST desarrollada en Spring Boot. El servidor gestiona la lógica de negocio y persiste la información de dominio en una base de datos MySQL.
+BetSphere es una aplicación web para consultar un catálogo deportivo y gestionar sus datos. El alcance de la versión 0.1 incluye deportes, competiciones, equipos y partidos, registro e inicio de sesión, perfil con avatar y administración del catálogo. La interfaz también muestra los últimos partidos visitados por cada usuario en ese navegador. Consulta las [funcionalidades de la versión 0.1](functionalities.md) y el [estado de las funcionalidades previstas](detailed-functionalities.md).
 
-| Aspecto | Estado de Fase 2 |
-| --- | --- |
-| **Tipo** | Aplicación Web SPA (cliente) y API REST (servidor). |
-| **Tecnologías** | React, TypeScript, React Router y Vite; Java y Spring Boot; MySQL. |
-| **Herramientas** | Entornos IDE (Visual Studio Code / IntelliJ), Git, GitHub, Node.js, Docker, OpenAPI y Postman. |
-| **Control de calidad** | JUnit, Mockito, Testcontainers, Selenium, Vitest y flujos automáticos en GitHub Actions. |
-| **Despliegue** | Entorno local de desarrollo con MySQL y cliente/servidor ejecutándose como procesos locales independientes. |
-| **Proceso** | Iterativo e incremental basado en Programación Extrema (XP) y Kanban, ramas de funcionalidad cortas y controles obligatorios de CI/CD para la integración. |
+El navegador ejecuta una SPA de React que consume una API REST de Spring Boot. MySQL guarda las entidades del catálogo y las cuentas. MinIO proporciona almacenamiento de objetos compatible con S3 para imágenes. Durante el desarrollo Vite y Spring Boot se ejecutan por separado. La imagen distribuida sirve el cliente y la API desde Spring Boot, bajo el mismo origen HTTPS.
 
 ## Tecnologías
 
-*   **[Java](https://dev.java/) y [Spring Boot](https://spring.io/projects/spring-boot/):** Conforman el núcleo del backend, implementando la API REST, la seguridad, la capa de servicios de dominio y el acceso a datos mediante el patrón Repositorio.
-*   **[MySQL](https://www.mysql.com/):** Sistema de gestión de bases de datos relacional empleado para la persistencia del modelo de datos de la plataforma.
-*   **[React](https://react.dev/), [TypeScript](https://www.typescriptlang.org/) y [React Router](https://reactrouter.com/):** Forman el cliente SPA. React Router gestiona la navegación interna de la aplicación, mientras que TypeScript garantiza el tipado estricto para evitar errores en tiempo de compilación.
-*   **[Vite](https://vitejs.dev/):** Herramienta de construcción (build tool) y servidor de desarrollo local para el frontend, que proporciona un arranque ultra rápido y Hot Module Replacement (HMR).
+| Área | Tecnologías | Uso |
+| --- | --- | --- |
+| Cliente | React, TypeScript, React Router, Vite, Bootstrap y React Bootstrap | Interfaz, rutas, compilación y estilos. |
+| Estado del cliente | Zustand y almacenamiento del navegador | Estado de sesión en memoria y registro local de partidos visitados. |
+| Servidor | Java 21, Spring Boot y Spring MVC | API REST y distribución del cliente compilado. |
+| Seguridad | Spring Security y JWT | Autenticación, renovación de sesión y autorización por rol. |
+| Persistencia | Spring Data JPA, Hibernate y MySQL 8.0 | Mapeo y almacenamiento de las entidades relacionales. |
+| Intercambio de datos | DTO, MapStruct y Lombok | Contratos de la API, transformación de entidades y reducción de código repetitivo. |
+| Imágenes | AWS SDK para S3 y MinIO | Almacenamiento de avatares, logos e iconos. |
 
 ## Herramientas
 
-*   **[Git](https://git-scm.com/) y [GitHub](https://github.com/):** Gestionan el control de versiones del código, el seguimiento de tareas mediante Issues y tableros Project, y la revisión de código a través de Pull Requests.
-*   **[Node.js](https://nodejs.org/) y npm:** Entorno de ejecución y gestor de paquetes necesarios para instalar las dependencias del frontend e iniciar las herramientas de desarrollo de Vite.
-*   **[Docker](https://www.docker.com/):** Proporciona el motor local necesario para levantar instancias efímeras de bases de datos durante las pruebas de integración a través de Testcontainers.
-*   **[Postman](https://www.postman.com/):** Cliente HTTP empleado para realizar consultas manuales y verificar los endpoints de la API REST del servidor de forma aislada.
+| Herramienta | Uso |
+| --- | --- |
+| Git, GitHub Issues y GitHub Projects | Control de versiones y seguimiento de tareas. |
+| GitHub Actions | Integración continua, compilación de imágenes y publicación de artefactos. |
+| Maven Wrapper | Compilación, pruebas y arranque local del servidor. |
+| Node.js y npm | Instalación de dependencias, servidor de desarrollo, pruebas y compilación del cliente. |
+| Docker, Compose y Docker Hub | Servicios auxiliares locales y distribución del despliegue. |
+| Springdoc OpenAPI y Postman | Inspección y pruebas manuales de la API REST. |
+| ESLint, Vitest, JUnit, Mockito, Testcontainers, REST Assured, Selenium y JaCoCo | Análisis del cliente, pruebas automatizadas y cobertura. |
 
 ## Arquitectura
 
+### Modelo del dominio
+
+El diagrama recoge las cinco entidades JPA persistentes. Los extremos indican cuántas instancias pueden participar en cada relación. Las referencias JPA aparecen como asociaciones y los demás campos como atributos.
+
 ```mermaid
-flowchart TB
-    browser["Navegador Web<br/>SPA (React Router)"]
-    postman["Postman<br/>Peticiones a la API"]
-    vite["Vite<br/>Servidor Frontend :5173"]
-
-    subgraph backend["Servidor · Spring Boot :8080"]
-        direction TB
-        controller["Controlador REST<br/>/api/v1/..."]
-        service["Servicio de Negocio"]
-        repository["Repositorio de Datos"]
-        controller --> service --> repository
-    end
-
-    database[("MySQL :3306<br/>Base de datos local")]
-
-    browser -->|"HTTP :5173<br/>Carga UI y consulta /api"| vite
-    vite -->|"HTTP :8080<br/>Proxy de peticiones /api"| controller
-    postman -.->|"HTTP GET/POST :8080"| controller
-    repository -->|"JDBC / Protocolo MySQL<br/>TCP :3306"| database
-
-    classDef user fill:#e2e8f0,stroke:#475569,color:#0f172a,stroke-width:2px
-    classDef client fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:2px
-    classDef server fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:2px
-    classDef data fill:#dcfce7,stroke:#16a34a,color:#14532d,stroke-width:2px
-    class browser,postman user
-    class vite client
-    class controller,service,repository server
-    class database data
+classDiagram
+direction TB
+class Sport {
+    -Long id
+    -String name
+    -String iconUrl
+}
+class Competition {
+    -Long id
+    -String name
+    -String country
+    -String iconUrl
+}
+class Team {
+    -Long id
+    -String name
+    -String country
+    -String logoUrl
+    -int totalMatches
+    -int wins
+    -int draws
+    -int losses
+    -int goalsFor
+    -int goalsAgainst
+}
+class Match {
+    -Long id
+    -String homeTeam
+    -String awayTeam
+    -LocalDateTime matchDate
+    -Double homeOdds
+    -Double drawOdds
+    -Double awayOdds
+    -String gameStatus
+}
+class User {
+    -Long id
+    -String username
+    -String email
+    -String password
+    -List~String~ roles
+    -Double virtualBalance
+    -String avatarUrl
+    -Boolean verified18
+    -LocalDate birthDate
+}
+Sport "1" -- "0..*" Competition : deporte
+Competition "0..*" -- "0..*" Team : equipos inscritos
+Competition "0..1" -- "0..*" Match : competición
+Match "0..*" --> "0..1" Team : local
+Match "0..*" --> "0..1" Team : visitante
 ```
 
-En el entorno de desarrollo, la arquitectura se divide en **tres procesos totalmente independientes**: Vite (Frontend), Spring Boot (Backend) y MySQL (Base de datos). El navegador interactúa con la SPA servida por Vite en el puerto `5173`. Para solucionar problemas de CORS en desarrollo, Vite actúa como proxy, reenviando todas las llamadas al prefijo `/api` hacia el servidor backend que escucha en el puerto `8080`. El servidor, a su vez, se comunica mediante el driver JDBC con el motor de MySQL expuesto en el puerto `3306`.
+Cada competición requiere un deporte. Las inscripciones de equipos se guardan en una tabla de unión. Un partido puede conservar los nombres de los participantes aunque las referencias a equipos sean nulas. Las asociaciones local y visitante corresponden a `homeTeamRef` y `awayTeamRef`, respectivamente. Los roles de usuario se guardan como una colección de cadenas y la contraseña se almacena codificada. Los campos de imagen guardan URLs y los binarios se guardan en MinIO. El historial de partidos visitados se guarda en el navegador y carece de entidad JPA.
 
-**Documentación de la API (OpenAPI):**
-La especificación técnica del contrato de la API REST se ha documentado siguiendo el estándar OpenAPI. La documentación HTML generada estáticamente es accesible a través del siguiente enlace, servida mediante RawGitHack:
-**[Documentación API REST BetSphere](https://raw.githack.com/codeurjc-students/2026-BetSphere/main/docs/api/api-docs.html)** 
+### API REST
+
+La API usa el prefijo `/api/v1` y se sirve por HTTPS en `https://localhost` con la configuración local del backend. Las operaciones de catálogo y cuenta intercambian JSON. Las cargas de imágenes usan `multipart/form-data` y la consulta de una imagen devuelve el binario.
+
+La tabla usa rutas relativas a `/api/v1`. La autenticación devuelve un token de acceso que el cliente envía como `Authorization: Bearer <token>`. El servidor entrega el token de renovación mediante una cookie HttpOnly.
+
+| Recurso | Operaciones disponibles | Acceso |
+| --- | --- | --- |
+| `/sports` | `GET` listado, `/options` y `/{id}`. `POST` alta e imagen en `/{id}/image`. `PUT` y `DELETE` en `/{id}`. | Lectura pública. Escritura de administrador. |
+| `/competitions` | `GET` listado, `/options`, `/by-sport/{sportId}` y `/{id}`. `POST` alta e imagen en `/{id}/image`. `PUT` y `DELETE` en `/{id}`. `POST /{id}/teams` crea y vincula un equipo. `POST` o `DELETE /{id}/teams/{teamId}` vincula o desvincula uno existente. | Lectura pública. Escritura de administrador. |
+| `/teams` | `GET` listado y `/{id}`. `PUT` y `DELETE` en `/{id}`. `POST /{id}/image` actualiza su imagen. | Lectura pública. Escritura de administrador. |
+| `/matches` | `GET` listado, `/by-competition/{competitionId}` y `/{id}`. `POST` alta. `PUT` y `DELETE` en `/{id}`. | Lectura pública. Escritura de administrador. |
+| `/auth` | `POST /login`, `POST /refresh` y `POST /logout`. | Entrada pública. La renovación requiere una cookie válida. |
+| `/users` | `POST /` registro. `GET /me` sesión actual. `GET /` listado. `GET`, `PUT` y `DELETE` en `/{id}`. | Registro público. Listado de administrador. Consulta, edición y eliminación de una cuenta sujetas a los permisos del titular o administrador. |
+| `/images` | `GET /{key}` consulta, `POST` carga de avatar y `DELETE /{key}` retirada del avatar propio. | Lectura pública. Escritura autenticada. |
+
+El proyecto configura `/docs/api` para Swagger UI y `/v3/api-docs` para el JSON de OpenAPI. El POM combina Spring Boot 4.1 con Springdoc 2.5, fuera de la [matriz de compatibilidad de Springdoc](https://springdoc.org/#what-is-the-compatibility-matrix-of-springdoc-openapi-with-spring-boot). La generación dinámica de la especificación queda por verificar. La [exportación estática anterior](api/api-docs.yaml) corresponde a la primera implementación del listado de partidos. Para revisar las rutas de la versión actual utiliza el inventario anterior, los controladores y los tests HTTP. La [colección de Postman](api/postman/BetSphere_API.postman_collection.json) puede servir como punto de partida para peticiones manuales.
+
+### Arquitectura del servidor
+
+Cada flecha discontinua va desde una clase a su dependencia directa. Las vistas se leen de izquierda a derecha. Si una clase aparece en varias, se trata de la misma clase.
+
+#### Recorrido del catálogo
+
+```mermaid
+classDiagram
+direction LR
+namespace Controladores {
+    class SportRestController
+    class CompetitionRestController
+    class TeamRestController
+    class MatchRestController
+}
+namespace Servicios {
+    class SportService
+    class CompetitionService
+    class TeamService
+    class MatchService
+}
+namespace Repositorios {
+    class SportRepository
+    class CompetitionRepository
+    class TeamRepository
+    class MatchRepository
+}
+namespace Entidades {
+    class Sport
+    class Competition
+    class Team
+    class Match
+}
+SportRestController ..> SportService
+SportService ..> SportRepository
+SportRepository ..> Sport
+CompetitionRestController ..> CompetitionService
+CompetitionService ..> CompetitionRepository
+CompetitionRepository ..> Competition
+TeamRestController ..> TeamService
+TeamService ..> TeamRepository
+TeamRepository ..> Team
+MatchRestController ..> MatchService
+MatchService ..> MatchRepository
+MatchRepository ..> Match
+```
+
+#### Consultas entre recursos del catálogo
+
+```mermaid
+classDiagram
+direction LR
+namespace Servicios {
+    class CompetitionService
+    class TeamService
+    class MatchService
+}
+namespace Servicio_compartido {
+    class SportService
+}
+namespace Repositorios {
+    class TeamRepository
+    class MatchRepository
+    class CompetitionRepository
+}
+CompetitionService ..> SportService
+CompetitionService ..> TeamRepository
+CompetitionService ..> MatchRepository
+TeamService ..> MatchRepository
+MatchService ..> TeamRepository
+MatchService ..> CompetitionRepository
+```
+
+#### Cuentas y almacenamiento de imágenes
+
+```mermaid
+classDiagram
+direction LR
+namespace Controladores {
+    class UserRestController
+    class ImageRestController
+    class SportRestController
+    class CompetitionRestController
+    class TeamRestController
+}
+namespace Servicios {
+    class UserService
+    class ImageStorageService
+}
+namespace Acceso_a_datos {
+    class UserRepository
+    class S3Client
+}
+namespace Entidades {
+    class User
+}
+UserRestController ..> UserService
+ImageRestController ..> UserService
+ImageRestController ..> ImageStorageService
+SportRestController ..> ImageStorageService
+CompetitionRestController ..> ImageStorageService
+TeamRestController ..> ImageStorageService
+UserService ..> UserRepository
+UserRepository ..> User
+ImageStorageService ..> S3Client
+```
+
+#### Inicio de sesión y verificación del token
+
+```mermaid
+classDiagram
+direction LR
+namespace Entrada {
+    class LoginRestController
+    class SecurityConfig
+}
+namespace Autenticacion {
+    class UserLoginService
+    class JwtRequestFilter
+}
+namespace Identidad {
+    class JwtTokenProvider
+    class RepositoryUserDetailsService
+}
+namespace Repositorios {
+    class UserRepository
+}
+SecurityConfig ..> JwtRequestFilter
+LoginRestController ..> UserLoginService
+JwtRequestFilter ..> JwtTokenProvider
+JwtRequestFilter ..> RepositoryUserDetailsService
+UserLoginService ..> JwtTokenProvider
+UserLoginService ..> RepositoryUserDetailsService
+RepositoryUserDetailsService ..> UserRepository
+```
+
+#### Conversión de entidades a DTO
+
+```mermaid
+classDiagram
+direction LR
+namespace Controladores {
+    class SportRestController
+    class CompetitionRestController
+    class TeamRestController
+    class MatchRestController
+    class UserRestController
+}
+namespace Mapeadores {
+    class SportMapper
+    class CompetitionMapper
+    class TeamMapper
+    class MatchMapper
+    class UserMapper
+}
+SportRestController ..> SportMapper
+CompetitionRestController ..> CompetitionMapper
+CompetitionRestController ..> TeamMapper
+TeamRestController ..> TeamMapper
+MatchRestController ..> MatchMapper
+UserRestController ..> UserMapper
+```
+
+#### Inicialización de datos de ejemplo
+
+```mermaid
+classDiagram
+direction LR
+namespace Arranque {
+    class DatabaseInitializer
+}
+namespace Repositorios {
+    class SportRepository
+    class CompetitionRepository
+    class TeamRepository
+    class MatchRepository
+    class UserRepository
+}
+DatabaseInitializer ..> SportRepository
+DatabaseInitializer ..> CompetitionRepository
+DatabaseInitializer ..> TeamRepository
+DatabaseInitializer ..> MatchRepository
+DatabaseInitializer ..> UserRepository
+```
+
+#### Dependencias de infraestructura
+
+```mermaid
+classDiagram
+direction LR
+namespace Servicios {
+    class UserService
+    class UserLoginService
+    class DatabaseInitializer
+    class ImageStorageService
+}
+namespace Configuracion {
+    class S3StorageConfig
+}
+namespace Infraestructura {
+    class PasswordEncoder
+    class AuthenticationManager
+    class S3Client
+}
+UserService ..> PasswordEncoder
+DatabaseInitializer ..> PasswordEncoder
+UserLoginService ..> AuthenticationManager
+ImageStorageService ..> S3Client
+S3StorageConfig ..> S3Client : configura
+```
+
+La capa web también incluye `WebController`, que reenvía las rutas de navegación a `index.html`. Este controlador no invoca servicios del dominio.
+
+| Capa | Responsabilidad |
+| --- | --- |
+| Controladores REST | Reciben peticiones, coordinan servicios y devuelven respuestas HTTP. Los controladores de deportes, competiciones y equipos también usan `ImageStorageService` para sus imágenes. |
+| Presentación web | `WebController` reenvía las rutas de navegación a `index.html` para que React Router resuelva la vista. |
+| Servicios | Aplican las reglas del catálogo y las cuentas, coordinan repositorios y gestionan imágenes mediante S3. `DatabaseInitializer` usa los repositorios para preparar los datos de ejemplo cuando está habilitado. |
+| Repositorios y entidades | Los repositorios Spring Data JPA consultan y guardan entidades. Hibernate persiste atributos y relaciones en MySQL. |
+| DTO y mapeadores | Delimitan los datos de entrada y salida. Los controladores usan mapeadores como `CompetitionMapper` y `UserMapper` para convertir entidades a los DTO correspondientes. |
+| Seguridad y configuración | `SecurityConfig` aplica las reglas de acceso y usa `JwtRequestFilter` para resolver la identidad con `JwtTokenProvider` y `RepositoryUserDetailsService`. `S3StorageConfig` configura el cliente de almacenamiento. |
+
+### Arquitectura del cliente
+
+Las cajas representan módulos TypeScript y componentes React. Las flechas muestran los imports directos entre los módulos propios de cada vista. Las vistas separan los usos de un mismo módulo para evitar cruces entre recorridos. Los DTO describen los datos intercambiados en la API.
+
+#### Pantallas y lectura del catálogo
+
+```mermaid
+classDiagram
+direction LR
+namespace Pantallas {
+    class sports_index["sports-index.tsx"]
+    class sports["sports.tsx"]
+    class competitions["competitions.tsx"]
+    class team["team.tsx"]
+    class matches["matches.tsx"]
+}
+namespace Servicios {
+    class sport_service["sport-service.ts"]
+    class competition_service["competition-service.ts"]
+    class team_service["team-service.ts"]
+    class match_service["match-service.ts"]
+}
+sports_index ..> sport_service
+sports_index ..> match_service
+sports ..> sport_service
+competitions ..> competition_service
+team ..> team_service
+team ..> competition_service
+matches ..> match_service
+```
+
+#### Componentes compartidos de navegación y catálogo
+
+```mermaid
+classDiagram
+direction LR
+namespace Pantallas {
+    class home["home.tsx"]
+    class competitions["competitions.tsx"]
+    class matches["matches.tsx"]
+    class admin["admin.tsx"]
+}
+namespace Componentes {
+    class Header["Header.tsx"]
+    class Footer["Footer.tsx"]
+    class FixtureExplorer["FixtureExplorer.tsx"]
+    class LoadMore["LoadMore.tsx"]
+}
+namespace Utilidades {
+    class format_date["format-date.ts"]
+    class format_odds["format-odds.ts"]
+}
+home ..> Header
+home ..> Footer
+competitions ..> FixtureExplorer
+matches ..> FixtureExplorer
+matches ..> LoadMore
+admin ..> LoadMore
+FixtureExplorer ..> format_date
+FixtureExplorer ..> format_odds
+```
+
+#### Administración del catálogo
+
+```mermaid
+classDiagram
+direction LR
+namespace Pantallas {
+    class admin["admin.tsx"]
+}
+namespace Acciones {
+    class admin_actions["admin-actions.ts"]
+}
+namespace Servicios {
+    class sport_service["sport-service.ts"]
+    class competition_service["competition-service.ts"]
+    class team_service["team-service.ts"]
+    class match_service["match-service.ts"]
+    class user_service["user-service.ts"]
+}
+admin ..> admin_actions
+admin ..> sport_service
+admin ..> competition_service
+admin ..> team_service
+admin ..> match_service
+admin ..> user_service
+admin_actions ..> sport_service
+admin_actions ..> competition_service
+admin_actions ..> team_service
+admin_actions ..> match_service
+```
+
+#### Transporte HTTP de catálogo y usuarios
+
+```mermaid
+classDiagram
+direction LR
+namespace Servicios {
+    class sport_service["sport-service.ts"]
+    class competition_service["competition-service.ts"]
+    class team_service["team-service.ts"]
+    class match_service["match-service.ts"]
+    class user_service["user-service.ts"]
+}
+namespace Transporte {
+    class api_client["api-client.ts"]
+}
+sport_service ..> api_client
+competition_service ..> api_client
+team_service ..> api_client
+match_service ..> api_client
+user_service ..> api_client
+```
+
+#### Formularios y validación
+
+```mermaid
+classDiagram
+direction LR
+namespace Pantallas {
+    class login["login.tsx"]
+    class register["register.tsx"]
+}
+namespace Componentes {
+    class PasswordField["PasswordField.tsx"]
+}
+namespace Servicios {
+    class auth_service["auth-service.ts"]
+    class auth_validation["auth-validation.ts"]
+}
+namespace Estado {
+    class auth_store["auth-store.ts"]
+}
+login ..> PasswordField
+login ..> auth_service
+login ..> auth_validation
+login ..> auth_store
+register ..> PasswordField
+register ..> auth_service
+register ..> auth_validation
+PasswordField ..> auth_validation
+```
+
+#### Sesión, perfil y control de acceso
+
+```mermaid
+classDiagram
+direction LR
+namespace Entrada {
+    class root["root.tsx"]
+    class Header["Header.tsx"]
+    class profile["profile.tsx"]
+}
+namespace Control_de_acceso {
+    class auth_guards["auth-guards.ts"]
+}
+namespace Estado {
+    class auth_store["auth-store.ts"]
+}
+namespace Servicios {
+    class auth_service["auth-service.ts"]
+}
+namespace Transporte {
+    class api_client["api-client.ts"]
+    class auth_token["auth-token.ts"]
+}
+root ..> auth_store
+Header ..> auth_store
+Header ..> auth_service
+profile ..> auth_store
+profile ..> api_client
+profile ..> auth_guards
+auth_guards ..> auth_store
+auth_store ..> auth_service
+auth_service ..> api_client
+auth_service ..> auth_token
+api_client ..> auth_store
+api_client ..> auth_token
+```
+
+#### Detalle de partido, historial y utilidades
+
+```mermaid
+classDiagram
+direction LR
+namespace Pantallas {
+    class match["match.tsx"]
+    class history["history.tsx"]
+    class admin["admin.tsx"]
+    class sports_index["sports-index.tsx"]
+}
+namespace Servicios {
+    class match_service["match-service.ts"]
+    class recent_matches["recent-matches.ts"]
+    class auth_guards["auth-guards.ts"]
+}
+namespace Utilidades {
+    class format_date["format-date.ts"]
+    class format_odds["format-odds.ts"]
+}
+match ..> match_service
+match ..> recent_matches
+match ..> auth_guards
+match ..> format_date
+match ..> format_odds
+history ..> recent_matches
+history ..> auth_guards
+history ..> format_date
+admin ..> auth_guards
+admin ..> format_date
+sports_index ..> format_date
+```
+
+| Capa | Responsabilidad |
+| --- | --- |
+| Rutas y diseño común | `routes.ts` asocia URLs con pantallas. Las rutas cargan datos y coordinan vistas. `root.tsx` restaura la sesión y `home.tsx` incorpora el encabezado y el pie comunes. |
+| Componentes | Presentan datos y controles reutilizables. `FixtureExplorer` muestra partidos, `LoadMore` activa la carga de más resultados y `PasswordField` encapsula el campo de contraseña. |
+| Servicios | Agrupan las llamadas al catálogo, cuentas y autenticación. `admin-actions.ts` coordina operaciones del catálogo. `user-service.ts` alimenta la lista de usuarios en administración. `recent-matches.ts` guarda en `localStorage` las visitas registradas desde `match.tsx`. |
+| Estado y transporte | `auth-store.ts` conserva la sesión en memoria con Zustand. `api-client.ts` realiza las peticiones HTTP y coordina la renovación con `auth-token.ts`. Los tipos de `dtos/` describen los datos intercambiados. |
 
 ## Control de calidad
 
-Para asegurar la robustez de las funcionalidades desarrolladas desde la Fase 2, se han implementado diversas capas de pruebas automáticas:
+| Nivel | Herramientas y alcance |
+| --- | --- |
+| Unitaria del servidor | JUnit y Mockito para reglas del catálogo, cuentas, autenticación e imágenes con dependencias controladas. |
+| Unitaria del cliente | Vitest y Testing Library para componentes, rutas, formularios, sesión y servicios TypeScript. |
+| Integración del servidor | Spring Boot y Testcontainers con MySQL y almacenamiento compatible con S3 para comprobar persistencia y servicios. |
+| Integración cliente y API | Selenium ejecuta funciones TypeScript del cliente en Chrome contra la API real. |
+| E2E de API | REST Assured prueba operaciones HTTP de catálogo, autenticación, cuentas, administración e imágenes. |
+| E2E de interfaz | Selenium comprueba recorridos de usuario en Chrome con cliente, servidor y servicios reales de prueba. |
 
-| Nivel de prueba | Herramientas | Comportamiento verificado |
-| --- | --- | --- |
-| **Unitarias (Servidor)** | JUnit, Mockito | Lógica de los servicios, doblando (mocking) el acceso al repositorio de base de datos. |
-| **Integración (Servidor)** | Spring Boot Test, Testcontainers | Integración real de los servicios y repositorios contra una instancia efímera de MySQL levantada en Docker. |
-| **Sistema / API (Servidor)** | REST Assured | Verificación de las respuestas HTTP y el contenido JSON devuelto por los endpoints. |
-| **Unitarias (Cliente)** | Vitest | Renderizado de componentes aislados y uso de DOM virtual para simular la interfaz. |
-| **Integración (Cliente-Servidor)** | Vitest, Backend real | El frontend obtiene el catálogo real desde la API REST y lo pinta correctamente. |
-| **Sistema E2E UI** | Selenium, JUnit | Navegación automatizada desde un entorno de prueba simulando a un usuario real que accede a los datos. |
+Maven escribe los resultados de Surefire en `backend/target/surefire-reports/` y JaCoCo genera cobertura en `backend/target/site/jacoco/`. Vitest genera cobertura en `frontend/coverage/`. Los porcentajes dependen del commit y de la ejecución consultada. La [estructura de pruebas](testing-structure.md) identifica las suites y sus comandos.
 
-**Métricas y automatización:**
-Actualmente, las herramientas de cobertura (JaCoCo para Java y el coverage de Vitest) monitorizan el código escrito. 
-La cobertura actual se sitúa en un **75% en el servidor** y un **76% en el cliente**. 
+## Despliegue
 
-![Captura del workflow de Integración Continua superado en GitHub Actions](./images/ci-success.png)
-*Captura de los flujos de Integración Continua obligatorios en GitHub Actions*
+### Empaquetado y distribución
+
+El [Dockerfile](../docker/dockerfile) compila el cliente con Node.js, copia su salida estática al backend y empaqueta ambos en un JAR de Spring Boot. La imagen resultante contiene una única aplicación con cliente y servidor y expone HTTPS en el puerto 443.
+
+[Docker Compose](../docker/docker-compose.yml) coordina esa imagen con MySQL, MinIO y la tarea `minio-init`, que prepara el bucket antes de arrancar la aplicación. MySQL y MinIO conservan sus datos en volúmenes. El método de distribución de esta entrega es Compose como artefacto OCI.
+
+| Artefacto | Distribución |
+| --- | --- |
+| Imagen de aplicación | [huugoocm/betsphere](https://hub.docker.com/r/huugoocm/betsphere/tags) |
+| Compose OCI | [huugoocm/betsphere-compose](https://hub.docker.com/r/huugoocm/betsphere-compose/tags) |
+
+Para ejecutar las imágenes publicadas y preparar un servidor externo, consulta la [guía de ejecución](execution.md).
 
 ## Proceso de desarrollo
 
-El ciclo de vida del proyecto sigue un enfoque **iterativo e incremental** inspirado en los principios del manifiesto ágil, apoyándose en la gestión visual mediante **Kanban** y buenas prácticas de **Programación Extrema (XP)**. No se aplica el marco de trabajo Scrum.
+### Gestión de tareas
 
-*   **Gestión de tareas:** Se emplean GitHub Issues para la definición del trabajo y un tablero Kanban (GitHub Projects) para visualizar el flujo (Todo, In Progress, Review, Done).
-*   **Git y ramas:** El flujo de trabajo exige la creación de ramas de funcionalidad cortas. La rama `main` actúa como la única fuente de verdad y se actualiza exclusivamente a través de Pull Requests.
-*   **Integración Continua (CI):** El repositorio cuenta con GitHub Actions. Existe un control básico que se lanza automáticamente con cada *push* a una rama, ejecutando la compilación y los tests unitarios. Adicionalmente, la rama `main` se encuentra protegida: requiere que un workflow de **Full CI** (que levanta toda la infraestructura y ejecuta los tests E2E y Testcontainers) pase satisfactoriamente antes de permitir el *merge*.
+El desarrollo es iterativo e incremental. GitHub Issues recoge las tareas de cada fase y GitHub Projects permite seguirlas con Kanban a través de los estados Todo, In Progress, Review y Done. Cada tarea describe un resultado verificable y sus criterios de aceptación. La [metodología](methodology.md) detalla la organización del trabajo.
+
+### Git
+
+El trabajo se realiza en ramas cortas asociadas a un issue, como `docs/p3-44-development-guide`. Cada rama propone su integración en `main` mediante una pull request. La revisión de la PR y el resultado de Full CI sirven para decidir la integración.
+
+### Integración y entrega continua
+
+| Workflow | Disparador | Resultado |
+| --- | --- | --- |
+| Basic Backend CI | Push o ejecución manual | Compila el servidor y ejecuta las pruebas de Maven salvo las suites de navegador. |
+| Basic Frontend CI | Push | Compila el cliente y ejecuta Vitest con cobertura. |
+| Full CI | Pull request hacia `main` | Ejecuta pruebas del cliente, compilación, suites completas de Maven y pruebas de los scripts de versiones. |
+| Continuous Delivery | Push a `main` | Publica la imagen y el Compose OCI con el tag `dev`, a partir del SHA del cambio. |
+| Manual Build | Ejecución manual con rama y SHA opcional | Publica una build identificable por rama, fecha UTC y SHA abreviado. |
+| GitHub Release | Publicación de una release | Valida el tag y publica la imagen y el Compose OCI con las etiquetas de la versión y `latest`. |
+
+El [publicador reutilizable](../.github/workflows/publish-artifacts.yml) construye la imagen y prepara el Compose con la etiqueta correspondiente. Usa `DOCKERHUB_USERNAME` y `DOCKERHUB_TOKEN` como secretos de GitHub Actions. Al terminar registra el SHA, el digest de la imagen y las referencias publicadas. Las builds de Continuous Delivery se serializan y las de Manual Build usan etiquetas propias.
+
+### Versionado
+
+**Prepare Version** requiere que GitHub Actions pueda crear pull requests. Si el token predeterminado deja las comprobaciones esperando aprobación, apruébalas desde la PR. El workflow admite el secreto opcional `VERSION_BUMP_TOKEN` con acceso de escritura a Contents y Pull requests para iniciar las comprobaciones automáticamente.
+
+### Publicación de una release de GitHub
+
+1. Ejecuta **Prepare Version** con `operation=release` y la versión elegida. Revisa los cambios en Maven, npm, el lockfile y la etiqueta de Compose. Integra la PR cuando pase CI.
+2. Crea una release en GitHub sobre el commit de `main` que contiene las versiones preparadas. Usa notas con las funcionalidades principales, cambios y limitaciones. Para la entrega 0.1 se usa el tag `0.1` y los paquetes se versionan como `0.1.0`.
+3. Publica la release y revisa el resultado de **GitHub Release**. El workflow valida las versiones a partir del commit etiquetado y publica sus artefactos con los tags de versión y `latest`. Para `0.1` publica también `0.1.0` como alias. Una prerelease numérica también actualiza `latest` con el workflow actual.
+4. Tras la publicación correcta, revisa la PR de preparación de la siguiente versión de desarrollo. Después de `0.1` se propone `0.2.0-SNAPSHOT` en Maven y `0.2.0` en npm.
+
+En [GitHub Releases](https://github.com/codeurjc-students/2026-BetSphere/releases) se consultan las fechas de publicación de las releases y en el [changelog](../CHANGELOG.md) los hitos registrados del proyecto.
+
+| Hito | Fecha registrada | Alcance |
+| --- | --- | --- |
+| `0.1.0-fase1` | 2026-09-18, changelog de Fase 1 | Definición del alcance, navegación y arquitectura inicial. |
+| `0.2.0-fase2` | 2026-10-06, changelog de Fase 2 | Primera SPA y API del catálogo de partidos, persistencia inicial y pruebas automatizadas. |
+| Entrega `0.1` | Publicación por confirmar en GitHub Releases | Catálogo deportivo, registro y sesión, perfil con avatar, historial local de partidos visitados y administración. |
+
+Las fechas de las dos primeras filas corresponden a entradas del changelog. El artefacto `dev` se actualiza con los cambios de `main`.
 
 ## Ejecución y edición del código
 
-### Clonar el repositorio
-Se requiere tener instalados Git, Docker (en ejecución para los tests), Java, Node.js y npm.
-```bash
+Para trabajar con el código instala Git, un JDK 21, Node.js 22 compatible con Vite y npm, y Docker con Compose. Para las pruebas de navegador instala Chrome. Clona el repositorio:
+
+```sh
 git clone https://github.com/codeurjc-students/2026-BetSphere.git
 cd 2026-BetSphere
 ```
 
-### Ejecución de los procesos locales
+### MySQL y MinIO
 
-**1. Base de Datos (MySQL)**
-Ejecuta el script proporcionado en la raíz para levantar la instancia local:
-```bash
-./start_db.sh
+Arranca MySQL y MinIO desde la raíz. En Bash puedes usar `bash start_db.sh` y `bash start_minio.sh`. En PowerShell 7, puedes iniciar una instancia nueva con estos comandos:
+
+```powershell
+$env:MYSQL_ROOT_PASSWORD = Read-Host 'Contraseña para MySQL local' -MaskInput
+docker run --name mysql-betsphere -e MYSQL_ROOT_PASSWORD -e MYSQL_DATABASE=betsphere -p 3306:3306 -d mysql:8.0
+Remove-Item Env:MYSQL_ROOT_PASSWORD
+docker compose -f docker/docker-compose-dev.yml up -d minio
 ```
 
-**2. Backend (Spring Boot)**
-En una nueva terminal, arranca el servidor web.
-```bash
+Si el contenedor MySQL ya existe, reutilízalo con `docker start mysql-betsphere`. Si usaste el script Bash, utiliza el valor de desarrollo definido en ese script. Si la base ya existe, utiliza sus credenciales. MinIO escucha en el puerto 9000 y su consola en el 9001.
+
+### Backend
+
+Desde `backend/`, copia [`.env.template`](../backend/.env.template) a `.env` y rellena la configuración local. Para el contenedor de ejemplo usa `DB_HOST=localhost`, `DB_PORT=3306`, `DB_NAME=betsphere` y `DB_USER=root`, junto con la contraseña elegida al crear MySQL. Los valores `S3_*` deben corresponder a la instancia de MinIO. Las variables `KEYSTORE_PASSWORD` y `KEYSTORE_SECRET` deben corresponder a `backend/src/main/resources/keystore.jks`. Guarda los valores propios fuera del control de versiones.
+
+```powershell
 cd backend
-./mvnw spring-boot:run
+.\mvnw.cmd spring-boot:run
 ```
-*(El servidor expondrá la API en `http://localhost:8080`)*
 
-**3. Frontend (React/Vite)**
-En una tercera terminal, instala las dependencias y lanza el entorno de desarrollo.
-```bash
+En Bash usa `./mvnw spring-boot:run`. La API escucha en `https://localhost`. Ajusta la URL base de Postman si la colección conserva el puerto anterior. Una comprobación básica es consultar `GET https://localhost/api/v1/matches/`.
+
+### Frontend
+
+Desde una segunda terminal en la raíz del repositorio:
+
+```sh
 cd frontend
 npm ci
 npm run dev
 ```
-*(Accede a `http://localhost:5173` desde el navegador para visualizar la aplicación)*
 
-### Pruebas manuales con Postman
-En la carpeta `docs/api/` se proporciona la colección exportada de Postman. Imprórtala en la aplicación para poder lanzar las peticiones preconfiguradas directamente contra el backend en el puerto 8080 y verificar la recuperación de los datos de ejemplo.
+Abre `http://localhost:5173` o la URL indicada por Vite. Vite redirige las peticiones a `/api` hacia `https://localhost:443` de forma predeterminada. La variable `API_PROXY_TARGET` permite cambiar ese destino al iniciar Vite.
 
-### Ejecución de pruebas automáticas
-Para lanzar la suite de tests completos que exige la Integración Continua, puedes hacerlo de forma manual en local:
+Edita pantallas y servicios en `frontend/app/` y el servidor en `backend/src/main/java/es/codeurjc/betsphere/`. Vite actualiza el navegador al editar el cliente. Para cambios del backend, vuelve a iniciar Maven si la aplicación no se reinicia automáticamente.
 
-*   **Backend (Unitarias, Integración y E2E API):** 
-    ```bash
-    cd backend
-    ./mvnw verify
-    ```
-*   **Frontend (Unitarias e Integración):**
-    ```bash
-    cd frontend
-    npm run test
-    ```
+### Compilación y pruebas
 
-### Entrega continua
+Desde `frontend/`:
 
-Cada push a `main` ejecuta `continuous-delivery.yml`, que llama al workflow
-reutilizable `publish-artifacts.yml` con el SHA del cambio y el tag `dev`.
-Este publica la imagen `huugoocm/betsphere:dev` y el artefacto OCI
-`huugoocm/betsphere-compose:dev`. El resumen de Actions registra el SHA,
-el digest de la imagen y las referencias publicadas. Las publicaciones de
-desarrollo se ejecutan de una en una mediante el grupo `publish-dev`.
+```sh
+npm run lint
+npm run test:coverage
+npm run build
+```
 
-En GitHub, configura los secretos de Actions `DOCKERHUB_USERNAME` y
-`DOCKERHUB_TOKEN`. La cuenta debe tener permiso de escritura en los repositorios
-Docker Hub `huugoocm/betsphere` y `huugoocm/betsphere-compose`.
+Desde `backend/`, con Docker activo y dependencias del frontend instaladas:
 
-Para preparar esa configuración, sigue estos pasos
+```powershell
+.\mvnw.cmd test
+```
 
-1. Inicia sesión en Docker Hub con la cuenta `huugoocm` y crea los repositorios
-   `betsphere` y `betsphere-compose` si todavía no existen.
-2. Crea un token de acceso personal de Docker con permisos de lectura y escritura
-   en repositorios. Ese token permite que Actions publique usando tu cuenta.
-3. En el repositorio GitHub, abre Settings → Secrets and variables → Actions →
-   New repository secret. Guarda `DOCKERHUB_USERNAME` con el usuario `huugoocm`
-   y `DOCKERHUB_TOKEN` con el token creado en Docker.
-4. Integra el workflow en `main` mediante una PR y revisa la ejecución
-   Continuous Delivery que provoca el merge.
+En Bash usa `./mvnw test`. Para comprobar desde la raíz los scripts de publicación y versionado:
 
-Las instrucciones oficiales detallan la gestión del token y de los secretos.
-[Docker](https://docs.docker.com/security/access-tokens/),
-[GitHub Actions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets).
+```sh
+node --test .github/scripts/*.test.mjs
+```
 
-El workflow genera una copia temporal de `docker/docker-compose.yml` con el tag
-de la publicación. Las variables de configuración se conservan para el despliegue.
-Las builds manuales y las releases utilizan el mismo publicador. La preparación
-de versiones se realiza con Prepare Version.
+Para construir la imagen conjunta desde la raíz:
 
-Para construir la imagen desde la raíz del repositorio, ejecuta
-
-```bash
+```sh
 docker build -f docker/dockerfile -t betsphere:local .
 ```
-
-El frontend se compila como SPA y Spring sirve sus archivos estáticos y las
-rutas de navegación. Las rutas privadas de la API mantienen sus controles de acceso.
-
-Para desplegar los artefactos publicados, prepara un archivo `.env` local con
-`DB_NAME`, `DB_USER`, `DB_PASSWORD`, `KEYSTORE_PASSWORD` y `KEYSTORE_SECRET`.
-Para el MySQL incluido, usa `DB_USER=root`, ya que Compose configura esa cuenta.
-Los valores HTTPS deben corresponder al almacén `backend/src/main/resources/keystore.jks`.
-También puedes definir `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `S3_REGION` y
-`S3_BUCKET`.
-
-Con Docker Compose 5.6.1, ejecuta desde la carpeta del archivo `.env`
-
-```bash
-docker compose --env-file .env -f oci://docker.io/huugoocm/betsphere-compose:dev up -d
-```
-
-Abre `https://localhost/` y comprueba también el acceso directo a `/matches` y
-`/login`. El certificado del almacén local puede requerir que el navegador confirme
-su confianza. Los datos de MySQL y del almacenamiento de imágenes se guardan en
-volúmenes Docker.
-
-### Publicación de una build manual
-
-Una vez integrado `manual-build.yml` en `main`, abre Actions → Manual Build →
-Run workflow. En el selector de la definición del workflow, utiliza `main`.
-Los campos del formulario eligen el código que se va a publicar
-
-- `branch` indica la rama de origen, por ejemplo `main` o `feature/chat`.
-- `commit` permite indicar un SHA completo o abreviado de entre 7 y 40 caracteres.
-  Si se deja vacío, se utiliza el último commit de la rama seleccionada al hacer
-  el checkout. El commit indicado debe formar parte del historial de esa rama.
-
-El workflow resuelve primero el SHA completo y después llama al publicador con
-ese commit. El resumen de la ejecución registra la rama, el SHA y el tag generado.
-Una build de `feature/chat` tendrá un tag con este formato
-
-```text
-feature-chat-20261121-203000-a1b2c3d4e5f6
-```
-
-La fecha y la hora se calculan en UTC. El nombre de rama se convierte a minúsculas,
-sus caracteres incompatibles con Docker se sustituyen por guiones y se limita a
-80 caracteres. El SHA abreviado tiene 12 caracteres.
-
-Se publican `huugoocm/betsphere:<tag>` y `huugoocm/betsphere-compose:<tag>`.
-El Compose apunta a la imagen con ese mismo tag. Los tags `dev` y `latest`
-se conservan durante las publicaciones manuales.
-
-Para ejecutar una build publicada, sustituye `<tag>` por el valor que muestra
-Actions y utiliza tu archivo `.env` de despliegue
-
-```bash
-docker compose --env-file .env -f oci://docker.io/huugoocm/betsphere-compose:<tag> up -d
-```
-
-Una rama inexistente, un SHA inválido o un commit ajeno al historial de la rama
-detienen la preparación antes de autenticar y publicar en Docker Hub. Una build
-de un commit anterior utiliza el Dockerfile y el Compose de ese commit, que deben
-ser compatibles con el empaquetado de la aplicación en esa versión.
-
-### Preparación de versiones
-
-Actions → Prepare Version → Run workflow permite preparar los cambios de versión
-mediante una PR a `main`. Selecciona `main` en el selector del workflow y completa
-`operation` (`release` o `development`) y `version` (dos o tres componentes
-numéricos, sin `v` ni `SNAPSHOT`).
-
-| Operación | Entrada | Backend | Frontend y lockfile | Tag de imagen en Compose |
-| --- | --- | --- | --- | --- |
-| `release` | `0.1` | `0.1.0` | `0.1.0` | `0.1` |
-| `release` | `0.0.1` | `0.0.1` | `0.0.1` | `0.0.1` |
-| `development` | `0.2` | `0.2.0-SNAPSHOT` | `0.2.0` | `0.2` |
-
-El script actualiza la versión propia del backend, la del cliente, las dos
-referencias del paquete raíz en `package-lock.json` y la imagen de la aplicación
-en `docker/docker-compose.yml`. Conserva las versiones de las dependencias y de
-los otros servicios. Valida todos los archivos antes de escribir los cambios.
-
-Cada combinación de operación y versión utiliza una rama estable, por ejemplo
-`chore/prepare-release-0.1.0`. Repetirla actualiza la PR existente; las entradas
-`0.1` y `0.1.0` producen los mismos cambios y la misma rama. Si `main` ya tiene
-esas versiones, no se abre otra PR. El resumen de Actions muestra el resultado.
-
-Antes de usarlo, habilita Settings → Actions → General → Workflow permissions →
-**Allow GitHub Actions to create and approve pull requests**. Si la organización
-restringe esta opción, debe habilitarla un administrador. El workflow solicita
-permisos de escritura sobre contenido y PRs y utiliza el `GITHUB_TOKEN` que GitHub
-proporciona automáticamente; no utiliza el token de Docker Hub.
-
-Con el token predeterminado, GitHub puede solicitar **Approve workflows to run**
-en la PR generada. Aprueba las comprobaciones y espera a que Full CI termine antes
-del merge. Para iniciar los controles automáticamente, se puede configurar el
-secreto opcional `VERSION_BUMP_TOKEN` con un token de GitHub con permisos de
-escritura en Contents y Pull requests de este repositorio. Consulta las
-[reglas de activación de GitHub Actions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow)
-y los [permisos del creador de PRs](https://github.com/peter-evans/create-pull-request#workflow-permissions).
-
-El orden de trabajo es preparar y fusionar la PR `release`, crear la release de
-GitHub desde ese commit de `main`, y después preparar y fusionar la PR
-`development`. Este workflow también admite `workflow_call` con los mismos
-campos, para que el publicador de releases del #77 pueda solicitar la siguiente
-versión después de publicar correctamente. El llamador debe conceder los mismos
-permisos y pasar `VERSION_BUMP_TOKEN` si lo utiliza. Preparar versiones por sí solo
-no crea tags, releases ni publicaciones en Docker Hub.
-
-Las pruebas de esta operación se ejecutan en Full CI y pueden lanzarse localmente
-con `node --test .github/scripts/set-versions.test.mjs` desde la raíz.
-
-### Publicación de una release de GitHub
-
-El workflow **GitHub Release** se ejecuta únicamente al publicar una release
-(`release: published`). Integrar su PR en `main` deja preparada la automatización;
-no crea tags ni releases. Guardar un borrador tampoco publica artefactos. El evento
-`published` incluye las releases marcadas como prerelease: usa una versión numérica
-como `0.0.1` para un ensayo y ten en cuenta que también actualizará `latest`.
-Consulta los [eventos de GitHub Actions](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#release).
-
-Cuando la fase esté terminada y se decida publicar:
-
-1. Ejecuta Prepare Version con `operation=release` y la versión elegida.
-   Revisa, comprueba la CI y fusiona su PR a `main`.
-2. En GitHub → Releases → Draft a new release, crea el tag sobre el commit de
-   `main` que contiene esas versiones. Para la entrega, el tag es `0.1`; para un
-   ensayo previo se puede utilizar `0.0.1`. Publica la release cuando corresponda.
-3. Revisa la ejecución GitHub Release y su resumen de publicación. Después del
-   éxito se prepara mediante el #78 una PR con la siguiente versión de desarrollo;
-   espera a que pasen sus controles antes de fusionarla.
-
-La validación resuelve el tag a un SHA y comprueba que coincide con el commit del
-evento y pertenece al historial de `main`. Lee las versiones desde ese commit,
-incluido `package-lock.json`, y rechaza valores inconsistentes o `SNAPSHOT`.
-El publicador recibe el SHA exacto, por lo que los cambios posteriores en `main`
-no entran en la imagen de esa release.
-
-| Tag de GitHub | Backend y frontend en el tag | Imagen en el Compose del tag | Tags publicados en ambos repositorios Docker Hub |
-| --- | --- | --- | --- |
-| `0.0.1` | `0.0.1` | `0.0.1` | `0.0.1`, `latest` |
-| `0.1` o `0.1.0` | `0.1.0` | `0.1` | `0.1`, `0.1.0`, `latest` |
-
-Los aliases de la imagen comparten una única construcción y digest. Los aliases
-del artefacto OCI contienen el mismo Compose, que referencia la imagen versionada
-y conserva las variables del despliegue. El publicador común admite aliases
-opcionales; Continuous Delivery y Manual Build siguen pasando un único tag.
-La publicación del Compose utiliza el
-[soporte OCI de Docker Compose](https://docs.docker.com/compose/how-tos/oci-artifact/).
-
-Después de publicar `0.1` se propone `0.2.0-SNAPSHOT` en el backend, `0.2.0` en
-el frontend y `0.2` en Compose. Las releases con patch distinto de cero avanzan
-ese patch: el ensayo `0.0.1` propone `0.0.2-SNAPSHOT` / `0.0.2`. Se pueden ajustar
-estas versiones en una PR posterior cuando cambie el objetivo de desarrollo.
-Si al validar la release `main` ya está en esa siguiente versión o una superior,
-se omite la preparación para evitar retroceder. Repetir la publicación reutiliza
-la misma rama de preparación mientras su PR siga abierta. La preparación no se
-ejecuta si falla la validación o la publicación.
-
-Se utilizan los secretos Docker Hub ya configurados y los permisos de creación
-de PR descritos en el apartado anterior. Si falla únicamente la preparación de
-desarrollo, los artefactos publicados permanecen disponibles: corrige los permisos
-y vuelve a ejecutar los jobs fallidos, o utiliza Prepare Version manualmente.
-
-Para verificar el workflow antes de publicar, ejecuta
-`node --test .github/scripts/*.test.mjs`. Las pruebas crean repositorios locales
-temporales para simular tags, cambios posteriores en `main` y metadatos inválidos;
-no publican releases ni se conectan a Docker Hub. La comprobación completa de
-publicación y despliegue queda pendiente de la release de ensayo autorizada.
