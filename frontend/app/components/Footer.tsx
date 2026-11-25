@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="row g-4 align-items-start">
           <div className="col-md-6">
             <Link className="brand-lockup text-white" to="/">
-              <span className="brand-mark">B</span>
+              <img className="brand-mark" src="/favicon.svg" alt="" />
               <span>
                 BETSPHERE<span className="brand-period">.</span>
               </span>
