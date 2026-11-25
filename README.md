@@ -1,21 +1,26 @@
-# BetSphere: una aplicación web para seguir eventos deportivos y simular apuestas
-
-![Logo de BetSphere](docs/images/BetSphereLogo.png)
+<h1>
+  <img src="frontend/public/favicon.svg" width="32" height="32" alt="">
+  BetSphere: una aplicación web para seguir eventos deportivos y simular apuestas
+</h1>
 
 La versión 0.1 de BetSphere permite explorar deportes y competiciones, buscar partidos y comparar las estadísticas de los equipos. Los usuarios registrados pueden iniciar sesión, cambiar su avatar y volver a los últimos partidos que visitaron. El administrador puede consultar las cuentas y gestionar el catálogo deportivo y sus partidos. Las cuotas se muestran como referencia durante esta fase.
 
 **BetSphere sigue en desarrollo.** La simulación de apuestas se incorporará en próximas versiones. Consulta las [funcionalidades de la 0.1](docs/functionalities.md) para ver qué está disponible por rol.
 
-## Capturas de la versión 0.1
-
-| Catálogo deportivo | Perfil de usuario | Panel de administración |
-| --- | --- | --- |
-| ![Portada con deportes y partidos destacados](docs/images/v0.1/sports-home.png) | ![Perfil con avatar y saldo virtual](docs/images/v0.1/profile.png) | ![Panel de administración del catálogo deportivo](docs/images/v0.1/admin-catalog.png) |
-| Acceso a deportes y partidos destacados. | Consulta de la cuenta y cambio de avatar. | Gestión de deportes, competiciones y equipos. |
-
 ## Vídeo de la versión 0.1
 
-Pendiente de grabación. La demo recorrerá la consulta pública del catálogo, las funciones de la cuenta y el panel de administración.
+**[Ver la demo de BetSphere 0.1 en YouTube](https://youtu.be/Ru065-V4QDI)**
+
+La demo muestra la navegación por el catálogo como visitante, el registro y las pantallas de perfil e historial como usuario registrado, y la creación y eliminación de un deporte desde el panel de administración.
+
+## Capturas de la versión 0.1
+
+![Portada de BetSphere con el catálogo deportivo y los partidos destacados](docs/images/v0.1/sports-home.png)
+
+| Perfil de usuario | Panel de administración |
+| --- | --- |
+| ![Perfil con avatar y saldo virtual](docs/images/v0.1/profile.png) | ![Panel de administración del catálogo deportivo](docs/images/v0.1/admin-catalog.png) |
+| Consulta de la cuenta y cambio de avatar. | Gestión de deportes, competiciones y equipos. |
 
 ## Funcionalidades previstas
 

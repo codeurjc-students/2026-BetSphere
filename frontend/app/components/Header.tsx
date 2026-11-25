@@ -27,7 +27,7 @@ export default function Header() {
         aria-label="Main navigation"
       >
         <Link className="brand-lockup" to="/" onClick={() => setOpen(false)}>
-          <span className="brand-mark">B</span>
+          <img className="brand-mark" src="/favicon.svg" alt="" />
           <span>
             BETSPHERE<span className="brand-period">.</span>
           </span>

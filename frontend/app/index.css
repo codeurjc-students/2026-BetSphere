@@ -55,16 +55,10 @@ a {
 }
 
 .brand-mark {
-    display: grid;
-    place-items: center;
+    display: block;
+    flex-shrink: 0;
     width: 2.35rem;
-    height: 2.35rem;
-    background: var(--green);
-    color: var(--deep);
-    border-radius: .75rem;
-    font-size: 1.35rem;
-    font-weight: 950;
-    letter-spacing: -.08em
+    height: 2.35rem
 }
 
 .brand-lockup small {
@@ -469,7 +463,7 @@ body { background: #101311; color: var(--ink); }
 .brand-lockup { color: #f2f4f2; }
 .brand-lockup small { color: #a2aaa4; }
 .brand-period { color: #ccff00; }
-.brand-mark, .btn-brand { background: #ccff00; color: #101311; }
+.btn-brand { background: #ccff00; color: #101311; }
 .btn-brand:hover { background: #dfff50; color: #101311; }
 .main-content { background: #101311; }
 .hero-panel { background: linear-gradient(125deg, #1b211d, #131714); border: 1px solid #303832; }

@@ -17,7 +17,7 @@ body { font-family: "DM Sans", system-ui, sans-serif; }
 a:focus-visible, button:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
 .site-header, .site-footer { background: var(--deep); border-color: var(--line); }
 .brand-lockup, .brand-lockup:hover { color: var(--ink); }
-.brand-mark, .btn-brand { background: var(--green); color: var(--canvas); border-radius: 0; }
+.btn-brand { background: var(--green); color: var(--canvas); border-radius: 0; }
 .brand-period, .text-link, .match-status, .back-link,
 .match-score-display, .profile-stat, .error-detail, .breadcrumb a { color: var(--green); }
 .brand-lockup small, .header-greeting, .header-logout, .footer-bottom { color: var(--muted); }
@@ -183,12 +183,6 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--green); outline
     z-index: 10;
 }
 .site-header .navbar { padding-inline: calc(var(--bs-gutter-x) * .5); }
-.brand-mark {
-    background: var(--red);
-    color: white;
-    border-radius: 50% 45% 50% 20%;
-    font: italic 800 1.55rem/1 var(--display);
-}
 .brand-lockup { letter-spacing: .11em; }
 .navbar .nav-link { padding-inline: .85rem; }
 .navbar .nav-link:hover, .navbar .nav-link.active { color: var(--ink) !important; }
