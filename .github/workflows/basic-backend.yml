@@ -4,12 +4,20 @@ on:
   push:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      RUN_SONAR: ${{ github.ref == 'refs/heads/main' && vars.SONAR_ORGANIZATION != '' && vars.SONAR_PROJECT_KEY != '' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: ${{ github.ref == 'refs/heads/main' && '0' || '1' }}
+          persist-credentials: false
 
       - name: Setup Java 21
         uses: actions/setup-java@v4
@@ -46,3 +54,33 @@ jobs:
       - name: Run backend tests without browser suites
         working-directory: ./backend
         run: ./mvnw test -Dtest="!**/e2e/ui/**,!**/integration/clientapi/**"
+
+      - name: Prepare Java analysis inputs
+        if: env.RUN_SONAR == 'true'
+        working-directory: ./backend
+        run: ./mvnw --batch-mode jacoco:report dependency:copy-dependencies
+
+      - name: Setup Node.js for frontend coverage
+        if: env.RUN_SONAR == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Generate frontend coverage
+        if: env.RUN_SONAR == 'true'
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run test:coverage
+
+      - name: Analyze with SonarQube Cloud
+        if: env.RUN_SONAR == 'true'
+        uses: SonarSource/sonarqube-scan-action@v8.3.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >-
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}

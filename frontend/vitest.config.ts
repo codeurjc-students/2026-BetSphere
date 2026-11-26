@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig, configDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
@@ -16,7 +17,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["app/**/*.{ts,tsx}"],
-      reporter: ["text", "html"],
+      reporter: ["text", "html", ["lcovonly", { projectRoot: fileURLToPath(new URL("..", import.meta.url)) }]],
       thresholds: { lines: 70 },
     },
   },

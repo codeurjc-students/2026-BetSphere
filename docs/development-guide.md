@@ -576,6 +576,15 @@ sports_index ..> format_date
 
 Maven escribe los resultados de Surefire en `backend/target/surefire-reports/` y JaCoCo genera cobertura en `backend/target/site/jacoco/`. Vitest genera cobertura en `frontend/coverage/`. Los porcentajes dependen del commit y de la ejecución consultada. La [estructura de pruebas](testing-structure.md) identifica las suites y sus comandos.
 
+### Análisis estático con SonarQube Cloud
+
+SonarQube Cloud analiza el código Java y TypeScript para señalar posibles defectos, duplicación y problemas de mantenibilidad. JaCoCo y Vitest miden la cobertura al ejecutar las pruebas. SonarQube importa sus informes XML y LCOV junto con los resultados del análisis estático.
+
+1. Importa el repositorio como un único proyecto en [SonarQube Cloud](https://sonarcloud.io/). En la configuración de análisis del proyecto, desactiva el análisis automático para usar GitHub Actions.
+2. En GitHub, abre **Settings → Secrets and variables → Actions**. En **Variables**, crea `SONAR_ORGANIZATION` y `SONAR_PROJECT_KEY` con los identificadores del proyecto en SonarQube Cloud. En **Secrets**, añade un token con permiso de análisis como `SONAR_TOKEN`.
+3. Ejecuta **Basic Backend CI** en `main`, una vez que esa rama incluya la configuración. El análisis también se ejecuta en cada push a `main` cuando están definidas ambas variables. El workflow compila y prueba el backend, genera ambos informes de cobertura y después ejecuta el escáner para las rutas definidas en [`sonar-project.properties`](../sonar-project.properties).
+4. Abre el enlace al análisis en el log del paso **Analyze with SonarQube Cloud**. En el proyecto, revisa **Issues** y el resultado del **Quality Gate**. Registra las incidencias que requieran cambios y comprueba su resolución en un análisis posterior.
+
 ## Despliegue
 
 ### Empaquetado y distribución
