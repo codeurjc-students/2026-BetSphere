@@ -2,7 +2,7 @@
 
 La siguiente lista actualiza las funcionalidades previstas según el comportamiento implementado en la aplicación. **Implementada** indica que la funcionalidad está disponible; **Parcial** indica que solo se ha desarrollado una parte, descrita en la tabla; **Pendiente** indica que todavía no está disponible.
 
-Las funcionalidades disponibles desde la interfaz se presentan con sus capturas en [Funcionalidades de la versión 0.1](functionalities.md).
+Las funcionalidades disponibles desde la interfaz se presentan con sus capturas en [Funcionalidades de la versión 0.1](functionalities.md). La [especificación inicial](initial-functionalities.md) recoge el alcance definido al comenzar el proyecto.
 
 ## Funcionalidad básica
 
@@ -11,7 +11,7 @@ Las funcionalidades disponibles desde la interfaz se presentan con sus capturas 
 | Anónimo | Navegación por deportes, competiciones y partidos. | Implementada | Se puede explorar el catálogo, acceder a las competiciones de un deporte y consultar sus equipos y partidos. Las competiciones de un deporte pueden filtrarse por país cuando hay varios disponibles. |
 | Anónimo | Consulta estática de cuotas. | Implementada | Los listados y las fichas de partido muestran las cuotas de referencia 1X2 almacenadas: victoria local, empate y victoria visitante. No se actualizan en directo. |
 | Anónimo | Simulación de apuesta sin ejecución. | Pendiente | Las cuotas de la ficha están deshabilitadas. No hay selección de pronóstico, introducción de importe ni cálculo de una apuesta simulada. |
-| Anónimo | Búsqueda y filtrado de partidos. | Implementada | El listado permite buscar por equipo, filtrar entre todos, próximos o finalizados y cargar más partidos en grupos de diez. Los filtros y la búsqueda se aplican a los resultados cargados. En una competición se puede filtrar su calendario del mismo modo. |
+| Anónimo | Búsqueda y filtrado de partidos. | Implementada | En el listado general, la API busca por equipo local o visitante y aplica el estado antes de devolver cada página de diez. En una competición, la ficha carga el calendario completo y la interfaz lo filtra y muestra de diez en diez. Los equipos aparecen juntos. |
 | Anónimo | Consulta de equipos y comparación de estadísticas. | Implementada | La ficha de equipo muestra sus datos y estadísticas de temporada almacenadas. La ficha de partido permite comparar victorias y goles a favor y en contra y desplegar una tabla con las estadísticas de ambos equipos. |
 | Usuario registrado | Registro de cuenta, comprobación de edad e inicio de sesión. | Implementada | El registro solicita usuario, correo, contraseña y fecha de nacimiento y rechaza fechas correspondientes a menores de 18 años. La edad se comprueba sobre la fecha declarada, sin verificación documental. Se inicia sesión con correo y contraseña y se puede cerrar la sesión desde el menú de cuenta. |
 | Usuario registrado | Gestión del perfil. | Parcial | La pantalla permite consultar usuario, correo, fecha de nacimiento y saldo virtual y cambiar el avatar. La actualización de usuario, contraseña y fecha de nacimiento y la eliminación de la cuenta están disponibles en la API para el propietario o un administrador, pero no tienen formularios en la interfaz. |

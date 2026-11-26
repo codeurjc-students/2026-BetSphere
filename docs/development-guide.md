@@ -119,7 +119,11 @@ La tabla usa rutas relativas a `/api/v1`. La autenticación devuelve un token de
 | `/users` | `POST /` registro. `GET /me` sesión actual. `GET /` listado. `GET`, `PUT` y `DELETE` en `/{id}`. | Registro público. Listado de administrador. Consulta, edición y eliminación de una cuenta sujetas a los permisos del titular o administrador. |
 | `/images` | `GET /{key}` consulta, `POST` carga de avatar y `DELETE /{key}` retirada del avatar propio. | Lectura pública. Escritura autenticada. |
 
-El proyecto configura `/docs/api` para Swagger UI y `/v3/api-docs` para el JSON de OpenAPI. El POM combina Spring Boot 4.1 con Springdoc 2.5, fuera de la [matriz de compatibilidad de Springdoc](https://springdoc.org/#what-is-the-compatibility-matrix-of-springdoc-openapi-with-spring-boot). La generación dinámica de la especificación queda por verificar. La [exportación estática anterior](api/api-docs.yaml) corresponde a la primera implementación del listado de partidos. Para revisar las rutas de la versión actual utiliza el inventario anterior, los controladores y los tests HTTP. La [colección de Postman](api/postman/BetSphere_API.postman_collection.json) puede servir como punto de partida para peticiones manuales.
+`GET /api/v1/matches` acepta los parámetros opcionales `q` y `status`. `q` busca texto en los nombres de los equipos local y visitante sin distinguir mayúsculas. `status=FINISHED` selecciona los finalizados y `status=SCHEDULED` selecciona los programados cuya fecha aún no ha pasado. Ambos filtros se combinan antes de aplicar `page` y `size`. La página inicial es `0` y, si se omite `sort`, se ordena por ID ascendente. Por ejemplo, `/api/v1/matches/?q=Chelsea&status=FINISHED&page=0&size=10` devuelve la primera página de hasta diez partidos finalizados que coinciden con Chelsea.
+
+En la ficha de una competición, el frontend filtra el calendario que recibe y muestra diez resultados cada vez. La lista de equipos se muestra completa.
+
+El proyecto configura `/docs/api` para Swagger UI y `/v3/api-docs` para el JSON de OpenAPI. El POM combina Spring Boot 4.1 con Springdoc 2.5, fuera de la [matriz de compatibilidad de Springdoc](https://springdoc.org/#what-is-the-compatibility-matrix-of-springdoc-openapi-with-spring-boot). La generación dinámica de la especificación queda por verificar. La tabla anterior y los controladores implementados describen la API de la 0.1. La [exportación de OpenAPI](api/api-docs.yaml) y la [colección de Postman](api/postman/BetSphere_API.postman_collection.json) se conservan como referencia de una implementación anterior del listado.
 
 ### Arquitectura del servidor
 
@@ -292,6 +296,9 @@ direction LR
 namespace Arranque {
     class DatabaseInitializer
 }
+namespace Almacenamiento {
+    class InitImageStorage["ImageStorageService"]
+}
 namespace Repositorios {
     class SportRepository
     class CompetitionRepository
@@ -304,7 +311,10 @@ DatabaseInitializer ..> CompetitionRepository
 DatabaseInitializer ..> TeamRepository
 DatabaseInitializer ..> MatchRepository
 DatabaseInitializer ..> UserRepository
+DatabaseInitializer ..> InitImageStorage
 ```
+
+Cuando está activado, `DatabaseInitializer` carga las imágenes propias del catálogo en MinIO mediante `ImageStorageService` y guarda sus URLs en la base de datos. Los [créditos de las imágenes](../backend/src/main/resources/demo-images/CREDITS.md) describen su origen.
 
 #### Dependencias de infraestructura
 
@@ -675,7 +685,7 @@ cd backend
 .\mvnw.cmd spring-boot:run
 ```
 
-En Bash usa `./mvnw spring-boot:run`. La API escucha en `https://localhost`. Ajusta la URL base de Postman si la colección conserva el puerto anterior. Una comprobación básica es consultar `GET https://localhost/api/v1/matches/`.
+En Bash usa `./mvnw spring-boot:run`. La API escucha en `https://localhost`. Una comprobación básica es consultar `GET https://localhost/api/v1/matches/`. Si reutilizas la colección histórica de Postman, cambia su variable `base_url` a `https://localhost/api/v1`.
 
 ### Frontend
 

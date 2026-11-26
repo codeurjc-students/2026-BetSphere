@@ -6,7 +6,7 @@ La versión 0.1 permite consultar el catálogo deportivo y las estadísticas de 
 
 ### Consulta de deportes y competiciones
 
-La página principal muestra el catálogo de deportes y una selección de partidos. Al seleccionar un deporte se accede a sus competiciones, con filtro por país cuando hay varios disponibles. La ficha de competición muestra sus equipos y calendario y permite abrir sus detalles.
+La página principal muestra el catálogo de deportes y una selección de partidos. Al seleccionar un deporte se accede a sus competiciones, con filtro por país cuando hay varios disponibles. La ficha de competición muestra juntos sus equipos y presenta los partidos del calendario de diez en diez con «Load more».
 
 ![Página principal con el catálogo de deportes y un partido destacado](images/v0.1/sports-home.png)
 
@@ -22,7 +22,7 @@ La página principal muestra el catálogo de deportes y una selección de partid
 
 ### Búsqueda y filtrado de partidos
 
-El listado permite buscar partidos por nombre de equipo y filtrar entre todos, próximos o finalizados. El botón «Load more» carga más resultados en grupos de diez. La búsqueda y los filtros se aplican a los partidos ya cargados.
+El listado permite buscar por nombre del equipo local o visitante y mostrar todos los partidos, los próximos o los finalizados. La API aplica la búsqueda y el estado al catálogo completo antes de devolver cada página. «Load more» muestra diez resultados más con los mismos filtros. En una competición, el buscador filtra el calendario de esa ficha antes de mostrar cada grupo de diez.
 
 ![Listado de partidos con búsqueda y filtros](images/v0.1/matches.png)
 
@@ -34,7 +34,7 @@ La ficha muestra los equipos, competición, fecha, estado y cuotas de referencia
 
 ### Estadísticas de un equipo
 
-Desde una competición o un partido se puede abrir la ficha de un equipo. Esta muestra nombre, país, escudo y estadísticas almacenadas de partidos, victorias, empates, derrotas y goles a favor y en contra.
+Desde una competición o un partido se puede abrir la ficha de un equipo. Esta muestra nombre, país, imagen del equipo y estadísticas almacenadas de partidos, victorias, empates, derrotas y goles a favor y en contra.
 
 ![Ficha y estadísticas de temporada de un equipo](images/v0.1/team.png)
 

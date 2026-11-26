@@ -624,3 +624,35 @@ A medida que avance el desarrollo de BetSphere, se irá detallando en este docum
 * **Complementos a la herramienta:** Terminal y Git para contrastar cambios y comprobar enlaces.
 * **Ficheros de contexto:** `README.md`, `CHANGELOG.md`, `docs/AI_USAGE.md`, la documentación de la Fase 3 y `docs/images/v0.1/`.
 * **Herramientas basadas en ficheros (Spec Driven Development):** El issue #80 y la guía del TFG sirvieron de referencia para revisar la portada.
+
+### [Registro 40] - Revisión de la rúbrica y ajustes del MVP
+
+* **Fecha:** 26/11/2026
+* **Fase:** 3: Revisión de requisitos, calidad y documentación.
+* **Objetivo:** Contrastar el MVP con la rúbrica de la Fase 3 y completar la búsqueda, la paginación y la documentación.
+* **Herramienta:** ChatGPT / Codex
+* **Versión concreta:** GPT-6.2 Sol durante la implementación y GPT-6.1 Sol durante la revisión final de la documentación.
+* **Configuración de la herramienta:** Agente con acceso al repositorio, terminal y consulta de documentación técnica.
+* **Cómo ha sido usada:**
+  * Se contrastaron la rúbrica y las indicaciones para doble titulación con el código y los workflows. Se preparó la integración de SonarQube Cloud, cuyo primer análisis queda pendiente de activar la integración.
+  * Se implementó la búsqueda de partidos por equipo y estado en la API antes de paginar, se conectó con el buscador y se añadieron pruebas de regresión.
+  * Se añadió la visualización de diez partidos cada vez en el calendario de competición. Se revisaron las guías, el changelog y el README, y se recuperó la especificación funcional inicial desde Git.
+* **Complementos a la herramienta:** Git, PowerShell, Maven, Vitest, TypeScript y ESLint para consultar el historial y comprobar los cambios.
+* **Ficheros de contexto:** Rúbrica de la Fase 3, guía del TFG v4, `MatchRestController`, `MatchService`, `MatchRepository`, componentes y servicios del cliente, `.github/workflows/`, pruebas y documentación de la 0.1.
+* **Herramientas basadas en ficheros (Spec Driven Development):** La rúbrica y el apartado de doble titulación de la guía del TFG orientaron la revisión del alcance y los cambios.
+
+### [Registro 41] - Imágenes para la demostración
+
+* **Fecha:** 26/11/2026
+* **Fase:** 3: Interfaz y datos de ejemplo.
+* **Objetivo:** Incorporar imágenes de demostración al catálogo y crear un fondo para las pantallas de la aplicación.
+* **Herramienta:** OpenAI ImageGen y ChatGPT / Codex
+* **Versión concreta:** ImageGen mediante la herramienta de generación de imágenes y GPT-6.2 Sol para su integración en la aplicación.
+* **Configuración de la herramienta:** Generación de imágenes a partir de descripciones y asistencia sobre los recursos y el inicializador del backend.
+* **Cómo ha sido usada:**
+  * Se generaron las ilustraciones de los balones de fútbol y baloncesto, la pelota de tenis y el fondo de un estadio ficticio para la portada y las pantallas de acceso y registro.
+  * Se diseñaron distintivos con iniciales y formas propias para los clubes, las competiciones y los jugadores. Se sustituyeron los escudos y fotografías de terceros que se habían considerado durante la preparación del catálogo.
+  * Se integraron 20 PNG en los datos de ejemplo, con almacenamiento en MinIO y URLs en MySQL, y se documentó su origen en los créditos.
+* **Complementos a la herramienta:** Generación de PNG con System.Drawing, Git y Maven para preparar y verificar los recursos empaquetados.
+* **Ficheros de contexto:** `DatabaseInitializer`, `ImageStorageService`, `backend/src/main/resources/demo-images/`, `frontend/public/matchday-pitch.jpg` y los [créditos de imágenes](../backend/src/main/resources/demo-images/CREDITS.md).
+* **Herramientas basadas en ficheros (Spec Driven Development):** Se utilizaron el requisito de datos de ejemplo de la rúbrica y los recursos visuales de la aplicación para definir e integrar las imágenes.

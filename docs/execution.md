@@ -53,9 +53,19 @@ Para reutilizar una base ya inicializada, conserva sus credenciales originales e
 
 El `.env` con valores propios debe permanecer fuera de Git. Los valores públicos de demostración son adecuados para pruebas locales; el despliegue externo debe utilizar credenciales propias. El Compose y el Dockerfile originales se mantienen sin cambios.
 
-## Última versión publicada
+## Última build de desarrollo
 
-Desde la carpeta del `.env`, ejecuta:
+Mientras la release `0.1` está pendiente de publicación, puedes usar la build de desarrollo generada desde `main`. Desde la carpeta del `.env`, ejecuta:
+
+```sh
+docker compose -p betsphere --env-file .env -f oci://docker.io/huugoocm/betsphere-compose:dev up -d
+```
+
+Para consultar el estado, los logs o detener esta instalación, utiliza `dev` como etiqueta en los comandos de las secciones siguientes.
+
+## Última release publicada
+
+Cuando haya una release publicada, utiliza `latest` para arrancar la más reciente:
 
 ```sh
 docker compose -p betsphere --env-file .env -f oci://docker.io/huugoocm/betsphere-compose:latest up -d
@@ -99,7 +109,9 @@ Incluye encuentros como Manchester City–Arsenal, Real Madrid–Barcelona, ALBA
 | Administrador | `admin@betsphere.com` | `admin123` |
 | Usuario registrado | `user@betsphere.com` | `user123` |
 
-Consulta las [funcionalidades disponibles](functionalities.md). Los datos iniciales no incluyen imágenes subidas ni apuestas realizadas. El inicializador añade ejemplos que falten: un ejemplo eliminado puede reaparecer en un arranque posterior si sigue activo.
+El catálogo incluye 20 imágenes de demostración creadas para BetSphere. Hay tres iconos de deportes, cinco distintivos de competiciones y doce de equipos o participantes. El inicializador guarda los PNG en MinIO y sus URLs en MySQL. Si se reinicia la aplicación, vuelve a usar los mismos identificadores y conserva las imágenes personalizadas. Consulta los [créditos de las imágenes](../backend/src/main/resources/demo-images/CREDITS.md).
+
+El inicializador añade los ejemplos que falten, así que un ejemplo eliminado puede reaparecer en un arranque posterior mientras siga activo. Consulta las [funcionalidades disponibles](functionalities.md).
 
 ## Arranque sin cargar ejemplos ni modificar el esquema
 
