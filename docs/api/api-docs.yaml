@@ -1,48 +1,2295 @@
-openapi: 3.0.1
+openapi: "3.0.3"
 info:
-  title: OpenAPI definition
-  version: v0
+  title: "BetSphere API"
+  version: "0.1"
+  description: "Static contract for the REST API implemented in Phase 3, checked against the repository controllers and DTOs. Release 0.1 is pending publication. Catalog writes require ROLE_ADMIN. Public reads use an empty security array. Handled business errors usually return an error field; framework errors may use a different format. Adjust example IDs to your installation."
 servers:
-- url: http://localhost:8080
-  description: Generated server url
+  -
+    url: "https://localhost"
+    description: "Local Docker Compose installation using HTTPS on port 443."
+tags:
+  -
+    name: "Authentication"
+  -
+    name: "Users"
+  -
+    name: "Sports"
+  -
+    name: "Competitions"
+  -
+    name: "Teams"
+  -
+    name: "Matches"
+  -
+    name: "Images"
 paths:
-  /api/v1/matches/:
-    get:
+  "/api/v1/auth/login":
+    post:
       tags:
-      - match-rest-controller
-      operationId: getMatches
+        - "Authentication"
+      summary: "Log in"
+      operationId: "operation1"
+      security: []
+      description: "Returns an access JWT and stores the refresh token in a cookie. Authentication failures return AuthResponse with status FAILURE."
+      parameters: []
       responses:
         "200":
-          description: OK
+          description: "Operation completed."
           content:
-            '*/*':
+            "application/json":
               schema:
-                type: array
+                $ref: "#/components/schemas/AuthResponse"
+          headers:
+            Set-Cookie:
+              description: "HttpOnly RefreshToken cookie with Path=/, SameSite=Strict and Secure when the request uses HTTPS."
+              schema:
+                type: "string"
+        "401":
+          description: "Invalid credentials."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+  "/api/v1/auth/refresh":
+    post:
+      tags:
+        - "Authentication"
+      summary: "Refresh access token"
+      operationId: "operation2"
+      security:
+        -
+          refreshCookie: []
+      description: "Uses the RefreshToken cookie from the latest login and returns a new access JWT. A missing cookie returns 400."
+      parameters: []
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: "Missing RefreshToken cookie."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: "The cookie has expired or does not contain a valid refresh token."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+  "/api/v1/auth/logout":
+    post:
+      tags:
+        - "Authentication"
+      summary: "Log out"
+      operationId: "operation3"
+      security: []
+      description: "Clears the refresh cookie using Max-Age=0. Issued access tokens remain valid until they expire."
+      parameters: []
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+          headers:
+            Set-Cookie:
+              description: "HttpOnly RefreshToken cookie with Path=/, SameSite=Strict and Secure when the request uses HTTPS."
+              schema:
+                type: "string"
+  "/api/v1/sports/":
+    get:
+      tags:
+        - "Sports"
+      summary: "List sports"
+      operationId: "operation4"
+      security: []
+      description: "Paginated list. The path without a trailing slash is also supported."
+      parameters:
+        -
+          name: "page"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 0
+            default: 0
+          description: "Zero-based page index."
+        -
+          name: "size"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 1
+            default: 20
+          description: "Page size. The web interface requests ten results."
+        -
+          name: "sort"
+          in: "query"
+          style: "form"
+          explode: true
+          schema:
+            type: "array"
+            items:
+              type: "string"
+          description: "Field and direction, for example id,asc. This parameter can be repeated."
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/SportPage"
+    post:
+      tags:
+        - "Sports"
+      summary: "Create sport"
+      operationId: "operation5"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires ROLE_ADMIN."
+      parameters: []
+      responses:
+        "201":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/SportDTO"
+          headers:
+            Location:
+              description: "URL of the created resource."
+              schema:
+                type: "string"
+                format: "uri"
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The input does not satisfy the validation rules."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/SportBasicInfoDTO"
+  "/api/v1/sports/{id}":
+    get:
+      tags:
+        - "Sports"
+      summary: "Get resource details"
+      operationId: "operation6"
+      security: []
+      description: ""
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/SportDTO"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+    put:
+      tags:
+        - "Sports"
+      summary: "Update sports"
+      operationId: "operation7"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires ROLE_ADMIN."
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/SportDTO"
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+        "422":
+          description: "The input does not satisfy the validation rules."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/SportBasicInfoDTO"
+    delete:
+      tags:
+        - "Sports"
+      summary: "Delete resource"
+      operationId: "operation8"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires ROLE_ADMIN. Catalog dependencies must allow deletion."
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "204":
+          description: "Operation completed with no response body."
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+        "409":
+          description: "Resource dependencies prevent this operation."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+  "/api/v1/sports/{id}/image":
+    post:
+      tags:
+        - "Sports"
+      summary: "Upload or replace image"
+      operationId: "operation9"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires ROLE_ADMIN. Stores the image in S3/MinIO and replaces the resource image URL."
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/ImageURL"
+        "400":
+          description: "Invalid request. The error format may depend on the handler that produces it."
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+      requestBody:
+        required: true
+        content:
+          "multipart/form-data":
+            schema:
+              $ref: "#/components/schemas/ImageUpload"
+  "/api/v1/competitions/":
+    get:
+      tags:
+        - "Competitions"
+      summary: "List competitions"
+      operationId: "operation10"
+      security: []
+      description: "Paginated list. The path without a trailing slash is also supported."
+      parameters:
+        -
+          name: "page"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 0
+            default: 0
+          description: "Zero-based page index."
+        -
+          name: "size"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 1
+            default: 20
+          description: "Page size. The web interface requests ten results."
+        -
+          name: "sort"
+          in: "query"
+          style: "form"
+          explode: true
+          schema:
+            type: "array"
+            items:
+              type: "string"
+          description: "Field and direction, for example id,asc. This parameter can be repeated."
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/CompetitionPage"
+    post:
+      tags:
+        - "Competitions"
+      summary: "Create competition"
+      operationId: "operation11"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires ROLE_ADMIN."
+      parameters: []
+      responses:
+        "201":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/CompetitionDTO"
+          headers:
+            Location:
+              description: "URL of the created resource."
+              schema:
+                type: "string"
+                format: "uri"
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+        "409":
+          description: "Resource dependencies prevent this operation."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The input does not satisfy the validation rules."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/CompetitionBasicInfoDTO"
+  "/api/v1/competitions/{id}":
+    get:
+      tags:
+        - "Competitions"
+      summary: "Get resource details"
+      operationId: "operation12"
+      security: []
+      description: ""
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/CompetitionDTO"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+    put:
+      tags:
+        - "Competitions"
+      summary: "Update competitions"
+      operationId: "operation13"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires ROLE_ADMIN."
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/CompetitionDTO"
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+        "409":
+          description: "Resource dependencies prevent this operation."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The input does not satisfy the validation rules."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/CompetitionBasicInfoDTO"
+    delete:
+      tags:
+        - "Competitions"
+      summary: "Delete resource"
+      operationId: "operation14"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires ROLE_ADMIN. Catalog dependencies must allow deletion."
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "204":
+          description: "Operation completed with no response body."
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+        "409":
+          description: "Resource dependencies prevent this operation."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+  "/api/v1/competitions/{id}/image":
+    post:
+      tags:
+        - "Competitions"
+      summary: "Upload or replace image"
+      operationId: "operation15"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires ROLE_ADMIN. Stores the image in S3/MinIO and replaces the resource image URL."
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/ImageURL"
+        "400":
+          description: "Invalid request. The error format may depend on the handler that produces it."
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+      requestBody:
+        required: true
+        content:
+          "multipart/form-data":
+            schema:
+              $ref: "#/components/schemas/ImageUpload"
+  "/api/v1/teams/":
+    get:
+      tags:
+        - "Teams"
+      summary: "List teams"
+      operationId: "operation16"
+      security: []
+      description: "Paginated list. The path without a trailing slash is also supported."
+      parameters:
+        -
+          name: "page"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 0
+            default: 0
+          description: "Zero-based page index."
+        -
+          name: "size"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 1
+            default: 20
+          description: "Page size. The web interface requests ten results."
+        -
+          name: "sort"
+          in: "query"
+          style: "form"
+          explode: true
+          schema:
+            type: "array"
+            items:
+              type: "string"
+          description: "Field and direction, for example id,asc. This parameter can be repeated."
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/TeamPage"
+  "/api/v1/teams/{id}":
+    get:
+      tags:
+        - "Teams"
+      summary: "Get resource details"
+      operationId: "operation17"
+      security: []
+      description: ""
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/TeamDTO"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+    put:
+      tags:
+        - "Teams"
+      summary: "Update teams"
+      operationId: "operation18"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires ROLE_ADMIN."
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/TeamDTO"
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+        "409":
+          description: "Resource dependencies prevent this operation."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The input does not satisfy the validation rules."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/TeamBasicInfoDTO"
+    delete:
+      tags:
+        - "Teams"
+      summary: "Delete resource"
+      operationId: "operation19"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires ROLE_ADMIN. Catalog dependencies must allow deletion."
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "204":
+          description: "Operation completed with no response body."
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+        "409":
+          description: "Resource dependencies prevent this operation."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+  "/api/v1/teams/{id}/image":
+    post:
+      tags:
+        - "Teams"
+      summary: "Upload or replace image"
+      operationId: "operation20"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires ROLE_ADMIN. Stores the image in S3/MinIO and replaces the resource image URL."
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/ImageURL"
+        "400":
+          description: "Invalid request. The error format may depend on the handler that produces it."
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+      requestBody:
+        required: true
+        content:
+          "multipart/form-data":
+            schema:
+              $ref: "#/components/schemas/ImageUpload"
+  "/api/v1/matches/":
+    get:
+      tags:
+        - "Matches"
+      summary: "List matches"
+      operationId: "operation21"
+      security: []
+      description: "Paginated list. The path without a trailing slash is also supported. Results default to ascending ID order. Search and status filters are applied before pagination. An unknown status returns an empty page."
+      parameters:
+        -
+          name: "page"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 0
+            default: 0
+          description: "Zero-based page index."
+        -
+          name: "size"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 1
+            default: 20
+          description: "Page size. The web interface requests ten results."
+        -
+          name: "sort"
+          in: "query"
+          style: "form"
+          explode: true
+          schema:
+            type: "array"
+            items:
+              type: "string"
+          description: "Field and direction, for example id,asc. This parameter can be repeated."
+        -
+          name: "q"
+          in: "query"
+          schema:
+            type: "string"
+          example: "Madrid"
+          description: "Case-insensitive text search in home or away team names. Leading and trailing whitespace is ignored."
+        -
+          name: "status"
+          in: "query"
+          schema:
+            type: "string"
+          example: "SCHEDULED"
+          description: "Exact status: SCHEDULED, PLAYING or FINISHED. SCHEDULED excludes fixtures whose scheduled date is in the past."
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/MatchPage"
+    post:
+      tags:
+        - "Matches"
+      summary: "Create match"
+      operationId: "operation22"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires homeTeamId, awayTeamId, competitionId and matchDate. Teams must be different and belong to the competition. The request body uses MatchDTO."
+      parameters: []
+      responses:
+        "201":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/MatchDTO"
+          headers:
+            Location:
+              description: "URL of the created resource."
+              schema:
+                type: "string"
+                format: "uri"
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+        "422":
+          description: "The input does not satisfy the validation rules."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/MatchDTO"
+            example:
+              homeTeamId: 1
+              awayTeamId: 2
+              competitionId: 1
+              matchDate: "2026-12-01T18:30:00"
+              homeOdds: 2.1
+              drawOdds: 3.4
+              awayOdds: 3.2
+              gameStatus: "SCHEDULED"
+  "/api/v1/matches/{id}":
+    get:
+      tags:
+        - "Matches"
+      summary: "Get resource details"
+      operationId: "operation23"
+      security: []
+      description: "Includes both team objects and a competition summary. Relationship fields may be null in older records."
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/MatchDetailDTO"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+    put:
+      tags:
+        - "Matches"
+      summary: "Update matches"
+      operationId: "operation24"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires ROLE_ADMIN."
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/MatchDTO"
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+        "422":
+          description: "The input does not satisfy the validation rules."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/MatchDTO"
+    delete:
+      tags:
+        - "Matches"
+      summary: "Delete resource"
+      operationId: "operation25"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires ROLE_ADMIN. Catalog dependencies must allow deletion."
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "204":
+          description: "Operation completed with no response body."
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+  "/api/v1/sports/options":
+    get:
+      tags:
+        - "Sports"
+      summary: "Get sport options"
+      operationId: "operation26"
+      security: []
+      description: ""
+      parameters:
+        -
+          name: "page"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 0
+            default: 0
+          description: "Zero-based page index."
+        -
+          name: "size"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 1
+            default: 20
+          description: "Page size. The web interface requests ten results."
+        -
+          name: "sort"
+          in: "query"
+          style: "form"
+          explode: true
+          schema:
+            type: "array"
+            items:
+              type: "string"
+          description: "Field and direction, for example id,asc. This parameter can be repeated."
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/SportOptionsPage"
+  "/api/v1/competitions/options":
+    get:
+      tags:
+        - "Competitions"
+      summary: "Get competition options"
+      operationId: "operation27"
+      security: []
+      description: ""
+      parameters:
+        -
+          name: "page"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 0
+            default: 0
+          description: "Zero-based page index."
+        -
+          name: "size"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 1
+            default: 20
+          description: "Page size. The web interface requests ten results."
+        -
+          name: "sort"
+          in: "query"
+          style: "form"
+          explode: true
+          schema:
+            type: "array"
+            items:
+              type: "string"
+          description: "Field and direction, for example id,asc. This parameter can be repeated."
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/CompetitionOptionsPage"
+  "/api/v1/competitions/by-sport/{sportId}":
+    get:
+      tags:
+        - "Competitions"
+      summary: "Get competitions for a sport"
+      operationId: "operation28"
+      security: []
+      description: "Returns the complete array."
+      parameters:
+        -
+          name: "sportId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/CompetitionDTO"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+  "/api/v1/matches/by-competition/{competitionId}":
+    get:
+      tags:
+        - "Matches"
+      summary: "Get a competition schedule"
+      operationId: "operation29"
+      security: []
+      description: "Returns the complete array. The competition page applies its filters and displays ten results at a time."
+      parameters:
+        -
+          name: "competitionId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                type: "array"
                 items:
                   $ref: "#/components/schemas/MatchDTO"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+  "/api/v1/competitions/{competitionId}/teams":
+    post:
+      tags:
+        - "Competitions"
+      summary: "Create and link a team"
+      operationId: "operation30"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires ROLE_ADMIN. Creates the team and links it to the competition."
+      parameters:
+        -
+          name: "competitionId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "201":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/TeamDTO"
+          headers:
+            Location:
+              description: "URL of the created resource."
+              schema:
+                type: "string"
+                format: "uri"
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+        "409":
+          description: "Resource dependencies prevent this operation."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The input does not satisfy the validation rules."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/TeamBasicInfoDTO"
+  "/api/v1/competitions/{competitionId}/teams/{teamId}":
+    post:
+      tags:
+        - "Competitions"
+      summary: "Link an existing team"
+      operationId: "operation31"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires ROLE_ADMIN. Returns 422 if the team is already linked."
+      parameters:
+        -
+          name: "competitionId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+        -
+          name: "teamId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/CompetitionDTO"
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+        "422":
+          description: "The input does not satisfy the validation rules."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags:
+        - "Competitions"
+      summary: "Unlink team"
+      operationId: "operation32"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires ROLE_ADMIN. The team must be linked and must not participate in matches of this competition."
+      parameters:
+        -
+          name: "competitionId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+        -
+          name: "teamId"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "204":
+          description: "Operation completed with no response body."
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+        "422":
+          description: "The input does not satisfy the validation rules."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+  "/api/v1/users/":
+    post:
+      tags:
+        - "Users"
+      summary: "Register user"
+      operationId: "operation33"
+      security: []
+      description: "Public endpoint. Validates the declared age, unique username and email, and password. Assigns ROLE_REGISTERED and a zero balance."
+      parameters: []
+      responses:
+        "201":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/UserDTO"
+          headers:
+            Location:
+              description: "URL of the created resource."
+              schema:
+                type: "string"
+                format: "uri"
+        "422":
+          description: "The input does not satisfy the validation rules."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/UserRegisterDTO"
+    get:
+      tags:
+        - "Users"
+      summary: "List users"
+      operationId: "operation34"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires ROLE_ADMIN."
+      parameters:
+        -
+          name: "page"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 0
+            default: 0
+          description: "Zero-based page index."
+        -
+          name: "size"
+          in: "query"
+          schema:
+            type: "integer"
+            minimum: 1
+            default: 20
+          description: "Page size. The web interface requests ten results."
+        -
+          name: "sort"
+          in: "query"
+          style: "form"
+          explode: true
+          schema:
+            type: "array"
+            items:
+              type: "string"
+          description: "Field and direction, for example id,asc. This parameter can be repeated."
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/UserPage"
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+  "/api/v1/users/me":
+    get:
+      tags:
+        - "Users"
+      summary: "Get current account"
+      operationId: "operation35"
+      security:
+        -
+          bearerAuth: []
+      description: ""
+      parameters: []
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/UserDTO"
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+  "/api/v1/users/{id}":
+    get:
+      tags:
+        - "Users"
+      summary: "Get account by ID"
+      operationId: "operation36"
+      security:
+        -
+          bearerAuth: []
+      description: "Only the account owner or ROLE_ADMIN can access this operation."
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/UserDTO"
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+    put:
+      tags:
+        - "Users"
+      summary: "Update account"
+      operationId: "operation37"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires the account owner or ROLE_ADMIN. Updates fields with supplied values and preserves omitted fields."
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "200":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/UserDTO"
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+        "422":
+          description: "The input does not satisfy the validation rules."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/UserUpdateDTO"
+    delete:
+      tags:
+        - "Users"
+      summary: "Delete account"
+      operationId: "operation38"
+      security:
+        -
+          bearerAuth: []
+      description: "Only the account owner or ROLE_ADMIN can access this operation."
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      responses:
+        "204":
+          description: "Operation completed with no response body."
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+  "/api/v1/images":
+    post:
+      tags:
+        - "Images"
+      summary: "Upload own avatar"
+      operationId: "operation39"
+      security:
+        -
+          bearerAuth: []
+      description: "Requires an authenticated account. Replaces the current user's avatar and deletes the previous object, if present."
+      parameters: []
+      responses:
+        "201":
+          description: "Operation completed."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/AvatarUploadResponse"
+        "400":
+          description: "Invalid request. The error format may depend on the handler that produces it."
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          "multipart/form-data":
+            schema:
+              $ref: "#/components/schemas/ImageUpload"
+  "/api/v1/images/{key}":
+    get:
+      tags:
+        - "Images"
+      summary: "Download image"
+      operationId: "operation40"
+      security: []
+      description: "Public endpoint. The key must contain 36 hexadecimal characters or hyphens. Returns the bytes and MIME type stored in MinIO."
+      parameters:
+        -
+          name: "key"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "Binary image content."
+          content:
+            "image/png":
+              schema:
+                type: "string"
+                format: "binary"
+            "image/jpeg":
+              schema:
+                type: "string"
+                format: "binary"
+            "image/webp":
+              schema:
+                type: "string"
+                format: "binary"
+            "image/gif":
+              schema:
+                type: "string"
+                format: "binary"
+            "image/svg+xml":
+              schema:
+                type: "string"
+                format: "binary"
+            "application/octet-stream":
+              schema:
+                type: "string"
+                format: "binary"
+        "404":
+          description: "Resource not found. Some operations return an empty response body."
+    delete:
+      tags:
+        - "Images"
+      summary: "Delete own avatar"
+      operationId: "operation41"
+      security:
+        -
+          bearerAuth: []
+      description: "The key must match the authenticated user's current avatar. Returns 403 if it does not match."
+      parameters:
+        -
+          name: "key"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "204":
+          description: "Operation completed with no response body."
+        "401":
+          description: "A valid access JWT is required."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: "The authenticated account does not have the required permission."
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Error"
 components:
+  securitySchemes:
+    bearerAuth:
+      type: "http"
+      scheme: "bearer"
+      bearerFormat: "JWT"
+      description: "JWT returned by login or refresh. Roles are checked on the server."
+    refreshCookie:
+      type: "apiKey"
+      in: "cookie"
+      name: "RefreshToken"
+      description: "HttpOnly cookie created by login and managed by the HTTP client."
   schemas:
-    MatchDTO:
-      type: object
+    Error:
+      type: "object"
+      properties:
+        error:
+          type: "string"
+    LoginRequest:
+      type: "object"
+      required:
+        - "email"
+        - "password"
+      properties:
+        email:
+          type: "string"
+          format: "email"
+          example: "user@betsphere.com"
+        password:
+          type: "string"
+          format: "password"
+          example: "user123"
+    AuthResponse:
+      type: "object"
+      properties:
+        status:
+          type: "string"
+          enum:
+            - "SUCCESS"
+            - "FAILURE"
+        message:
+          type: "string"
+        accessToken:
+          type: "string"
+          nullable: true
+          description: "Access JWT returned after a successful login or refresh."
+    SportSummaryDTO:
+      type: "object"
       properties:
         id:
-          type: integer
-          format: int64
+          type: "integer"
+          format: "int64"
+        name:
+          type: "string"
+        iconUrl:
+          type: "string"
+          nullable: true
+    SportBasicInfoDTO:
+      type: "object"
+      required:
+        - "name"
+      properties:
+        name:
+          type: "string"
+          example: "Demo Sport"
+        iconUrl:
+          type: "string"
+          nullable: true
+    CompetitionSummaryDTO:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        name:
+          type: "string"
+        country:
+          type: "string"
+        iconUrl:
+          type: "string"
+          nullable: true
+        sport:
+          $ref: "#/components/schemas/SportSummaryDTO"
+    CompetitionBasicInfoDTO:
+      type: "object"
+      required:
+        - "name"
+        - "sportId"
+      properties:
+        name:
+          type: "string"
+          example: "Demo League"
+        country:
+          type: "string"
+          example: "Spain"
+        sportId:
+          type: "integer"
+          format: "int64"
+        iconUrl:
+          type: "string"
+          nullable: true
+    TeamBasicInfoDTO:
+      type: "object"
+      required:
+        - "name"
+      properties:
+        name:
+          type: "string"
+          example: "Demo Team"
+        country:
+          type: "string"
+          example: "Spain"
+        logoUrl:
+          type: "string"
+          nullable: true
+    TeamDTO:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        name:
+          type: "string"
+        country:
+          type: "string"
+        logoUrl:
+          type: "string"
+          nullable: true
+        wins:
+          type: "integer"
+          format: "int32"
+        draws:
+          type: "integer"
+          format: "int32"
+        losses:
+          type: "integer"
+          format: "int32"
+        goalsFor:
+          type: "integer"
+          format: "int32"
+        goalsAgainst:
+          type: "integer"
+          format: "int32"
+        totalMatches:
+          type: "integer"
+          format: "int32"
+    MatchDTO:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
         homeTeam:
-          type: string
+          type: "string"
         awayTeam:
-          type: string
+          type: "string"
         matchDate:
-          type: string
-          format: date-time
+          type: "string"
+          description: "Local date and time without a timezone offset."
+          example: "2026-12-01T18:30:00"
         homeOdds:
-          type: number
-          format: double
+          type: "number"
+          format: "double"
+          nullable: true
         drawOdds:
-          type: number
-          format: double
+          type: "number"
+          format: "double"
+          nullable: true
         awayOdds:
-          type: number
-          format: double
-        status:
-          type: string
+          type: "number"
+          format: "double"
+          nullable: true
+        gameStatus:
+          type: "string"
+          description: "Typical values are SCHEDULED, PLAYING and FINISHED."
+        homeTeamId:
+          type: "integer"
+          format: "int64"
+          nullable: true
+        awayTeamId:
+          type: "integer"
+          format: "int64"
+          nullable: true
+        competitionId:
+          type: "integer"
+          format: "int64"
+          nullable: true
+        homeTeamLogoUrl:
+          type: "string"
+          nullable: true
+        awayTeamLogoUrl:
+          type: "string"
+          nullable: true
+    MatchDetailDTO:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        homeTeam:
+          $ref: "#/components/schemas/TeamDTO"
+        awayTeam:
+          $ref: "#/components/schemas/TeamDTO"
+        matchDate:
+          type: "string"
+          example: "2026-12-01T18:30:00"
+        homeOdds:
+          type: "number"
+          format: "double"
+          nullable: true
+        drawOdds:
+          type: "number"
+          format: "double"
+          nullable: true
+        awayOdds:
+          type: "number"
+          format: "double"
+          nullable: true
+        gameStatus:
+          type: "string"
+        competition:
+          $ref: "#/components/schemas/CompetitionSummaryDTO"
+    CompetitionDTO:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        name:
+          type: "string"
+        country:
+          type: "string"
+        iconUrl:
+          type: "string"
+          nullable: true
+        sport:
+          $ref: "#/components/schemas/SportSummaryDTO"
+        teams:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/TeamDTO"
+        matches:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/MatchDTO"
+    SportDTO:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        name:
+          type: "string"
+        iconUrl:
+          type: "string"
+          nullable: true
+        competitions:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/CompetitionDTO"
+    UserDTO:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+        username:
+          type: "string"
+        email:
+          type: "string"
+          format: "email"
+        roles:
+          type: "array"
+          items:
+            type: "string"
+        birthDate:
+          type: "string"
+          format: "date"
+          nullable: true
+        virtualBalance:
+          type: "number"
+          format: "double"
+          nullable: true
+        avatarUrl:
+          type: "string"
+          nullable: true
+    UserRegisterDTO:
+      type: "object"
+      required:
+        - "username"
+        - "email"
+        - "password"
+        - "birthDate"
+      properties:
+        username:
+          type: "string"
+          minLength: 3
+          maxLength: 30
+          pattern: "^[a-zA-Z0-9_]+$"
+          example: "postman_user"
+        email:
+          type: "string"
+          format: "email"
+          example: "postman@example.test"
+        password:
+          type: "string"
+          format: "password"
+          minLength: 8
+          maxLength: 64
+          description: "Requires uppercase and lowercase letters, a digit and a character from @$!%*?&#_-, with no whitespace."
+          example: "PostmanDemo123!"
+        birthDate:
+          type: "string"
+          format: "date"
+          example: "2000-01-01"
+          description: "Declared date of birth corresponding to an age of at least 18."
+    UserUpdateDTO:
+      type: "object"
+      properties:
+        username:
+          type: "string"
+          minLength: 3
+          maxLength: 30
+        password:
+          type: "string"
+          format: "password"
+          minLength: 8
+          maxLength: 64
+        birthDate:
+          type: "string"
+          format: "date"
+          description: "Age must be at least 18."
+    ImageUpload:
+      type: "object"
+      required:
+        - "file"
+      properties:
+        file:
+          type: "string"
+          format: "binary"
+          description: "JPEG, PNG, WebP or GIF up to 5 MiB. The complete multipart request is also limited to 5 MB."
+    ImageURL:
+      type: "object"
+      required:
+        - "url"
+      properties:
+        url:
+          type: "string"
+          example: "/api/v1/images/ab4e2e24-2591-4015-a82f-f16db457d44b"
+    AvatarUploadResponse:
+      type: "object"
+      required:
+        - "key"
+        - "url"
+      properties:
+        key:
+          type: "string"
+          format: "uuid"
+        url:
+          type: "string"
+    SportPage:
+      type: "object"
+      required:
+        - "content"
+        - "number"
+        - "size"
+        - "totalElements"
+        - "totalPages"
+        - "last"
+      properties:
+        content:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/SportDTO"
+        number:
+          type: "integer"
+        size:
+          type: "integer"
+        totalElements:
+          type: "integer"
+          format: "int64"
+        totalPages:
+          type: "integer"
+        last:
+          type: "boolean"
+        first:
+          type: "boolean"
+        numberOfElements:
+          type: "integer"
+        empty:
+          type: "boolean"
+    SportOptionsPage:
+      type: "object"
+      required:
+        - "content"
+        - "number"
+        - "size"
+        - "totalElements"
+        - "totalPages"
+        - "last"
+      properties:
+        content:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/SportSummaryDTO"
+        number:
+          type: "integer"
+        size:
+          type: "integer"
+        totalElements:
+          type: "integer"
+          format: "int64"
+        totalPages:
+          type: "integer"
+        last:
+          type: "boolean"
+        first:
+          type: "boolean"
+        numberOfElements:
+          type: "integer"
+        empty:
+          type: "boolean"
+    CompetitionPage:
+      type: "object"
+      required:
+        - "content"
+        - "number"
+        - "size"
+        - "totalElements"
+        - "totalPages"
+        - "last"
+      properties:
+        content:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/CompetitionDTO"
+        number:
+          type: "integer"
+        size:
+          type: "integer"
+        totalElements:
+          type: "integer"
+          format: "int64"
+        totalPages:
+          type: "integer"
+        last:
+          type: "boolean"
+        first:
+          type: "boolean"
+        numberOfElements:
+          type: "integer"
+        empty:
+          type: "boolean"
+    CompetitionOptionsPage:
+      type: "object"
+      required:
+        - "content"
+        - "number"
+        - "size"
+        - "totalElements"
+        - "totalPages"
+        - "last"
+      properties:
+        content:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/CompetitionSummaryDTO"
+        number:
+          type: "integer"
+        size:
+          type: "integer"
+        totalElements:
+          type: "integer"
+          format: "int64"
+        totalPages:
+          type: "integer"
+        last:
+          type: "boolean"
+        first:
+          type: "boolean"
+        numberOfElements:
+          type: "integer"
+        empty:
+          type: "boolean"
+    TeamPage:
+      type: "object"
+      required:
+        - "content"
+        - "number"
+        - "size"
+        - "totalElements"
+        - "totalPages"
+        - "last"
+      properties:
+        content:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/TeamDTO"
+        number:
+          type: "integer"
+        size:
+          type: "integer"
+        totalElements:
+          type: "integer"
+          format: "int64"
+        totalPages:
+          type: "integer"
+        last:
+          type: "boolean"
+        first:
+          type: "boolean"
+        numberOfElements:
+          type: "integer"
+        empty:
+          type: "boolean"
+    MatchPage:
+      type: "object"
+      required:
+        - "content"
+        - "number"
+        - "size"
+        - "totalElements"
+        - "totalPages"
+        - "last"
+      properties:
+        content:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/MatchDTO"
+        number:
+          type: "integer"
+        size:
+          type: "integer"
+        totalElements:
+          type: "integer"
+          format: "int64"
+        totalPages:
+          type: "integer"
+        last:
+          type: "boolean"
+        first:
+          type: "boolean"
+        numberOfElements:
+          type: "integer"
+        empty:
+          type: "boolean"
+    UserPage:
+      type: "object"
+      required:
+        - "content"
+        - "number"
+        - "size"
+        - "totalElements"
+        - "totalPages"
+        - "last"
+      properties:
+        content:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/UserDTO"
+        number:
+          type: "integer"
+        size:
+          type: "integer"
+        totalElements:
+          type: "integer"
+          format: "int64"
+        totalPages:
+          type: "integer"
+        last:
+          type: "boolean"
+        first:
+          type: "boolean"
+        numberOfElements:
+          type: "integer"
+        empty:
+          type: "boolean"

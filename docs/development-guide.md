@@ -123,7 +123,11 @@ La tabla usa rutas relativas a `/api/v1`. La autenticación devuelve un token de
 
 En la ficha de una competición, el frontend filtra el calendario que recibe y muestra diez resultados cada vez. La lista de equipos se muestra completa.
 
-El proyecto configura `/docs/api` para Swagger UI y `/v3/api-docs` para el JSON de OpenAPI. El POM combina Spring Boot 4.1 con Springdoc 2.5, fuera de la [matriz de compatibilidad de Springdoc](https://springdoc.org/#what-is-the-compatibility-matrix-of-springdoc-openapi-with-spring-boot). La generación dinámica de la especificación queda por verificar. La tabla anterior y los controladores implementados describen la API de la 0.1. La [exportación de OpenAPI](api/api-docs.yaml) y la [colección de Postman](api/postman/BetSphere_API.postman_collection.json) se conservan como referencia de una implementación anterior del listado.
+El proyecto configura `/docs/api` para Swagger UI y `/v3/api-docs` para el JSON de OpenAPI. El POM combina Spring Boot 4.1 con Springdoc 2.5, fuera de la [matriz de compatibilidad de Springdoc](https://springdoc.org/#what-is-the-compatibility-matrix-of-springdoc-openapi-with-spring-boot). La generación dinámica de la especificación queda por verificar. El [contrato OpenAPI estático](api/api-docs.yaml) documenta las 41 operaciones REST de la 0.1, sus DTO, filtros, permisos y respuestas. El [visor HTML](api/api-docs.html) incorpora el mismo contrato y carga ReDoc desde su CDN para mostrarlo. Ambos archivos se mantienen a partir de los controladores y DTO del repositorio.
+
+La [colección de Postman de la 0.1](api/postman/BetSphere_API.postman_collection.json) incluye 54 peticiones para autenticación, cuentas, catálogo, relaciones de equipos, imágenes y permisos. Importa el archivo y ejecuta las cinco carpetas en orden con la aplicación y sus datos de ejemplo arrancados. Las respuestas guardan los tokens y los IDs en variables de colección. El login y la renovación usan la cookie `RefreshToken` que administra Postman.
+
+Las operaciones de administración crean recursos identificados con `Postman` y la carpeta final los elimina usando sus IDs. La carpeta de imágenes usa el PNG de fútbol de `backend/src/main/resources/demo-images/catalog/sports/football.png`. Configura la raíz del repositorio como directorio de trabajo de Postman o selecciona el archivo en cada petición multipart. `base_url` apunta a `https://localhost/api/v1`. Configura la confianza en el certificado de demostración y conserva los valores de los tokens en el cliente local.
 
 ### Arquitectura del servidor
 
@@ -685,7 +689,7 @@ cd backend
 .\mvnw.cmd spring-boot:run
 ```
 
-En Bash usa `./mvnw spring-boot:run`. La API escucha en `https://localhost`. Una comprobación básica es consultar `GET https://localhost/api/v1/matches/`. Si reutilizas la colección histórica de Postman, cambia su variable `base_url` a `https://localhost/api/v1`.
+En Bash usa `./mvnw spring-boot:run`. La API escucha en `https://localhost`. Una comprobación básica es consultar `GET https://localhost/api/v1/matches/`. La colección de Postman utiliza esta misma URL base.
 
 ### Frontend
 
