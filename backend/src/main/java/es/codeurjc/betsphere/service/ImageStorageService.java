@@ -52,13 +52,23 @@ public class ImageStorageService {
 
         ensureBucketExists();
         String key = UUID.randomUUID().toString();
+        put(key, file.getBytes(), contentType);
+        return key;
+    }
+
+    void storeIfMissing(String key, byte[] bytes, String contentType) {
+        if (!exists(key)) {
+            put(key, bytes, contentType);
+        }
+    }
+
+    private void put(String key, byte[] bytes, String contentType) {
         s3Client.putObject(PutObjectRequest.builder()
                         .bucket(bucket)
                         .key(key)
                         .contentType(contentType)
                         .build(),
-                RequestBody.fromBytes(file.getBytes()));
-        return key;
+                RequestBody.fromBytes(bytes));
     }
 
     public void delete(String key) {

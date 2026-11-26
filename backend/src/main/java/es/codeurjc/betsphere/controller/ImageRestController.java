@@ -63,10 +63,14 @@ public class ImageRestController {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Image not found.");
             }
             ImageStorageService.StoredImage image = imageStorageService.load(key);
-            return ResponseEntity.ok()
+            var response = ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(image.contentType()))
-                    .cacheControl(CacheControl.noCache())
-                    .body(image.bytes());
+                    .cacheControl(CacheControl.noCache());
+            if ("image/svg+xml".equals(image.contentType())) {
+                response.header("Content-Security-Policy",
+                        "sandbox; default-src 'none'; img-src data:; style-src 'unsafe-inline'");
+            }
+            return response.body(image.bytes());
         } catch (software.amazon.awssdk.services.s3.model.NoSuchKeyException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Image not found.");
         }

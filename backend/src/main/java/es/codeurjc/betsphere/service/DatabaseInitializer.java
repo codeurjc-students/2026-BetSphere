@@ -1,7 +1,12 @@
 package es.codeurjc.betsphere.service;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +14,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +30,7 @@ import es.codeurjc.betsphere.repository.SportRepository;
 import es.codeurjc.betsphere.repository.CompetitionRepository;
 import es.codeurjc.betsphere.repository.MatchRepository;
 import es.codeurjc.betsphere.repository.UserRepository;
+import software.amazon.awssdk.core.exception.SdkException;
 
 @Service
 @ConditionalOnProperty(name = "betsphere.seeder.enabled", havingValue = "true")
@@ -36,19 +44,22 @@ public class DatabaseInitializer implements ApplicationRunner {
     private final TeamRepository teamRepository;
     private final SportRepository sportRepository;
     private final CompetitionRepository competitionRepository;
+    private final ImageStorageService imageStorage;
 
     public DatabaseInitializer(MatchRepository matchRepository,
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             TeamRepository teamRepository,
             SportRepository sportRepository,
-            CompetitionRepository competitionRepository) {
+            CompetitionRepository competitionRepository,
+            ImageStorageService imageStorage) {
         this.matchRepository = matchRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.teamRepository = teamRepository;
         this.sportRepository = sportRepository;
         this.competitionRepository = competitionRepository;
+        this.imageStorage = imageStorage;
     }
 
     @Override
@@ -117,6 +128,55 @@ public class DatabaseInitializer implements ApplicationRunner {
             userRepository.saveAll(List.of(admin, user));
             log.info("Users initialized with dummy data.");
         }
+
+        seedCatalogImages(List.of(football, basketball, tennis),
+                List.of(premierLeague, laLiga, bundesliga, euroleague, atpTour),
+                List.of(manCity, arsenal, liverpool, realMadrid, barcelona, atletico, bayern, dortmund,
+                        alba, olympiacos, nadal, alcaraz));
+    }
+
+    private void seedCatalogImages(List<Sport> sports, List<Competition> competitions, List<Team> teams) {
+        try {
+            imageStorage.ensureBucketExists();
+            for (Sport sport : sports) {
+                sport.setIconUrl(seedImage("sports", sport.getName(), sport.getIconUrl()));
+            }
+            for (Competition competition : competitions) {
+                competition.setIconUrl(seedImage("competitions", competition.getName(), competition.getIconUrl()));
+            }
+            for (Team team : teams) {
+                team.setLogoUrl(seedImage("teams", team.getName(), team.getLogoUrl()));
+            }
+        } catch (SdkException e) {
+            log.warn("Could not seed catalog images in object storage. They will be retried on startup: {}",
+                    e.getMessage());
+        }
+    }
+
+    private String seedImage(String category, String name, String currentUrl) {
+        String filename = name.toLowerCase(Locale.ROOT).replace(' ', '-');
+        String relativePath = category + "/" + filename;
+        String previousCatalogPath = "demo-images/catalog/" + relativePath;
+        String path = previousCatalogPath + ".png";
+        String key = imageKey(path);
+        String url = imageStorage.publicUrl(key);
+        String firstDemoUrl = imageStorage.publicUrl(imageKey("demo-images/" + relativePath + ".png"));
+        String previousCatalogUrl = imageStorage.publicUrl(imageKey(previousCatalogPath));
+        if (currentUrl != null && !currentUrl.equals(url)
+                && !currentUrl.equals(firstDemoUrl) && !currentUrl.equals(previousCatalogUrl)) {
+            return currentUrl;
+        }
+
+        try (var input = new ClassPathResource(path).getInputStream()) {
+            imageStorage.storeIfMissing(key, input.readAllBytes(), MediaType.IMAGE_PNG_VALUE);
+            return url;
+        } catch (IOException e) {
+            throw new UncheckedIOException("Could not read demo image " + path, e);
+        }
+    }
+
+    private String imageKey(String path) {
+        return UUID.nameUUIDFromBytes(path.getBytes(StandardCharsets.UTF_8)).toString();
     }
 
     private Sport getOrCreateSport(String name) {

@@ -1,5 +1,6 @@
 package es.codeurjc.betsphere.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -33,6 +34,16 @@ public class MatchService {
     }
 
     public Page<Match> getAllMatches(Pageable pageable) { return matchRepo.findAll(pageable); }
+
+    public Page<Match> searchMatches(String query, String status, Pageable pageable) {
+        String team = query == null || query.isBlank() ? null : query.strip();
+        String gameStatus = status == null || status.isBlank() ? null : status;
+        if (team == null && gameStatus == null) {
+            return getAllMatches(pageable);
+        }
+        LocalDateTime fromDate = "SCHEDULED".equals(gameStatus) ? LocalDateTime.now() : null;
+        return matchRepo.search(team, gameStatus, fromDate, pageable);
+    }
 
     public List<Match> getMatchesByCompetition(Long competitionId) {
         if (!competitionRepository.existsById(competitionId)) {

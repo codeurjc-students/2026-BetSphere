@@ -5,19 +5,32 @@ import { formatDateTime } from "../services/format-date";
 import { formatOdds } from "../services/format-odds";
 
 const statuses = ["All", "Upcoming", "Finished"] as const;
+export type FixtureStatus = typeof statuses[number];
+
+type RemoteSearch = {
+  query: string;
+  filter: FixtureStatus;
+  onChange: (query: string, filter: FixtureStatus) => void;
+};
 
 export default function FixtureExplorer({
-  matches, initialFilter = "All", paginated = false,
+  matches, initialFilter = "All", remoteSearch,
 }: {
   matches: MatchDTO[];
-  initialFilter?: typeof statuses[number];
-  paginated?: boolean;
+  initialFilter?: FixtureStatus;
+  remoteSearch?: RemoteSearch;
 }) {
-  const [filter, setFilter] = useState(initialFilter);
-  const [query, setQuery] = useState("");
+  const [localFilter, setLocalFilter] = useState(initialFilter);
+  const [localQuery, setLocalQuery] = useState("");
   const [openedAt] = useState(Date.now);
+  const filter = remoteSearch?.filter ?? localFilter;
+  const query = remoteSearch?.query ?? localQuery;
+  const changeFilters = remoteSearch?.onChange ?? ((text, status) => {
+    setLocalQuery(text);
+    setLocalFilter(status);
+  });
   const search = query.trim().toLowerCase();
-  const visible = matches.filter((match) => {
+  const visible = remoteSearch ? matches : matches.filter((match) => {
     const finished = match.gameStatus === "FINISHED";
     const upcoming = match.gameStatus === "SCHEDULED" && new Date(match.matchDate).getTime() >= openedAt;
     return (filter === "All" || (filter === "Upcoming" ? upcoming : finished))
@@ -29,7 +42,7 @@ export default function FixtureExplorer({
       <div className="explorer-toolbar">
         <div className="segmented" role="group" aria-label="Match status">
           {statuses.map((status) => (
-            <button key={status} type="button" aria-pressed={status === filter} onClick={() => setFilter(status)}>
+            <button key={status} type="button" aria-pressed={status === filter} onClick={() => changeFilters(query, status)}>
               {status}
             </button>
           ))}
@@ -37,11 +50,11 @@ export default function FixtureExplorer({
         <label className="search-field">
           <span aria-hidden="true">⌕</span>
           <span className="visually-hidden">Find a team</span>
-          <input type="search" placeholder="Find a team" value={query} onChange={(event) => setQuery(event.target.value)} />
+          <input type="search" placeholder="Find a team" value={query} onChange={(event) => changeFilters(event.target.value, filter)} />
         </label>
       </div>
       <p className="result-count" aria-live="polite">
-        {visible.length} {visible.length === 1 ? "match" : "matches"}{paginated ? " in loaded results" : ""}
+        {visible.length} {visible.length === 1 ? "match" : "matches"}
       </p>
       {visible.length ? (
         <div className="fixture-programme">
@@ -77,7 +90,7 @@ export default function FixtureExplorer({
         <div className="empty-panel">
           <p>{filter === "Upcoming" && !search ? "No upcoming matches." : "No matches available."}</p>
           {(filter !== "All" || query) && (
-            <button type="button" className="btn btn-outline-light" onClick={() => { setQuery(""); setFilter("All"); }}>
+            <button type="button" className="btn btn-outline-light" onClick={() => changeFilters("", "All")}>
               Clear filters
             </button>
           )}
