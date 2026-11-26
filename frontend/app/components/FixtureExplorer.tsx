@@ -3,33 +3,51 @@ import { Link } from "react-router";
 import type { MatchDTO } from "../dtos/MatchDTO";
 import { formatDateTime } from "../services/format-date";
 import { formatOdds } from "../services/format-odds";
+import LoadMore from "./LoadMore";
 
 const statuses = ["All", "Upcoming", "Finished"] as const;
+const PAGE_SIZE = 10;
+export type FixtureStatus = typeof statuses[number];
+
+type RemoteSearch = {
+  query: string;
+  filter: FixtureStatus;
+  onChange: (query: string, filter: FixtureStatus) => void;
+};
 
 export default function FixtureExplorer({
-  matches, initialFilter = "All", paginated = false,
+  matches, initialFilter = "All", remoteSearch,
 }: {
   matches: MatchDTO[];
-  initialFilter?: typeof statuses[number];
-  paginated?: boolean;
+  initialFilter?: FixtureStatus;
+  remoteSearch?: RemoteSearch;
 }) {
-  const [filter, setFilter] = useState(initialFilter);
-  const [query, setQuery] = useState("");
+  const [localFilter, setLocalFilter] = useState(initialFilter);
+  const [localQuery, setLocalQuery] = useState("");
+  const [visibleLimit, setVisibleLimit] = useState(PAGE_SIZE);
   const [openedAt] = useState(Date.now);
+  const filter = remoteSearch?.filter ?? localFilter;
+  const query = remoteSearch?.query ?? localQuery;
+  const changeFilters = remoteSearch?.onChange ?? ((text, status) => {
+    setLocalQuery(text);
+    setLocalFilter(status);
+    setVisibleLimit(PAGE_SIZE);
+  });
   const search = query.trim().toLowerCase();
-  const visible = matches.filter((match) => {
+  const filteredMatches = remoteSearch ? matches : matches.filter((match) => {
     const finished = match.gameStatus === "FINISHED";
     const upcoming = match.gameStatus === "SCHEDULED" && new Date(match.matchDate).getTime() >= openedAt;
     return (filter === "All" || (filter === "Upcoming" ? upcoming : finished))
       && `${match.homeTeam} ${match.awayTeam}`.toLowerCase().includes(search);
   });
+  const visible = remoteSearch ? filteredMatches : filteredMatches.slice(0, visibleLimit);
 
   return (
     <div className="fixture-explorer">
       <div className="explorer-toolbar">
         <div className="segmented" role="group" aria-label="Match status">
           {statuses.map((status) => (
-            <button key={status} type="button" aria-pressed={status === filter} onClick={() => setFilter(status)}>
+            <button key={status} type="button" aria-pressed={status === filter} onClick={() => changeFilters(query, status)}>
               {status}
             </button>
           ))}
@@ -37,11 +55,11 @@ export default function FixtureExplorer({
         <label className="search-field">
           <span aria-hidden="true">⌕</span>
           <span className="visually-hidden">Find a team</span>
-          <input type="search" placeholder="Find a team" value={query} onChange={(event) => setQuery(event.target.value)} />
+          <input type="search" placeholder="Find a team" value={query} onChange={(event) => changeFilters(event.target.value, filter)} />
         </label>
       </div>
       <p className="result-count" aria-live="polite">
-        {visible.length} {visible.length === 1 ? "match" : "matches"}{paginated ? " in loaded results" : ""}
+        {filteredMatches.length} {filteredMatches.length === 1 ? "match" : "matches"}
       </p>
       {visible.length ? (
         <div className="fixture-programme">
@@ -77,11 +95,14 @@ export default function FixtureExplorer({
         <div className="empty-panel">
           <p>{filter === "Upcoming" && !search ? "No upcoming matches." : "No matches available."}</p>
           {(filter !== "All" || query) && (
-            <button type="button" className="btn btn-outline-light" onClick={() => { setQuery(""); setFilter("All"); }}>
+            <button type="button" className="btn btn-outline-light" onClick={() => changeFilters("", "All")}>
               Clear filters
             </button>
           )}
         </div>
+      )}
+      {!remoteSearch && visible.length < filteredMatches.length && (
+        <LoadMore onClick={() => setVisibleLimit((limit) => limit + PAGE_SIZE)} />
       )}
     </div>
   );

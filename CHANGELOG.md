@@ -15,15 +15,15 @@ Cambios incorporados para la primera release de la aplicación (`0.1`), pendient
 * **Catálogo deportivo:** navegación por deportes y competiciones, fichas de equipos, búsqueda y filtrado de partidos, y detalle de partido con estadísticas y cuotas informativas.
 * **Cuentas y sesión:** registro con comprobación de edad a partir de la fecha declarada, inicio y cierre de sesión, renovación con JWT, perfil con saldo virtual y cambio de avatar, e historial local de partidos visitados.
 * **Administración:** consulta de cuentas y gestión de deportes, competiciones, equipos y partidos desde el panel.
-* **Imágenes y datos de demostración:** subida de avatares, iconos y logos a almacenamiento compatible con S3 y carga inicial configurable del catálogo.
+* **Imágenes y datos de demostración:** subida de avatares, iconos y logos a almacenamiento compatible con S3 y carga inicial configurable del catálogo. El catálogo incorpora 20 imágenes propias de demostración que se guardan en MinIO.
 * **Empaquetado y entrega:** imagen Docker conjunta para cliente y servidor, Compose con MySQL y almacenamiento de imágenes, y distribución del Compose como artefacto OCI. Los workflows automatizan la publicación de la build `dev`, las builds manuales y la preparación y publicación de releases.
 * **Documentación:** descripción de las funciones por rol con capturas, seguimiento de las funcionalidades previstas, guía de ejecución local y despliegue externo, y actualización de la guía de desarrollo con diagramas y procedimiento de versionado.
 
 ### Modificado
 
-* **Interfaz:** rediseño de las pantallas del MVP, navegación adaptada a distintos anchos, paginación con carga incremental y páginas de error.
-* **API y seguridad:** ampliación de la API REST del catálogo y las cuentas, normalización de respuestas, HTTPS y autorización de operaciones por rol.
-* **Calidad:** ampliación y reorganización de las pruebas unitarias, de integración y E2E para catálogo, autenticación, perfil, administración e imágenes. Se incorporó análisis estático con ESLint y un umbral del 70 % de cobertura de líneas en el cliente.
+* **Interfaz:** rediseño de las pantallas del MVP, navegación adaptada a distintos anchos y páginas de error. El calendario de competición muestra sus partidos de diez en diez y la portada y los formularios de cuenta usan un fondo de estadio creado para BetSphere.
+* **API y seguridad:** ampliación de la API REST del catálogo y las cuentas, normalización de respuestas, HTTPS y autorización de operaciones por rol. El listado general de partidos busca por equipo y filtra por estado antes de paginar.
+* **Calidad:** ampliación y reorganización de las pruebas unitarias, de integración y E2E para catálogo, autenticación, perfil, administración e imágenes. Se incorporó ESLint, se fijó un umbral del 70 % de cobertura de líneas en el cliente y se configuró SonarQube Cloud en GitHub Actions. Su primer análisis queda pendiente de activar la integración.
 * **README y trazabilidad de IA:** portada actualizada con capturas de la 0.1, índice de documentación, resumen de las funciones previstas y registro de asistencia durante la fase.
 
 ---

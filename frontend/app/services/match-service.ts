@@ -12,8 +12,13 @@ export async function getMatches(): Promise<MatchDTO[]>{
     return Array.isArray(page) ? page : page.content;
 }
 
-export async function getMatchesPage(page = 0, size = 10): Promise<PageDTO<MatchDTO>> {
-    const res = await apiFetch(`${API_URL}/?page=${page}&size=${size}`);
+export async function getMatchesPage(
+    page = 0, size = 10, filters: { query?: string; status?: string; signal?: AbortSignal } = {},
+): Promise<PageDTO<MatchDTO>> {
+    const params = new URLSearchParams({ page: String(page), size: String(size) });
+    if (filters.query?.trim()) params.set("q", filters.query.trim());
+    if (filters.status) params.set("status", filters.status);
+    const res = await apiFetch(`${API_URL}/?${params}`, { signal: filters.signal });
     return res.json();
 }
 

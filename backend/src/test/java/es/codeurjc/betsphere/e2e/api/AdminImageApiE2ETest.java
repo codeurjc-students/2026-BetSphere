@@ -41,6 +41,25 @@ class AdminImageApiE2ETest {
     }
 
     @ParameterizedTest
+    @CsvSource({
+        "sports, Basketball, iconUrl",
+        "competitions, EuroLeague, iconUrl",
+        "teams, Arsenal, logoUrl",
+        "teams, Real Madrid, logoUrl",
+        "teams, Rafael Nadal, logoUrl"
+    })
+    void servesAnImageForEachKindOfSeededCatalogEntry(String resource, String name, String imageField) {
+        String url = given().port(port).queryParam("size", 100).get("/api/v1/" + resource)
+                .then().statusCode(200).extract().jsonPath().param("name", name)
+                .getString("content.find { it.name == name }." + imageField);
+
+        assertThat(url).startsWith("/api/v1/images/");
+        byte[] image = given().port(port).get(url).then().statusCode(200)
+                .contentType("image/png").extract().asByteArray();
+        assertThat(image).startsWith(new byte[] {(byte) 137, 80, 78, 71, 13, 10, 26, 10});
+    }
+
+    @ParameterizedTest
     @CsvSource({"sports, Football, iconUrl", "competitions, La Liga, iconUrl", "teams, Barcelona, logoUrl"})
     void onlyAdminsCanUploadAndTheCatalogServesTheImage(String resource, String name, String imageField) {
         String collection = "/api/v1/" + resource;

@@ -1,5 +1,8 @@
 package es.codeurjc.betsphere.repository;
 
+import java.time.LocalDateTime;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import es.codeurjc.betsphere.model.Match;
@@ -13,6 +16,20 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
 
     @EntityGraph(attributePaths = {"homeTeamRef", "awayTeamRef", "competition"})
     List<Match> findByCompetitionId(Long competitionId);
+
+    @EntityGraph(attributePaths = {"homeTeamRef", "awayTeamRef", "competition"})
+    @Query("""
+            select m from Match m
+            left join m.homeTeamRef home
+            left join m.awayTeamRef away
+            where (:query is null or locate(lower(:query), lower(concat(
+                coalesce(home.name, m.homeTeam, ''), ' ', coalesce(away.name, m.awayTeam, '')
+            ))) > 0)
+            and (:status is null or m.gameStatus = :status)
+            and (:fromDate is null or m.matchDate >= :fromDate)
+            """)
+    Page<Match> search(@Param("query") String query, @Param("status") String status,
+            @Param("fromDate") LocalDateTime fromDate, Pageable pageable);
 
     @Override
     @EntityGraph(attributePaths = {"homeTeamRef", "awayTeamRef", "competition"})

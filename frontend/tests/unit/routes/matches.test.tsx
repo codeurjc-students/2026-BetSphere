@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import {
   createMemoryRouter,
   RouterProvider,
@@ -83,5 +83,30 @@ describe("Matches route", () => {
     ).toBeInTheDocument();
 
     expect(screen.getByText("No matches available.")).toBeInTheDocument();
+  });
+
+  it("searches through the API and keeps the filters on the next page", async () => {
+    const firstResult = { ...mockMatches[0], id: 2, homeTeam: "Liverpool", awayTeam: "Chelsea" };
+    const nextResult = { ...firstResult, id: 3, homeTeam: "Arsenal" };
+    const fetchSpy = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({ content: mockMatches, number: 0, last: true }))
+      .mockResolvedValueOnce(Response.json({ content: [firstResult], number: 0, last: false }))
+      .mockResolvedValueOnce(Response.json({ content: [nextResult], number: 1, last: true }));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    renderMatchesRoute();
+    const search = await screen.findByRole("searchbox", { name: "Find a team" });
+    fireEvent.change(search, { target: { value: "Chelsea" } });
+    expect(await screen.findByRole("link", { name: "Liverpool vs Chelsea" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Real Madrid vs Barcelona" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Load more" }));
+    expect(await screen.findByRole("link", { name: "Arsenal vs Chelsea" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Liverpool vs Chelsea" })).toBeInTheDocument();
+    expect(fetchSpy.mock.calls.map(([url]) => url)).toEqual([
+      "/api/v1/matches/?page=0&size=10",
+      "/api/v1/matches/?page=0&size=10&q=Chelsea",
+      "/api/v1/matches/?page=1&size=10&q=Chelsea",
+    ]);
   });
 });

@@ -75,4 +75,22 @@ class MatchApiE2ETest {
                 .body("content[0].homeTeam", equalTo("Arsenal"))
                 .body("last", equalTo(true));
     }
+
+    @Test
+    void searchesByEitherTeamAndStatusBeforePaginating() {
+        LocalDateTime now = LocalDateTime.now();
+        matchRepository.save(new Match("Arsenal", "Everton", now, 2.0, 3.0, 4.0, "FINISHED"));
+        matchRepository.save(new Match("Liverpool", "Chelsea", now, 2.0, 3.0, 4.0, "SCHEDULED"));
+        matchRepository.save(new Match("Chelsea", "Tottenham", now, 2.0, 3.0, 4.0, "FINISHED"));
+        matchRepository.save(new Match("Newcastle", "Chelsea", now, 2.0, 3.0, 4.0, "FINISHED"));
+
+        given().port(port).queryParam("q", " cHeLsEa ").queryParam("status", "FINISHED")
+                .queryParam("page", 1).queryParam("size", 1).queryParam("sort", "id,asc")
+                .get("/api/v1/matches/")
+                .then().statusCode(200)
+                .body("totalElements", equalTo(2))
+                .body("content.size()", equalTo(1))
+                .body("content[0].homeTeam", equalTo("Newcastle"))
+                .body("content[0].awayTeam", equalTo("Chelsea"));
+    }
 }

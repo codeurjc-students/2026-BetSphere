@@ -119,7 +119,15 @@ La tabla usa rutas relativas a `/api/v1`. La autenticación devuelve un token de
 | `/users` | `POST /` registro. `GET /me` sesión actual. `GET /` listado. `GET`, `PUT` y `DELETE` en `/{id}`. | Registro público. Listado de administrador. Consulta, edición y eliminación de una cuenta sujetas a los permisos del titular o administrador. |
 | `/images` | `GET /{key}` consulta, `POST` carga de avatar y `DELETE /{key}` retirada del avatar propio. | Lectura pública. Escritura autenticada. |
 
-El proyecto configura `/docs/api` para Swagger UI y `/v3/api-docs` para el JSON de OpenAPI. El POM combina Spring Boot 4.1 con Springdoc 2.5, fuera de la [matriz de compatibilidad de Springdoc](https://springdoc.org/#what-is-the-compatibility-matrix-of-springdoc-openapi-with-spring-boot). La generación dinámica de la especificación queda por verificar. La [exportación estática anterior](api/api-docs.yaml) corresponde a la primera implementación del listado de partidos. Para revisar las rutas de la versión actual utiliza el inventario anterior, los controladores y los tests HTTP. La [colección de Postman](api/postman/BetSphere_API.postman_collection.json) puede servir como punto de partida para peticiones manuales.
+`GET /api/v1/matches` acepta los parámetros opcionales `q` y `status`. `q` busca texto en los nombres de los equipos local y visitante sin distinguir mayúsculas. `status=FINISHED` selecciona los finalizados y `status=SCHEDULED` selecciona los programados cuya fecha aún no ha pasado. Ambos filtros se combinan antes de aplicar `page` y `size`. La página inicial es `0` y, si se omite `sort`, se ordena por ID ascendente. Por ejemplo, `/api/v1/matches/?q=Chelsea&status=FINISHED&page=0&size=10` devuelve la primera página de hasta diez partidos finalizados que coinciden con Chelsea.
+
+En la ficha de una competición, el frontend filtra el calendario que recibe y muestra diez resultados cada vez. La lista de equipos se muestra completa.
+
+El proyecto configura `/docs/api` para Swagger UI y `/v3/api-docs` para el JSON de OpenAPI. El POM combina Spring Boot 4.1 con Springdoc 2.5, fuera de la [matriz de compatibilidad de Springdoc](https://springdoc.org/#what-is-the-compatibility-matrix-of-springdoc-openapi-with-spring-boot). La generación dinámica de la especificación queda por verificar. El [contrato OpenAPI estático](api/api-docs.yaml) documenta las 41 operaciones REST de la 0.1, sus DTO, filtros, permisos y respuestas. El [visor HTML](api/api-docs.html) incorpora el mismo contrato y carga ReDoc desde su CDN para mostrarlo. Ambos archivos se mantienen a partir de los controladores y DTO del repositorio.
+
+La [colección de Postman de la 0.1](api/postman/BetSphere_API.postman_collection.json) incluye 54 peticiones para autenticación, cuentas, catálogo, relaciones de equipos, imágenes y permisos. Importa el archivo y ejecuta las cinco carpetas en orden con la aplicación y sus datos de ejemplo arrancados. Las respuestas guardan los tokens y los IDs en variables de colección. El login y la renovación usan la cookie `RefreshToken` que administra Postman.
+
+Las operaciones de administración crean recursos identificados con `Postman` y la carpeta final los elimina usando sus IDs. La carpeta de imágenes usa el PNG de fútbol de `backend/src/main/resources/demo-images/catalog/sports/football.png`. Configura la raíz del repositorio como directorio de trabajo de Postman o selecciona el archivo en cada petición multipart. `base_url` apunta a `https://localhost/api/v1`. Configura la confianza en el certificado de demostración y conserva los valores de los tokens en el cliente local.
 
 ### Arquitectura del servidor
 
@@ -292,6 +300,9 @@ direction LR
 namespace Arranque {
     class DatabaseInitializer
 }
+namespace Almacenamiento {
+    class InitImageStorage["ImageStorageService"]
+}
 namespace Repositorios {
     class SportRepository
     class CompetitionRepository
@@ -304,7 +315,10 @@ DatabaseInitializer ..> CompetitionRepository
 DatabaseInitializer ..> TeamRepository
 DatabaseInitializer ..> MatchRepository
 DatabaseInitializer ..> UserRepository
+DatabaseInitializer ..> InitImageStorage
 ```
+
+Cuando está activado, `DatabaseInitializer` carga las imágenes propias del catálogo en MinIO mediante `ImageStorageService` y guarda sus URLs en la base de datos. Los [créditos de las imágenes](../backend/src/main/resources/demo-images/CREDITS.md) describen su origen.
 
 #### Dependencias de infraestructura
 
@@ -576,6 +590,15 @@ sports_index ..> format_date
 
 Maven escribe los resultados de Surefire en `backend/target/surefire-reports/` y JaCoCo genera cobertura en `backend/target/site/jacoco/`. Vitest genera cobertura en `frontend/coverage/`. Los porcentajes dependen del commit y de la ejecución consultada. La [estructura de pruebas](testing-structure.md) identifica las suites y sus comandos.
 
+### Análisis estático con SonarQube Cloud
+
+SonarQube Cloud analiza el código Java y TypeScript para señalar posibles defectos, duplicación y problemas de mantenibilidad. JaCoCo y Vitest miden la cobertura al ejecutar las pruebas. SonarQube importa sus informes XML y LCOV junto con los resultados del análisis estático.
+
+1. Importa el repositorio como un único proyecto en [SonarQube Cloud](https://sonarcloud.io/). En la configuración de análisis del proyecto, desactiva el análisis automático para usar GitHub Actions.
+2. En GitHub, abre **Settings → Secrets and variables → Actions**. En **Variables**, crea `SONAR_ORGANIZATION` y `SONAR_PROJECT_KEY` con los identificadores del proyecto en SonarQube Cloud. En **Secrets**, añade un token con permiso de análisis como `SONAR_TOKEN`.
+3. Ejecuta **Basic Backend CI** en `main`, una vez que esa rama incluya la configuración. El análisis también se ejecuta en cada push a `main` cuando están definidas ambas variables. El workflow compila y prueba el backend, genera ambos informes de cobertura y después ejecuta el escáner para las rutas definidas en [`sonar-project.properties`](../sonar-project.properties).
+4. Abre el enlace al análisis en el log del paso **Analyze with SonarQube Cloud**. En el proyecto, revisa **Issues** y el resultado del **Quality Gate**. Registra las incidencias que requieran cambios y comprueba su resolución en un análisis posterior.
+
 ## Despliegue
 
 ### Empaquetado y distribución
@@ -666,7 +689,7 @@ cd backend
 .\mvnw.cmd spring-boot:run
 ```
 
-En Bash usa `./mvnw spring-boot:run`. La API escucha en `https://localhost`. Ajusta la URL base de Postman si la colección conserva el puerto anterior. Una comprobación básica es consultar `GET https://localhost/api/v1/matches/`.
+En Bash usa `./mvnw spring-boot:run`. La API escucha en `https://localhost`. Una comprobación básica es consultar `GET https://localhost/api/v1/matches/`. La colección de Postman utiliza esta misma URL base.
 
 ### Frontend
 
