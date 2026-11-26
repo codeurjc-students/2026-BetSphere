@@ -3,8 +3,10 @@ import { Link } from "react-router";
 import type { MatchDTO } from "../dtos/MatchDTO";
 import { formatDateTime } from "../services/format-date";
 import { formatOdds } from "../services/format-odds";
+import LoadMore from "./LoadMore";
 
 const statuses = ["All", "Upcoming", "Finished"] as const;
+const PAGE_SIZE = 10;
 export type FixtureStatus = typeof statuses[number];
 
 type RemoteSearch = {
@@ -22,20 +24,23 @@ export default function FixtureExplorer({
 }) {
   const [localFilter, setLocalFilter] = useState(initialFilter);
   const [localQuery, setLocalQuery] = useState("");
+  const [visibleLimit, setVisibleLimit] = useState(PAGE_SIZE);
   const [openedAt] = useState(Date.now);
   const filter = remoteSearch?.filter ?? localFilter;
   const query = remoteSearch?.query ?? localQuery;
   const changeFilters = remoteSearch?.onChange ?? ((text, status) => {
     setLocalQuery(text);
     setLocalFilter(status);
+    setVisibleLimit(PAGE_SIZE);
   });
   const search = query.trim().toLowerCase();
-  const visible = remoteSearch ? matches : matches.filter((match) => {
+  const filteredMatches = remoteSearch ? matches : matches.filter((match) => {
     const finished = match.gameStatus === "FINISHED";
     const upcoming = match.gameStatus === "SCHEDULED" && new Date(match.matchDate).getTime() >= openedAt;
     return (filter === "All" || (filter === "Upcoming" ? upcoming : finished))
       && `${match.homeTeam} ${match.awayTeam}`.toLowerCase().includes(search);
   });
+  const visible = remoteSearch ? filteredMatches : filteredMatches.slice(0, visibleLimit);
 
   return (
     <div className="fixture-explorer">
@@ -54,7 +59,7 @@ export default function FixtureExplorer({
         </label>
       </div>
       <p className="result-count" aria-live="polite">
-        {visible.length} {visible.length === 1 ? "match" : "matches"}
+        {filteredMatches.length} {filteredMatches.length === 1 ? "match" : "matches"}
       </p>
       {visible.length ? (
         <div className="fixture-programme">
@@ -95,6 +100,9 @@ export default function FixtureExplorer({
             </button>
           )}
         </div>
+      )}
+      {!remoteSearch && visible.length < filteredMatches.length && (
+        <LoadMore onClick={() => setVisibleLimit((limit) => limit + PAGE_SIZE)} />
       )}
     </div>
   );
